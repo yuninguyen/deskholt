@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Deskholt — Layout Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F1EA; --paper-alt:#EAE7DC; --card:#FBFAF6;
+    --ink:#1F2421; --ink-soft:#565b54; --ink-faint:#8b8f86;
+    --line:#DBD6C7; --line-strong:#c7c1ae;
+    --walnut:#A8623E; --walnut-soft:#F0E1D8;
+    --blueprint:#2C5079; --blueprint-deep:#1D3A57; --blueprint-soft:#E1E9F0;
+    --sage:#566E4E; --sage-soft:#E4EBE0;
+    --amber:#A9762E; --amber-soft:#F3E7D2;
+    --brick:#A8432B; --brick-soft:#F3E0DA;
+    --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+    --radius-sm:3px; --radius-md:6px; --radius-lg:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);}
+  body{background-image:linear-gradient(var(--line) 1px, transparent 1px),linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size:32px 32px; background-position:-1px -1px;}
+  .wrap{max-width:1200px;margin:0 auto;padding:40px 24px 96px;}
+  h1{font-family:var(--font-display);font-size:32px;margin:0 0 6px;}
+  .sub{color:var(--ink-soft);max-width:640px;line-height:1.6;margin-bottom:28px;}
+  code{font-family:var(--font-mono);background:var(--paper-alt);padding:1px 5px;border-radius:4px;font-size:0.85em;}
+
+  /* Tabs */
+  .tabbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;border-bottom:1px solid var(--line-strong);padding-bottom:14px;}
+  .tabbtn{font-family:var(--font-mono);font-size:11.5px;text-transform:uppercase;letter-spacing:0.04em;padding:8px 13px;border-radius:20px;border:1px solid var(--line-strong);background:var(--card);color:var(--ink-soft);cursor:pointer;}
+  .tabbtn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .tabbtn .grp{color:var(--walnut);margin-right:5px;}
+  .tabbtn.active .grp{color:#e3c2ae;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .frame{border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:0 1px 0 var(--line);}
+  .chrome{background:var(--paper-alt);padding:9px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);}
+  .dots{display:flex;gap:5px;} .dot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);}
+  .urlbar{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);background:var(--card);border:1px solid var(--line);border-radius:5px;padding:3px 10px;flex:1;}
+  .canvas{padding:18px;}
+
+  .region{border:1.5px dashed var(--line-strong);border-radius:8px;padding:12px 14px;background:var(--paper-alt);}
+  .region-label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-faint);display:flex;justify-content:space-between;}
+  .region-note{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);margin-top:6px;line-height:1.5;}
+  .region.solid{background:var(--card);border-style:solid;}
+  .region.accent{border-color:var(--blueprint);background:var(--blueprint-soft);}
+  .region.accent .region-label{color:var(--blueprint-deep);}
+  .stack{display:flex;flex-direction:column;gap:12px;}
+  .row{display:flex;gap:12px;}
+  .row > *{flex:1;}
+
+  /* mini components reused from design system */
+  .btn{font-family:var(--font-display);font-weight:600;font-size:12px;border-radius:var(--radius-sm);padding:8px 14px;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;}
+  .btn-primary{background:var(--blueprint);color:#fff;}
+  .btn-secondary{background:transparent;color:var(--ink);border-color:var(--line-strong);}
+  .badge{font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
+  .badge-eco{background:var(--sage-soft);color:var(--sage);} .badge-instock{background:var(--blueprint-soft);color:var(--blueprint-deep);}
+  .badge-best{background:var(--amber-soft);color:var(--amber);} .badge-drop{background:var(--brick-soft);color:var(--brick);}
+  .badge-draft{background:var(--amber-soft);color:var(--amber);} .badge-pub{background:var(--sage-soft);color:var(--sage);} .badge-sched{background:var(--blueprint-soft);color:var(--blueprint-deep);}
+  .badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .mini-card{background:var(--card);border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;flex:1;}
+  .mini-card .img{height:70px;background:linear-gradient(135deg,var(--walnut-soft),var(--paper-alt));}
+  .mini-card .b{padding:10px;}
+  .mini-card h5{font-family:var(--font-display);font-size:12.5px;margin:0 0 6px;}
+  .mini-price{font-family:var(--font-mono);font-weight:600;font-size:14px;margin:6px 0;}
+  .mini-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .mini-table th{text-align:left;font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;color:var(--ink-faint);background:var(--paper-alt);padding:6px 10px;}
+  .mini-table td{padding:6px 10px;border-top:1px solid var(--line);}
+  .mini-table tr.best td{background:var(--sage-soft);}
+  .dim{display:flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:10px;color:var(--ink-soft);}
+  .dim svg{flex:1;height:8px;}
+
+  .annot{margin-top:22px;}
+  .annot h3{font-family:var(--font-display);font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);}
+  table.spec{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.spec th{text-align:left;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--ink-faint);padding:7px 10px;border-bottom:1px solid var(--line-strong);}
+  table.spec td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--ink-soft);}
+  table.spec td:first-child{color:var(--ink);font-weight:500;white-space:nowrap;}
+
+  .toolbar-ico{width:26px;height:22px;border-radius:4px;background:var(--card);border:1px solid var(--line-strong);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--ink-faint);}
+  .tabgroup{display:flex;gap:4px;margin-bottom:10px;}
+  .tabgroup span{font-family:var(--font-mono);font-size:9.5px;padding:5px 9px;border-radius:5px;background:var(--card);border:1px solid var(--line-strong);color:var(--ink-soft);}
+  .tabgroup span.on{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Đề xuất Layout — Deskholt</h1>
+  <p class="sub">7 layout chính, dựng trên token &amp; component đã có trong <code>deskholt-design-system.html</code>. Vùng nét đứt = khối bố cục (chưa cần nội dung thật); vùng nét liền = component đã thiết kế, tái dùng nguyên bản.</p>
+
+  <div class="tabbar" id="tabbar">
+    <button class="tabbtn active" data-t="home"><span class="grp">Public</span>Trang chủ</button>
+    <button class="tabbtn" data-t="category"><span class="grp">Public</span>Category</button>
+    <button class="tabbtn" data-t="product"><span class="grp">Public</span>Product</button>
+    <button class="tabbtn" data-t="blog"><span class="grp">Public</span>Blog Article</button>
+    <button class="tabbtn" data-t="editor"><span class="grp">Admin</span>Create/Edit Post</button>
+    <button class="tabbtn" data-t="list"><span class="grp">Admin</span>Danh sách</button>
+    <button class="tabbtn" data-t="tags"><span class="grp">Admin</span>Quản lý Tag</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="panel active" id="p-home">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/</div></div>
+      <div class="canvas stack">
+        <div class="region solid" style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="region-label" style="border:none;padding:0;">HEADER · sticky · 64px</div>
+          <div style="display:flex;gap:14px;font-size:11px;color:var(--ink-soft)">Desks · Chairs · Lighting · Eco · Blog · 🔍</div>
+        </div>
+        <div class="region accent">
+          <div class="region-label"><span>HERO · full-width · ~460px</span><span>1 CTA duy nhất</span></div>
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:20px;">Find the best price on your next desk setup</div>
+              <div style="font-size:12px;color:var(--ink-soft);margin:6px 0 10px;">So giá thời gian thực trên Amazon · Walmart · Target — không cần rời trang.</div>
+              <button class="btn btn-primary">Browse Standing Desks →</button>
+            </div>
+            <div class="region" style="background:transparent;border-style:dashed;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);">hero visual / dimension-line graphic</div>
+          </div>
+        </div>
+        <div class="region"><div class="region-label"><span>CATEGORY QUICK-NAV · 1 hàng · scroll ngang mobile</span></div>
+          <div class="row" style="margin-top:8px;">
+            <div class="mini-card"><div class="b" style="text-align:center;font-size:11px;">🪑 Standing Desks</div></div>
+            <div class="mini-card"><div class="b" style="text-align:center;font-size:11px;">🪑 Task Chairs</div></div>
+            <div class="mini-card"><div class="b" style="text-align:center;font-size:11px;">💡 Lighting</div></div>
+            <div class="mini-card"><div class="b" style="text-align:center;font-size:11px;">🔌 Cable Mgmt</div></div>
+            <div class="mini-card"><div class="b" style="text-align:center;font-size:11px;">🌿 Eco-Friendly</div></div>
+          </div>
+        </div>
+        <div class="region"><div class="region-label"><span>PRICE DROPS THIS WEEK · scroll ngang · Product Card compact</span></div>
+          <div class="row" style="margin-top:8px;">
+            <div class="mini-card"><div class="img"></div><div class="b"><h5>Oakframe Standing Desk</h5><span class="badge badge-drop"><span class="badge-dot"></span>-12%</span><div class="mini-price">$249</div></div></div>
+            <div class="mini-card"><div class="img"></div><div class="b"><h5>Meridian Task Chair</h5><span class="badge badge-drop"><span class="badge-dot"></span>-8%</span><div class="mini-price">$189</div></div></div>
+            <div class="mini-card"><div class="img"></div><div class="b"><h5>Halo LED Desk Lamp</h5><span class="badge badge-eco"><span class="badge-dot"></span>Eco</span><div class="mini-price">$39</div></div></div>
+          </div>
+        </div>
+        <div class="region"><div class="region-label"><span>EDITOR'S COMPARISON · Comparison Grid block (table layout) từ 1 bài Top-N nổi bật</span></div>
+          <table class="mini-table" style="margin-top:8px;">
+            <tr><th>Sản phẩm</th><th>Giá tốt nhất</th><th></th></tr>
+            <tr class="best"><td>Oakframe Standing Desk</td><td>$249.00</td><td><span class="badge badge-best"><span class="badge-dot"></span>Best</span></td></tr>
+            <tr><td>Uplift Frame Pro</td><td>$279.00</td><td></td></tr>
+          </table>
+        </div>
+        <div class="region"><div class="region-label"><span>LATEST FROM THE BLOG · 3 cột</span></div>
+          <div class="row" style="margin-top:8px;">
+            <div class="mini-card"><div class="img"></div><div class="b"><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">GUIDE · 6 phút đọc</div><h5>Cách chọn bàn đứng cho người mới</h5></div></div>
+            <div class="mini-card"><div class="img"></div><div class="b"><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">ARTICLE · 4 phút đọc</div><h5>5 ghế công thái học dưới $200</h5></div></div>
+            <div class="mini-card"><div class="img"></div><div class="b"><div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-faint)">COMPARISON</div><h5>Top 5 bàn đứng dưới $400</h5></div></div>
+          </div>
+        </div>
+        <div class="region" style="background:var(--sage-soft);border-color:var(--sage);"><div class="region-label" style="color:var(--sage)"><span>ECO-FRIENDLY BANNER · full-width</span></div>
+          <div style="margin-top:8px;font-size:12px;">Shop sustainable home-office gear — lọc theo tag Eco-Friendly trong toàn catalog. <button class="btn btn-secondary" style="margin-left:8px;">Xem tất cả →</button></div>
+        </div>
+        <div class="region"><div class="region-label"><span>NEWSLETTER · inline form, 1 hàng</span></div></div>
+        <div class="region solid" style="background:var(--ink);color:#c9cec4;"><div class="region-label" style="color:#8b9086;border:none;padding:0;">FOOTER · About / Legal / Danh mục</div></div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Hero 1 CTA</td><td>Trang chủ không phải trang bán — CTA duy nhất dẫn vào category, tránh loãng focus khỏi các trang Product (nơi mới đặt nút Buy Now blueprint).</td></tr>
+        <tr><td>Price Drops trước Editor's Comparison</td><td>Ưu tiên tín hiệu "đang rẻ" (động lực click cao nhất) lên trên nội dung tĩnh hơn.</td></tr>
+        <tr><td>Blog 3 cột, không lẫn Product Card</td><td>Giữ trang chủ là điểm vào, không kéo dài — chi tiết Product Card/Price Table chỉ xuất hiện trong bài blog thật.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- CATEGORY -->
+  <div class="panel" id="p-category">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/category/standing-desks</div></div>
+      <div class="canvas stack">
+        <div class="region solid" style="font-size:11px;color:var(--ink-faint)">Home / Standing Desks</div>
+        <div class="region accent"><div class="region-label"><span>CATEGORY HEADER</span></div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:20px;margin-top:6px;">Standing Desks</div>
+          <div class="dim" style="max-width:220px;margin-top:6px;"><span>128 sản phẩm</span><svg viewBox="0 0 100 8"><line x1="0" y1="4" x2="100" y2="4" stroke="var(--ink-faint)" stroke-width="1"/></svg><span>cập nhật 6h trước</span></div>
+        </div>
+        <div class="row" style="align-items:flex-start;">
+          <div class="region" style="flex:0 0 200px;"><div class="region-label"><span>FILTERS · sidebar 200px · drawer trên mobile</span></div>
+            <div style="margin-top:8px;font-size:11px;color:var(--ink-soft);line-height:2.1;">
+              ☐ Eco-Friendly<br>☐ In Stock only<br>Giá: ——●———— $0–$800<br>Thương hiệu: ▾<br>Sàn: Amazon / Walmart / Target
+            </div>
+          </div>
+          <div style="flex:1;">
+            <div class="region solid" style="display:flex;justify-content:space-between;margin-bottom:12px;"><span style="font-size:11px;color:var(--ink-soft)">128 kết quả</span><span style="font-size:11px;color:var(--ink-soft)">Sắp xếp: Phù hợp nhất ▾</span></div>
+            <div class="row"><div class="mini-card"><div class="img"></div><div class="b"><h5>Oakframe Standing Desk</h5><span class="badge badge-eco"><span class="badge-dot"></span>Eco</span> <span class="badge badge-instock"><span class="badge-dot"></span>Còn hàng</span><div class="mini-price">$249</div></div></div>
+            <div class="mini-card"><div class="img"></div><div class="b"><h5>Uplift Frame Pro</h5><span class="badge badge-instock"><span class="badge-dot"></span>Còn hàng</span><div class="mini-price">$279</div></div></div>
+            <div class="mini-card"><div class="img"></div><div class="b"><h5>Vari Electric Desk</h5><span class="badge badge-best"><span class="badge-dot"></span>Best Price</span><div class="mini-price">$199</div></div></div></div>
+            <div class="region" style="margin-top:12px;text-align:center;font-size:11px;color:var(--ink-faint)">‹ Trang 1 / 11 ›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Filter sidebar trái, cố định</td><td>Người đang so sánh cần lọc liên tục (giá, tồn kho) mà không mất vị trí cuộn — phù hợp hành vi shopping hơn dropdown ẩn.</td></tr>
+        <tr><td>Product Card giữ nguyên .product-card gốc</td><td>Không tạo biến thể card riêng cho Category — nhất quán với card ở trang chủ và trong bài blog (đúng nguyên tắc "1 component, nhiều nơi dùng" đã đặt ra ở Create_Post_for_Deskholt).</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- PRODUCT -->
+  <div class="panel" id="p-product">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/product/oakframe-standing-desk</div></div>
+      <div class="canvas stack">
+        <div class="region solid" style="font-size:11px;color:var(--ink-faint)">Home / Standing Desks / Oakframe Standing Desk</div>
+        <div class="row" style="align-items:flex-start;">
+          <div class="region" style="flex:1;height:220px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">gallery ảnh (chính + thumbnail)</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--walnut);">STANDING DESKS</div>
+            <div style="font-family:var(--font-display);font-weight:700;font-size:22px;margin:4px 0;">Oakframe Electric Standing Desk</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;"><span class="badge badge-eco"><span class="badge-dot"></span>Eco-Friendly</span><span class="badge badge-instock"><span class="badge-dot"></span>Còn hàng</span></div>
+            <div class="dim" style="max-width:280px;margin-bottom:10px;"><span>48"W</span><svg viewBox="0 0 60 8"><line x1="0" y1="4" x2="60" y2="4" stroke="var(--ink-faint)" stroke-width="1"/></svg><span>24"D</span><svg viewBox="0 0 60 8"><line x1="0" y1="4" x2="60" y2="4" stroke="var(--ink-faint)" stroke-width="1"/></svg><span>28–46"H</span></div>
+            <div class="region accent"><div class="region-label"><span>PRICE COMPARISON TABLE · component gốc</span></div>
+              <table class="mini-table" style="margin-top:8px;"><tr><th>Sàn</th><th>Giá</th><th></th></tr>
+                <tr class="best"><td>Amazon</td><td>$249.00</td><td><button class="btn btn-primary" style="padding:4px 10px;font-size:10px;">Go →</button></td></tr>
+                <tr><td>Walmart</td><td>$259.99</td><td><button class="btn btn-secondary" style="padding:4px 10px;font-size:10px;">Go →</button></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="region"><div class="region-label"><span>MÔ TẢ &amp; THÔNG SỐ KỸ THUẬT</span></div><div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Nội dung mô tả, bảng specs đầy đủ (chất liệu, tải trọng, bảo hành...).</div></div>
+        <div class="row">
+          <div class="region" style="background:var(--sage-soft);border-color:var(--sage);"><div class="region-label" style="color:var(--sage)"><span>ƯU ĐIỂM</span></div><div style="font-size:11px;margin-top:6px;">từ <code>userSentiment.pros</code></div></div>
+          <div class="region" style="background:var(--brick-soft);border-color:var(--brick);"><div class="region-label" style="color:var(--brick)"><span>NHƯỢC ĐIỂM</span></div><div style="font-size:11px;margin-top:6px;">từ <code>userSentiment.cons</code></div></div>
+        </div>
+        <div class="region"><div class="region-label"><span>SẢN PHẨM LIÊN QUAN · Comparison Grid (card layout)</span></div></div>
+        <div class="region"><div class="region-label"><span>ĐƯỢC NHẮC TRONG BÀI VIẾT · liên kết tới BlogPostProduct</span></div></div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Price Table nằm ngay trong hero, không cuộn xuống</td><td>Đây là trang tiền tệ hóa chính — quyết định mua thường xảy ra trong 5 giây đầu, bảng giá phải nằm above-the-fold.</td></tr>
+        <tr><td>Mobile: thanh Buy Now dính đáy màn hình</td><td>Khi cuộn qua khỏi bảng giá trên mobile, nút mua sàn rẻ nhất vẫn phải trong tầm tay — không yêu cầu người dùng cuộn ngược lại.</td></tr>
+        <tr><td>"Được nhắc trong bài viết" cuối trang</td><td>Tận dụng bảng <code>BlogPostProduct</code> mới thêm — internal link 2 chiều product ↔ blog, tốt cho SEO.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- BLOG -->
+  <div class="panel" id="p-blog">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/blog/cach-chon-ban-dung</div></div>
+      <div class="canvas stack">
+        <div class="region" style="background:var(--walnut-soft);border-color:var(--walnut);font-size:11px;"><div class="region-label" style="color:var(--walnut)">AFFILIATE DISCLOSURE · tự động chèn đầu bài, không thể xóa nếu bài có Product/Price block</div></div>
+        <div class="region solid" style="font-size:11px;color:var(--ink-faint)">Home / Blog / Cách chọn bàn đứng cho người mới</div>
+        <div class="region" style="height:150px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">featured image full-width</div>
+        <div style="font-family:var(--font-display);font-weight:700;font-size:24px;">Cách chọn bàn đứng cho người mới bắt đầu</div>
+        <div style="font-size:11px;color:var(--ink-faint);font-family:var(--font-mono);">Nguyễn Văn A · 8 Th8 2026 · 6 phút đọc</div>
+        <div class="row" style="align-items:flex-start;margin-top:6px;">
+          <div style="flex:3;">
+            <div class="region" style="height:60px;font-size:11px;color:var(--ink-soft)">Đoạn mở bài (Inter, max-width 680px để dễ đọc)...</div>
+            <div class="region accent" style="margin:10px 0;"><div class="region-label"><span>PRODUCT CARD BLOCK — dọc · {{product:482}}</span></div>
+              <div class="mini-card" style="max-width:260px;margin-top:8px;"><div class="img"></div><div class="b"><h5>Oakframe Standing Desk</h5><div class="mini-price">$249</div><button class="btn btn-primary" style="width:100%;justify-content:center;">Buy Now →</button></div></div>
+            </div>
+            <div class="region" style="height:60px;font-size:11px;color:var(--ink-soft)">...tiếp tục nội dung...</div>
+            <div class="region accent" style="margin:10px 0;"><div class="region-label"><span>PRICE TABLE BLOCK — {{price-table:482}}</span></div>
+              <table class="mini-table" style="margin-top:8px;"><tr><th>Sàn</th><th>Giá</th></tr><tr class="best"><td>Amazon</td><td>$249.00</td></tr></table>
+            </div>
+            <div class="region" style="height:40px;font-size:11px;color:var(--ink-soft)">...kết bài, FAQ...</div>
+          </div>
+          <div style="flex:1;">
+            <div class="region" style="position:sticky;top:12px;"><div class="region-label"><span>TOC · sticky · tự sinh từ H2/H3</span></div>
+              <div style="font-size:11px;color:var(--ink-soft);line-height:2.2;margin-top:6px;">1. Chọn kích thước<br>2. Loại khung nâng<br>3. Ngân sách hợp lý</div>
+            </div>
+          </div>
+        </div>
+        <div class="region solid"><div class="region-label"><span>AUTHOR BOX</span></div></div>
+        <div class="region"><div class="region-label"><span>BÀI VIẾT LIÊN QUAN · 3 cột</span></div></div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Disclosure luôn ở trên cùng, tô walnut-soft</td><td>Bắt buộc theo FTC + đúng file pháp lý đã duyệt — tách biệt màu để không lẫn với nội dung, dễ nhận ngay cả khi lướt nhanh.</td></tr>
+        <tr><td>Cột nội dung 680px, TOC 1 cột phụ</td><td>Giữ dòng chữ Inter không quá dài (đọc mỏi mắt) trong khi vẫn cho điều hướng nhanh ở bài dài — đúng khuyến nghị "Guide dùng Product Card ngang" khi bài có nhiều bước.</td></tr>
+        <tr><td>Product/Price block căn giữa cột nội dung, không tràn sang TOC</td><td>Giữ nhịp đọc 1 cột, TOC không bị đẩy lệch khi block cao thấp khác nhau.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="panel" id="p-editor">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/admin/posts/[id]/edit</div></div>
+      <div class="canvas">
+        <div class="region solid" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-family:var(--font-display);font-weight:600;font-size:15px;">Cách chọn bàn đứng cho người mới</div>
+          <div style="display:flex;gap:8px;align-items:center;"><span class="badge badge-draft"><span class="badge-dot"></span>Nháp</span></div>
+        </div>
+        <div class="region" style="background:var(--amber-soft);border-color:var(--amber);font-size:11px;color:var(--amber);margin-bottom:12px;">🔒 Đang được Trần Thị B chỉnh sửa — bạn đang ở chế độ chỉ xem</div>
+        <div class="row" style="align-items:flex-start;">
+          <div style="flex:3;">
+            <div class="region solid" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+              <span class="toolbar-ico">H1</span><span class="toolbar-ico">B</span><span class="toolbar-ico">I</span><span class="toolbar-ico">🔗</span><span class="toolbar-ico">❝</span><span class="toolbar-ico">🖼</span>
+              <span class="toolbar-ico" style="background:var(--blueprint-soft);color:var(--blueprint-deep);border-color:var(--blueprint);">+Block</span>
+            </div>
+            <div class="region" style="height:280px;font-size:11px;color:var(--ink-faint);">vùng soạn thảo (WYSIWYG) — nút "+Block" mở dropdown: Product Card / Price Table / Comparison Grid / Disclosure</div>
+          </div>
+          <div style="flex:1;">
+            <div class="tabgroup"><span class="on">Cài đặt</span><span>SEO</span><span>Hỗ trợ AI</span></div>
+            <div class="region solid" style="font-size:11px;color:var(--ink-soft);line-height:2.1;">
+              Category: Standing Desks ▾<br>Tags: [Standing][Ergonomic] +<br>Ảnh đại diện: ▢<br>Người phụ trách: Trần Thị B ▾<br>Lên lịch: — <br>
+              <div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px;">Lịch sử chỉnh sửa (Edit only): v4 · v3 · v2 <span style="color:var(--blueprint)">xem diff</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="region solid" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);">Đã lưu lúc 14:30 · 812 từ · 6 phút đọc</span>
+          <div style="display:flex;gap:8px;"><button class="btn btn-secondary">Lưu nháp</button><button class="btn btn-secondary">Xem trước</button><button class="btn btn-primary">Xuất bản ngay</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Split 75/25, không đổi giữa Create/Edit</td><td>Đúng yêu cầu "tái sử dụng layout giống hệt Create" trong file spec — chỉ khác load sẵn dữ liệu + banner Lock + tab Lịch sử.</td></tr>
+        <tr><td>Banner Lock màu amber, nằm trên cùng editor</td><td>Cảnh báo va chạm chỉnh sửa phải thấy ngay khi vào trang, trước khi người dùng kịp gõ chữ nào.</td></tr>
+        <tr><td>Nút "+Block" tách biệt trong toolbar</td><td>Đây là thao tác đặc thù affiliate quan trọng nhất — không được lẫn vào nhóm icon định dạng văn bản thông thường.</td></tr>
+        <tr><td>Thanh trạng thái đáy dính (sticky)</td><td>3 nút Lưu/Xem trước/Xuất bản luôn trong tầm tay dù cuộn editor dài — khớp yêu cầu auto-save mỗi vài giây + nút publish nổi bật.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div class="panel" id="p-list">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/admin/posts</div></div>
+      <div class="canvas stack">
+        <div class="region solid" style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:18px;">Bài viết</div>
+          <button class="btn btn-primary">+ Tạo bài mới</button>
+        </div>
+        <div class="region solid" style="display:flex;gap:8px;font-size:11px;color:var(--ink-soft);">
+          Trạng thái ▾ &nbsp;·&nbsp; Category ▾ &nbsp;·&nbsp; Người phụ trách ▾ &nbsp;·&nbsp; Khoảng thời gian ▾ &nbsp;·&nbsp; 🔍 Tìm theo tiêu đề/slug
+        </div>
+        <table class="mini-table" style="font-size:12px;">
+          <tr><th>☐</th><th>Tiêu đề</th><th>Trạng thái</th><th>Category</th><th>Phụ trách</th><th>Views</th><th>Cập nhật</th><th></th></tr>
+          <tr><td>☐</td><td>Cách chọn bàn đứng... <span class="badge badge-drop" style="margin-left:4px;">🔴 SP hết hàng</span></td><td><span class="badge badge-draft"><span class="badge-dot"></span>Nháp</span></td><td>Standing Desks</td><td>Trần B</td><td>—</td><td>2 phút trước</td><td>✎ 👁 ⧉ 🗑</td></tr>
+          <tr><td>☐</td><td>5 ghế công thái học dưới $200</td><td><span class="badge badge-pub"><span class="badge-dot"></span>Published</span></td><td>Task Chairs</td><td>Lê C</td><td>1,204</td><td>Hôm qua</td><td>✎ 👁 ⧉ 🗑</td></tr>
+          <tr><td>☐</td><td>Top 5 bàn đứng dưới $400</td><td><span class="badge badge-sched"><span class="badge-dot"></span>Hẹn giờ</span></td><td>Comparison</td><td>Trần B</td><td>—</td><td>3 ngày trước</td><td>✎ 👁 ⧉ 🗑</td></tr>
+        </table>
+        <div class="region" style="background:var(--blueprint-soft);border-color:var(--blueprint);font-size:11px;color:var(--blueprint-deep);">Xuất hiện khi chọn dòng: <b>1 đã chọn</b> — [Xóa] &nbsp; [Đổi Category hàng loạt]</div>
+        <div class="region solid" style="text-align:center;font-size:11px;color:var(--ink-faint);">‹ Trang 1 / 4 ›</div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Badge 🔴 gắn ngay tên bài, không phải cột riêng</td><td>Cảnh báo hết hàng phải bắt mắt ngay trong luồng đọc tiêu đề — không bắt người quản lý dò từng cột để phát hiện.</td></tr>
+        <tr><td>Bulk action bar chỉ hiện khi có dòng chọn</td><td>Team 2-3 người không cần phân quyền phức tạp — thao tác hàng loạt nên ẩn mặc định, tránh rối giao diện ngày thường.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAGS -->
+  <div class="panel" id="p-tags">
+    <div class="frame">
+      <div class="chrome"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="urlbar">deskholt.com/admin/tags</div></div>
+      <div class="canvas stack">
+        <div style="font-family:var(--font-display);font-weight:700;font-size:18px;">Quản lý Tag</div>
+        <div class="region" style="background:var(--amber-soft);border-color:var(--amber);"><div class="region-label" style="color:var(--amber)"><span>UNUSED TAGS · 0 bài viết · dọn nhanh</span></div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="badge" style="background:var(--card);border:1px solid var(--line-strong);color:var(--ink-soft);">standing-desk-2024 🗑</span>
+            <span class="badge" style="background:var(--card);border:1px solid var(--line-strong);color:var(--ink-soft);">test-tag 🗑</span>
+          </div>
+        </div>
+        <table class="mini-table" style="font-size:12px;">
+          <tr><th>Tag</th><th>Slug</th><th>Số bài</th><th>Hành động</th></tr>
+          <tr><td>Standing Desk</td><td>standing-desk</td><td>18</td><td>Đổi tên · Gộp · Xóa</td></tr>
+          <tr><td>Ergonomic</td><td>ergonomic</td><td>12</td><td>Đổi tên · Gộp · Xóa</td></tr>
+          <tr><td>React</td><td>react</td><td>12</td><td>Đổi tên · Gộp · Xóa</td></tr>
+        </table>
+        <div class="region solid"><div class="region-label"><span>MODAL GỘP TAG (khi bấm "Gộp")</span></div>
+          <div style="font-size:11px;margin-top:8px;color:var(--ink-soft);">Nguồn: <code>reactjs</code> → Đích: <code>react ▾</code> &nbsp; <button class="btn btn-primary" style="padding:5px 12px;font-size:10px;">Gộp ngay</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="annot"><h3>Ghi chú</h3>
+      <table class="spec">
+        <tr><th>Vùng</th><th>Lý do</th></tr>
+        <tr><td>Unused Tags nổi trên cùng, tô amber</td><td>Chủ động liệt kê thay vì bắt người dùng tự lọc — đúng yêu cầu spec, giảm tag rác tích lũy khi auto-suggest không bắt được từ đồng nghĩa khác chữ.</td></tr>
+        <tr><td>Trang mở cho mọi thành viên</td><td>Team không phân role — không cần ẩn sau quyền Admin riêng.</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+<script>
+  document.querySelectorAll('.tabbtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('p-'+btn.dataset.t).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+node_modules
+.gitnexus
+.env
+.next
+.node
+prisma/dev.db
+.claude/worktrees

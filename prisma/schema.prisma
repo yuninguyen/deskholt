@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Product {
+  id             String          @id @default(cuid())
+  name           String
+  slug           String          @unique
+  category       String
+  description    String?
+  image_url      String
+  specs          String?         // Stored as JSON string in SQLite
+  upc_code       String?
+  user_sentiment String?         // Stored as JSON string in SQLite
+  is_indexed     Boolean         @default(true)
+  is_sustainable Boolean         @default(false)
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+
+  affiliate_links AffiliateLink[]
+  clicks          Click[]
+
+  @@map("products")
+}
+
+model AffiliateLink {
+  id             String   @id @default(cuid())
+  product_id     String
+  network        String   // amazon | walmart | target | awin | impact | cj
+  price          Float
+  raw_url        String
+  tracking_url   String
+  is_in_stock    Boolean  @default(true)
+  priority_order Int      @default(1)
+  last_crawled_at DateTime @default(now())
+
+  product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("affiliate_links")
+}
+
+model Click {
+  id          String   @id @default(cuid())
+  click_id    String   @unique
+  product_id  String
+  network     String
+  source_page String?
+  ip_hash     String?
+  user_agent  String?
+  us_state    String?
+  created_at  DateTime @default(now())
+
+  product    Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  conversion Conversion?
+
+  @@map("clicks")
+}
+
+model Conversion {
+  id          String   @id @default(cuid())
+  click_id    String   @unique
+  order_value Float
+  commission  Float
+  status      String   @default("pending")
+  matched_at  DateTime @default(now())
+
+  click Click @relation(fields: [click_id], references: [click_id], onDelete: Cascade)
+
+  @@map("conversions")
+}
