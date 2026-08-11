@@ -12,7 +12,7 @@
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "db:seed": "node --loader ts-node/register prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",

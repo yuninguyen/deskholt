@@ -28,6 +28,7 @@ Final audit result:
 - `uuid`: 10.x to 11.1.1.
 - PostCSS: 8.4.x to 8.5.23.
 - Added `tsx` as the TypeScript test runner.
+- Updated the Prisma seed command to use `tsx`, making it portable across local development and the Node.js 20 Linux CI runner.
 - Replaced legacy `.eslintrc.json` with the ESLint 9 flat configuration in `eslint.config.mjs`.
 - Updated dynamic route `params` and `searchParams` to the asynchronous Next.js 16 API.
 - Accepted Next.js 16's required TypeScript JSX runtime and generated type includes.
