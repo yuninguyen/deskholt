@@ -243,10 +243,11 @@ async function main() {
         description: p.description,
         image_url: STOCK_IMAGE[p.category],
         specs: p.specs,
-        // Not indexed for SEO yet: these products only have name/description/specs — no real
-        // user sentiment, reviews, or original photos yet (thin content per Constitution
-        // Principle V). Flip to true once a later batch adds genuine distinctive content.
-        is_indexed: false,
+        // This data is real but currently lacks distinctive content (real user sentiment,
+        // genuine photos) per Constitution Principle V. Indexed for now since the site isn't
+        // public yet — this MUST be revisited (either add real sentiment/photos, or flip back
+        // to is_indexed: false) before any production deploy.
+        is_indexed: true,
         is_sustainable: p.is_sustainable,
         affiliate_links: { create: [p.link] },
       },
