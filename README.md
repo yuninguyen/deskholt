@@ -10,7 +10,7 @@ Deskholt is a workspace-focused affiliate hub for home-office, desk-setup, and e
 
 ## Tech Stack
 
-- **Framework:** Next.js 14 (App Router), React 18, TypeScript
+- **Framework:** Next.js 16 (App Router), React 18, TypeScript
 - **Database:** Prisma ORM with SQLite for development; PostgreSQL is planned for production
 - **Cache/Queue:** Redis with `ioredis`
 - **Styling:** Tailwind CSS
@@ -48,6 +48,8 @@ npm run build
 npm run check
 ```
 
+GitHub Actions runs the same quality gate and a production-dependency audit on every pull request and every push to `main`.
+
 ## Project Structure
 
 ```text
@@ -77,6 +79,7 @@ tests/
 ## Documentation
 
 - Implementation history: [`docs/implementation-log-2026-08-12.md`](docs/implementation-log-2026-08-12.md)
+- Quality-gate migration: [`docs/quality-gate-2026-08-12.md`](docs/quality-gate-2026-08-12.md)
 - Product and architecture specification: [`DESKHOLT_FULL_SPECIFICATION.md`](DESKHOLT_FULL_SPECIFICATION.md)
 - Infrastructure roadmap: [`Stage-0.md`](Stage-0.md)
 - Admin design: [`Admin_Panel_for_Deskholt.md`](Admin_Panel_for_Deskholt.md)

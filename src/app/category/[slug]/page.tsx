@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
-import { ArrowRight, Filter, Leaf, Sparkles } from 'lucide-react';
+import { ArrowRight, Leaf } from 'lucide-react';
 
 export const revalidate = 86400; // ISR: 24h
 
@@ -9,11 +9,12 @@ export default async function CategoryPage({
   params,
   searchParams,
 }: {
-  params: { slug: string };
-  searchParams: { eco?: string };
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ eco?: string }>;
 }) {
-  const { slug } = params;
-  const isEcoFilter = searchParams.eco === 'true';
+  const { slug } = await params;
+  const { eco } = await searchParams;
+  const isEcoFilter = eco === 'true';
 
   const categoryTitles: Record<string, string> = {
     'standing-desks': 'Standing Desks & Adjustable Workstations',
@@ -99,10 +100,12 @@ export default async function CategoryPage({
                 className="group rounded-2xl glass-card overflow-hidden border border-white/10 flex flex-col hover:border-brand-500/40 transition-all"
               >
                 <div className="relative h-52 w-full bg-dark-800">
-                  <img
+                  <Image
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {product.is_sustainable && (
                     <div className="absolute top-3 left-3 bg-dark-900/90 backdrop-blur border border-brand-500/30 text-brand-500 text-xs px-2.5 py-1 rounded-full flex items-center gap-1 font-medium">

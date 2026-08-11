@@ -1,17 +1,18 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import ProductSchema from '@/components/ProductSchema';
-import { CheckCircle2, ExternalLink, Leaf, ShieldCheck, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Leaf, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
 
 export const revalidate = 86400; // ISR 24h
 
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
 
   const product = await prisma.product.findUnique({
     where: { slug },
@@ -34,7 +35,7 @@ export default async function ProductDetailPage({
   if (product.specs) {
     try {
       specsObj = typeof product.specs === 'string' ? JSON.parse(product.specs) : product.specs;
-    } catch (e) {
+    } catch {
       specsObj = {};
     }
   }
@@ -46,7 +47,7 @@ export default async function ProductDetailPage({
         typeof product.user_sentiment === 'string'
           ? JSON.parse(product.user_sentiment)
           : product.user_sentiment;
-    } catch (e) {
+    } catch {
       sentimentObj = {};
     }
   }
@@ -91,10 +92,13 @@ export default async function ProductDetailPage({
         {/* Product Image */}
         <div className="lg:col-span-5 rounded-3xl overflow-hidden glass-card p-4 border border-white/10">
           <div className="relative h-96 w-full rounded-2xl overflow-hidden bg-dark-800">
-            <img
+            <Image
               src={product.image_url}
               alt={product.name}
-              className="w-full h-full object-cover"
+              fill
+              priority
+              sizes="(min-width: 1024px) 42vw, 100vw"
+              className="object-cover"
             />
             {product.is_sustainable && (
               <div className="absolute top-4 left-4 bg-dark-900/90 backdrop-blur border border-brand-500/40 text-brand-500 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-semibold">

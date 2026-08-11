@@ -6,9 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = params;
+  const { slug } = await params;
   const searchParams = request.nextUrl.searchParams;
   const requestedNetwork = searchParams.get('network')?.toLowerCase();
 
