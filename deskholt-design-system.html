@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Deskholt — Design System v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ---- COLOR TOKENS ---- */
+    --paper: #F3F1EA;
+    --paper-alt: #EAE7DC;
+    --card: #FBFAF6;
+    --ink: #1F2421;
+    --ink-soft: #565b54;
+    --ink-faint: #8b8f86;
+    --line: #DBD6C7;
+    --line-strong: #c7c1ae;
+    --walnut: #A8623E;
+    --walnut-soft: #F0E1D8;
+    --blueprint: #2C5079;
+    --blueprint-deep: #1D3A57;
+    --blueprint-soft: #E1E9F0;
+    --sage: #566E4E;
+    --sage-soft: #E4EBE0;
+    --amber: #A9762E;
+    --amber-soft: #F3E7D2;
+    --brick: #A8432B;
+    --brick-soft: #F3E0DA;
+    --white: #FFFFFF;
+
+    /* ---- TYPE ---- */
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    /* ---- SPACE SCALE ---- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-7: 48px;
+    --space-8: 64px;
+    --space-9: 96px;
+
+    /* ---- RADIUS ---- */
+    --radius-sm: 3px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+
+    /* ---- MOTION ---- */
+    --ease: cubic-bezier(.2,.7,.3,1);
+    --dur-fast: 120ms;
+    --dur-med: 220ms;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:var(--font-body); }
+  body{
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+  }
+  .wrap{ max-width:1080px; margin:0 auto; padding: var(--space-8) var(--space-5) var(--space-9); }
+  section{ margin-bottom: var(--space-9); }
+  h1,h2,h3,h4{ font-family:var(--font-display); font-weight:600; margin:0 0 var(--space-2); letter-spacing:-0.01em; }
+  h2{ font-size: 13px; text-transform:uppercase; letter-spacing:0.12em; color:var(--ink-soft); font-weight:600; display:flex; align-items:center; gap:var(--space-3); }
+  h2::after{ content:""; flex:1; height:1px; background:var(--line-strong); }
+  h3{ font-size:20px; }
+  p{ line-height:1.6; color:var(--ink-soft); margin:0 0 var(--space-4); max-width:640px; }
+  code{ font-family:var(--font-mono); background:var(--paper-alt); padding:2px 6px; border-radius:4px; font-size:0.85em; }
+  .section-body{ margin-top: var(--space-6); }
+
+  /* ---- HERO ---- */
+  .hero{ padding-bottom: var(--space-8); border-bottom:1px solid var(--line-strong); margin-bottom: var(--space-8); }
+  .eyebrow{ font-family:var(--font-mono); font-size:12px; color:var(--walnut); text-transform:uppercase; letter-spacing:0.14em; margin-bottom:var(--space-3); display:flex; align-items:center; gap:8px;}
+  .eyebrow svg{ width:14px; height:14px; }
+  .hero h1{ font-size:42px; line-height:1.1; max-width:760px; }
+  .hero p.lead{ font-size:17px; max-width:620px; margin-top:var(--space-4); color:var(--ink-soft); }
+
+  /* ---- DIMENSION LINE (signature motif) ---- */
+  .dim-line{ display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); }
+  .dim-line svg{ flex:1; height:10px; }
+  .dim-line .val{ color:var(--ink); font-weight:600; white-space:nowrap; }
+
+  /* ---- COLOR SWATCHES ---- */
+  .swatch-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:var(--space-4); }
+  .swatch{ border:1px solid var(--line-strong); border-radius:var(--radius-md); overflow:hidden; background:var(--card); }
+  .swatch .fill{ height:64px; }
+  .swatch .meta{ padding:var(--space-3); }
+  .swatch .name{ font-family:var(--font-display); font-weight:600; font-size:14px; }
+  .swatch .hex{ font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-top:2px;}
+  .swatch .use{ font-size:11px; color:var(--ink-faint); margin-top:4px; line-height:1.4; }
+
+  /* ---- TYPE SPECIMENS ---- */
+  .type-row{ display:flex; align-items:baseline; gap:var(--space-5); padding:var(--space-4) 0; border-bottom:1px solid var(--line); }
+  .type-row:last-child{ border-bottom:none; }
+  .type-role{ width:150px; flex-shrink:0; font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.08em; }
+  .type-sample-display{ font-family:var(--font-display); font-weight:600; font-size:30px; }
+  .type-sample-body{ font-family:var(--font-body); font-size:17px; }
+  .type-sample-mono{ font-family:var(--font-mono); font-size:15px; }
+  .type-sample-caption{ font-family:var(--font-body); font-size:13px; color:var(--ink-soft); }
+
+  /* ---- SPACING ---- */
+  .space-row{ display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-3); font-family:var(--font-mono); font-size:12px; color:var(--ink-soft);}
+  .space-bar{ background:var(--walnut); height:12px; border-radius:2px; }
+  .space-label{ width:130px; }
+
+  /* ---- BUTTONS ---- */
+  .btn{ font-family:var(--font-display); font-weight:600; font-size:14px; border-radius:var(--radius-sm); padding:11px 20px; border:1px solid transparent; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all var(--dur-fast) var(--ease); }
+  .btn-primary{ background:var(--blueprint); color:var(--white); }
+  .btn-primary:hover{ background:var(--blueprint-deep); }
+  .btn-secondary{ background:transparent; color:var(--ink); border-color:var(--line-strong); }
+  .btn-secondary:hover{ border-color:var(--ink); }
+  .btn-ghost{ background:transparent; color:var(--blueprint); padding-left:4px; padding-right:4px; }
+  .btn-ghost:hover{ text-decoration:underline; }
+  .btn-disabled{ background:var(--paper-alt); color:var(--ink-faint); cursor:not-allowed; }
+  .btn-row{ display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center; margin-bottom:var(--space-4); }
+  .state-label{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); margin-right:4px; }
+
+  /* ---- BADGES ---- */
+  .badge{ font-family:var(--font-mono); font-size:11px; font-weight:500; padding:4px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; }
+  .badge-eco{ background:var(--sage-soft); color:var(--sage); }
+  .badge-instock{ background:var(--blueprint-soft); color:var(--blueprint-deep); }
+  .badge-outstock{ background:var(--paper-alt); color:var(--ink-faint); }
+  .badge-best{ background:var(--amber-soft); color:var(--amber); }
+  .badge-drop{ background:var(--brick-soft); color:var(--brick); }
+  .badge-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  /* ---- PRODUCT CARD ---- */
+  .card-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:var(--space-5); }
+  .product-card{ background:var(--card); border:1px solid var(--line-strong); border-radius:var(--radius-lg); overflow:hidden; }
+  .product-card .img{ height:150px; background:linear-gradient(135deg, var(--walnut-soft), var(--paper-alt)); display:flex; align-items:center; justify-content:center; color:var(--walnut); font-family:var(--font-mono); font-size:11px; position:relative; }
+  .product-card .body{ padding:var(--space-4); }
+  .product-card .cat{ font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-faint); margin-bottom:4px; }
+  .product-card h4{ font-family:var(--font-display); font-size:16px; margin-bottom:var(--space-2); }
+  .product-card .badges{ display:flex; gap:6px; margin-bottom:var(--space-3); }
+  .product-card .price{ font-family:var(--font-mono); font-size:20px; font-weight:600; margin-bottom:var(--space-3); }
+  .product-card .price .from{ font-size:11px; color:var(--ink-faint); font-weight:400; display:block; margin-bottom:2px;}
+
+  /* ---- PRICE TABLE ---- */
+  .price-table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line-strong); border-radius:var(--radius-md); overflow:hidden; }
+  .price-table th{ text-align:left; font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); padding:var(--space-3) var(--space-4); background:var(--paper-alt); font-weight:500;}
+  .price-table td{ padding:var(--space-3) var(--space-4); border-top:1px solid var(--line); font-size:14px; }
+  .price-table tr.best td{ background:var(--sage-soft); }
+  .price-table .net{ font-family:var(--font-display); font-weight:600; }
+  .price-table .price-val{ font-family:var(--font-mono); font-weight:600; }
+  .price-table .go-btn{ font-family:var(--font-display); font-size:12px; font-weight:600; background:var(--blueprint); color:var(--white); padding:6px 14px; border-radius:var(--radius-sm); text-decoration:none; display:inline-block; }
+
+  /* ---- COOKIE BANNER ---- */
+  .cookie-demo{ background:var(--ink); color:var(--paper); border-radius:var(--radius-lg); padding:var(--space-5); display:flex; justify-content:space-between; align-items:center; gap:var(--space-5); flex-wrap:wrap; }
+  .cookie-demo p{ color:#c9cec4; margin:0; font-size:13px; max-width:480px; }
+  .cookie-demo .actions{ display:flex; gap:var(--space-3); flex-shrink:0; }
+  .cookie-demo .btn-primary{ background:var(--paper); color:var(--ink); }
+  .cookie-demo .btn-secondary{ border-color:#4a4e48; color:var(--paper); }
+  .cookie-modal{ margin-top:var(--space-4); background:var(--card); color:var(--ink); border-radius:var(--radius-md); padding:var(--space-4); border:1px solid var(--line-strong); }
+  .toggle-row{ display:flex; justify-content:space-between; align-items:center; padding:var(--space-2) 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .toggle-row:last-child{ border-bottom:none; }
+  .toggle{ width:34px; height:19px; border-radius:20px; background:var(--line-strong); position:relative; flex-shrink:0; }
+  .toggle.on{ background:var(--blueprint); }
+  .toggle::after{ content:""; position:absolute; width:15px; height:15px; background:white; border-radius:50%; top:2px; left:2px; transition:left var(--dur-fast); }
+  .toggle.on::after{ left:17px; }
+  .toggle.locked{ background:var(--ink-faint); opacity:0.5; }
+
+  /* ---- NAV / FOOTER ---- */
+  .nav-demo{ background:var(--card); border:1px solid var(--line-strong); border-radius:var(--radius-md); padding:var(--space-4) var(--space-5); display:flex; justify-content:space-between; align-items:center; }
+  .nav-demo .logo{ font-family:var(--font-display); font-weight:700; font-size:17px; }
+  .nav-demo .logo span{ color:var(--walnut); }
+  .nav-demo .links{ display:flex; gap:var(--space-5); font-size:13px; color:var(--ink-soft); }
+  .footer-demo{ background:var(--ink); color:#c9cec4; border-radius:var(--radius-md); padding:var(--space-5); font-size:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:var(--space-4); }
+  .footer-demo a{ color:#c9cec4; text-decoration:none; }
+  .footer-demo .col a{ display:block; margin-bottom:6px; }
+  .footer-demo .col h5{ color:var(--paper); font-family:var(--font-display); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:var(--space-3); font-weight:600; }
+
+  /* ---- TABLE (spec/do-dont) ---- */
+  table.spec{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.spec th{ text-align:left; font-family:var(--font-mono); font-size:11px; text-transform:uppercase; color:var(--ink-faint); padding:8px 12px; border-bottom:1px solid var(--line-strong); }
+  table.spec td{ padding:10px 12px; border-bottom:1px solid var(--line); color:var(--ink-soft); vertical-align:top; }
+  table.spec td:first-child{ color:var(--ink); font-weight:500; }
+  .do{ color:var(--sage); }
+  .dont{ color:var(--brick); }
+
+  .code-block{ background:var(--ink); color:#d8e2dc; font-family:var(--font-mono); font-size:12.5px; padding:var(--space-4); border-radius:var(--radius-md); overflow-x:auto; line-height:1.6; white-space:pre; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      Deskholt.com · Design System v1.0
+    </div>
+    <h1>A comparison desk, not a storefront.</h1>
+    <p class="lead">Deskholt giúp người dùng dựng home-office của mình bằng cách so sánh giá thật — bàn, ghế, đèn, phụ kiện — trên nhiều sàn. Hệ thống này lấy cảm hứng từ bàn vẽ kỹ thuật của kiến trúc sư: giấy kẻ ô, đường kích thước (dimension line), mực đậm, gỗ óc chó — chính xác, đáng tin, không phông bạt.</p>
+  </div>
+
+  <!-- COLOR -->
+  <section>
+    <h2>01 · Màu sắc</h2>
+    <div class="section-body">
+      <p>Nền giấy kẻ ô mô phỏng bàn vẽ kỹ thuật. Mực than (ink) thay cho đen tuyền — ấm hơn, đỡ gắt khi đọc blog dài. Gỗ óc chó (walnut) dùng cực tiết kiệm — chỉ cho điểm nhấn thương hiệu, không phải màu hành động. Blueprint-blue là màu duy nhất cho hành động chính (Buy Now / Go).</p>
+      <div class="swatch-grid">
+        <div class="swatch"><div class="fill" style="background:var(--paper)"></div><div class="meta"><div class="name">Paper</div><div class="hex">#F3F1EA</div><div class="use">Nền chính toàn site</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--card)"></div><div class="meta"><div class="name">Card</div><div class="hex">#FBFAF6</div><div class="use">Nền card, bảng, modal</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--ink)"></div><div class="meta"><div class="name">Ink</div><div class="hex">#1F2421</div><div class="use">Chữ chính, footer, nav tối</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--ink-soft)"></div><div class="meta"><div class="name">Ink Soft</div><div class="hex">#565B54</div><div class="use">Chữ phụ, mô tả, caption</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--walnut)"></div><div class="meta"><div class="name">Walnut</div><div class="hex">#A8623E</div><div class="use">Logo, eyebrow, điểm nhấn thương hiệu — dùng tiết kiệm</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--blueprint)"></div><div class="meta"><div class="name">Blueprint</div><div class="hex">#2C5079</div><div class="use">CTA chính duy nhất: Buy Now, Go to store</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--sage)"></div><div class="meta"><div class="name">Sage</div><div class="hex">#566E4E</div><div class="use">Eco-friendly, Best value, thành công</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--amber)"></div><div class="meta"><div class="name">Amber</div><div class="hex">#A9762E</div><div class="use">Best price, nổi bật nhẹ</div></div></div>
+        <div class="swatch"><div class="fill" style="background:var(--brick)"></div><div class="meta"><div class="name">Brick</div><div class="hex">#A8432B</div><div class="use">Out of stock, cảnh báo, lỗi — không dùng đỏ thuần</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TYPOGRAPHY -->
+  <section>
+    <h2>02 · Typography</h2>
+    <div class="section-body">
+      <p>Ba vai trò rõ ràng, không lẫn lộn: <b>Space Grotesk</b> cho tiêu đề/UI (hình học, kỹ thuật — như chữ trên bản vẽ), <b>Inter</b> cho phần đọc dài (blog, mô tả), <b>IBM Plex Mono</b> cho mọi con số — giá, kích thước, thông số. Đây là site so sánh giá; số liệu phải trông như số liệu.</p>
+      <div class="type-row">
+        <div class="type-role">Display / H1</div>
+        <div class="type-sample-display">Standing Desks Under $400</div>
+      </div>
+      <div class="type-row">
+        <div class="type-role">Display / H3</div>
+        <div class="type-sample-display" style="font-size:20px;">Ergonomic Task Chairs</div>
+      </div>
+      <div class="type-row">
+        <div class="type-role">Body</div>
+        <div class="type-sample-body">Bàn đứng này có bàn nâng điện, ổn định ở độ cao tối đa nhờ khung thép đôi — phù hợp với dân văn phòng ngồi 8 tiếng/ngày.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-role">Mono / Data</div>
+        <div class="type-sample-mono">$249.00 &nbsp;·&nbsp; 48" × 24" &nbsp;·&nbsp; SKU DH-2291</div>
+      </div>
+      <div class="type-row">
+        <div class="type-role">Caption</div>
+        <div class="type-sample-caption">Cập nhật giá 6 giờ trước · 4 sàn đang theo dõi</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIGNATURE: DIMENSION LINE -->
+  <section>
+    <h2>03 · Chữ ký thị giác — Dimension Line</h2>
+    <div class="section-body">
+      <p>Mỗi sản phẩm nội thất đều có kích thước thật. Thay vì icon trang trí, Deskholt dùng chính <b>đường kích thước kỹ thuật</b> (dimension line) làm mô-típ xuyên suốt — trên product card, trong bảng so sánh, ở phần chuyển section. Nó vừa là trang trí, vừa là thông tin thật.</p>
+      <div class="dim-line" style="max-width:360px;">
+        <span class="val">48"</span>
+        <svg viewBox="0 0 200 10"><line x1="2" y1="5" x2="198" y2="5" stroke="var(--ink-faint)" stroke-width="1"/><line x1="2" y1="1" x2="2" y2="9" stroke="var(--ink-faint)" stroke-width="1"/><line x1="198" y1="1" x2="198" y2="9" stroke="var(--ink-faint)" stroke-width="1"/></svg>
+        <span class="val">chiều rộng</span>
+      </div>
+      <p style="margin-top:var(--space-4); font-size:13px;">Dùng cho: cạnh dưới card sản phẩm (spec nổi bật), divider giữa các section dài, dòng phụ đề trong bảng giá. <b>Không dùng</b> làm gạch trang trí không mang số liệu thật.</p>
+    </div>
+  </section>
+
+  <!-- SPACING -->
+  <section>
+    <h2>04 · Spacing &amp; Bo góc</h2>
+    <div class="section-body">
+      <div class="space-row"><span class="space-label">space-1 · 4px</span><div class="space-bar" style="width:4px"></div></div>
+      <div class="space-row"><span class="space-label">space-3 · 12px</span><div class="space-bar" style="width:12px"></div></div>
+      <div class="space-row"><span class="space-label">space-4 · 16px</span><div class="space-bar" style="width:16px"></div></div>
+      <div class="space-row"><span class="space-label">space-5 · 24px</span><div class="space-bar" style="width:24px"></div></div>
+      <div class="space-row"><span class="space-label">space-6 · 32px</span><div class="space-bar" style="width:32px"></div></div>
+      <div class="space-row"><span class="space-label">space-8 · 64px</span><div class="space-bar" style="width:64px"></div></div>
+      <p style="margin-top:var(--space-4);">Bo góc nhỏ và nhất quán — <code>3px</code> (input, badge nhỏ), <code>6px</code> (card, bảng, nút), <code>10px</code> (card sản phẩm, modal). Không bo tròn kiểu pill trừ badge — giữ cảm giác chính xác, kỹ thuật.</p>
+    </div>
+  </section>
+
+  <!-- BUTTONS -->
+  <section>
+    <h2>05 · Component — Button</h2>
+    <div class="section-body">
+      <p>Nút <b>Primary (blueprint)</b> chỉ dùng cho hành động dẫn tới affiliate link (Buy Now / Go to Amazon). Không dùng màu này cho hành động phụ — người dùng phải luôn nhận ra ngay đâu là link kiếm tiền.</p>
+      <div class="btn-row">
+        <span class="state-label">Primary</span>
+        <button class="btn btn-primary">Buy Now →</button>
+        <button class="btn btn-primary" style="background:var(--blueprint-deep)">Buy Now →</button>
+        <button class="btn btn-disabled" disabled>Out of Stock</button>
+      </div>
+      <div class="btn-row">
+        <span class="state-label">Secondary</span>
+        <button class="btn btn-secondary">Compare Prices</button>
+        <button class="btn btn-secondary" style="border-color:var(--ink)">Compare Prices</button>
+      </div>
+      <div class="btn-row">
+        <span class="state-label">Ghost</span>
+        <button class="btn btn-ghost">Xem thêm 3 sàn khác</button>
+      </div>
+      <table class="spec" style="margin-top:var(--space-5)">
+        <tr><th>State</th><th>Hành vi</th></tr>
+        <tr><td>Default</td><td>Nền blueprint #2C5079, chữ trắng, bo 3px</td></tr>
+        <tr><td>Hover</td><td>Nền tối hơn (#1D3A57), không đổi kích thước, transition 120ms</td></tr>
+        <tr><td>Focus</td><td>Outline 2px màu blueprint, offset 2px — luôn hiển thị khi điều hướng bàn phím</td></tr>
+        <tr><td>Disabled</td><td>Nền paper-alt, chữ ink-faint, con trỏ not-allowed, dùng khi hết hàng</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- BADGES -->
+  <section>
+    <h2>06 · Component — Badge</h2>
+    <div class="section-body">
+      <p>Badge luôn đi kèm chấm tròn (không chỉ dựa vào màu) để đảm bảo người mù màu vẫn phân biệt được loại trạng thái.</p>
+      <div class="btn-row">
+        <span class="badge badge-eco"><span class="badge-dot"></span>Eco-Friendly</span>
+        <span class="badge badge-instock"><span class="badge-dot"></span>In Stock</span>
+        <span class="badge badge-outstock"><span class="badge-dot"></span>Out of Stock</span>
+        <span class="badge badge-best"><span class="badge-dot"></span>Best Price</span>
+        <span class="badge badge-drop"><span class="badge-dot"></span>Price Drop 12%</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT CARD -->
+  <section>
+    <h2>07 · Component — Product Card</h2>
+    <div class="section-body">
+      <p>Card danh mục dùng ở trang Category và trang chủ. Dimension line ở đáy ảnh thay cho caption trang trí.</p>
+      <div class="card-grid">
+        <div class="product-card">
+          <div class="img">[ ảnh sản phẩm ]
+            <div style="position:absolute; bottom:8px; left:12px; right:12px;">
+              <div class="dim-line"><span class="val">48"</span><svg viewBox="0 0 100 10"><line x1="2" y1="5" x2="98" y2="5" stroke="var(--walnut)" stroke-width="1"/></svg><span class="val">rộng</span></div>
+            </div>
+          </div>
+          <div class="body">
+            <div class="cat">Standing Desks</div>
+            <h4>Oakframe Electric Standing Desk</h4>
+            <div class="badges"><span class="badge badge-eco"><span class="badge-dot"></span>Eco</span><span class="badge badge-instock"><span class="badge-dot"></span>In Stock</span></div>
+            <div class="price"><span class="from">Giá tốt nhất từ</span>$249.00</div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;">Compare 4 sàn →</button>
+          </div>
+        </div>
+        <div class="product-card">
+          <div class="img">[ ảnh sản phẩm ]
+            <div style="position:absolute; bottom:8px; left:12px; right:12px;">
+              <div class="dim-line"><span class="val">17"</span><svg viewBox="0 0 100 10"><line x1="2" y1="5" x2="98" y2="5" stroke="var(--walnut)" stroke-width="1"/></svg><span class="val">cao</span></div>
+            </div>
+          </div>
+          <div class="body">
+            <div class="cat">Task Chairs</div>
+            <h4>Meridian Ergonomic Chair</h4>
+            <div class="badges"><span class="badge badge-best"><span class="badge-dot"></span>Best Price</span></div>
+            <div class="price"><span class="from">Giá tốt nhất từ</span>$189.00</div>
+            <button class="btn btn-primary" style="width:100%; justify-content:center;">Compare 3 sàn →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICE TABLE -->
+  <section>
+    <h2>08 · Component — Price Comparison Table</h2>
+    <div class="section-body">
+      <p>Component trung tâm của toàn site (<code>PriceTable.tsx</code>). Hàng giá tốt nhất luôn tô sage nhạt, không cần label thêm — màu đã đủ phân biệt cùng badge "Best Price". Nút Go trỏ tới <code>/go/[slug]?network=X</code>.</p>
+      <table class="price-table">
+        <tr><th>Sàn</th><th>Giá</th><th>Tình trạng</th><th></th></tr>
+        <tr class="best"><td class="net">Amazon</td><td class="price-val">$249.00</td><td><span class="badge badge-instock"><span class="badge-dot"></span>In Stock</span></td><td><a class="go-btn" href="#">Go →</a></td></tr>
+        <tr><td class="net">Walmart</td><td class="price-val">$259.99</td><td><span class="badge badge-instock"><span class="badge-dot"></span>In Stock</span></td><td><a class="go-btn" href="#">Go →</a></td></tr>
+        <tr><td class="net">Target</td><td class="price-val">$264.00</td><td><span class="badge badge-outstock"><span class="badge-dot"></span>Out of Stock</span></td><td><a class="go-btn" style="background:var(--paper-alt); color:var(--ink-faint); pointer-events:none;" href="#">Go →</a></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- COOKIE BANNER -->
+  <section>
+    <h2>09 · Component — Cookie Consent Banner</h2>
+    <div class="section-body">
+      <p>Bắt buộc theo file pháp lý: nút "Customize" phải mở modal chọn từng loại cookie thật, không chỉ ẩn banner. Nếu trình duyệt gửi tín hiệu GPC, banner tự ẩn và ghi nhận "declined" — không hiện lại hỏi.</p>
+      <div class="cookie-demo">
+        <p>Chúng tôi dùng cookie để đo lường traffic và cải thiện trải nghiệm. Xem <a href="#" style="color:var(--paper)">Cookie Policy</a>.</p>
+        <div class="actions">
+          <button class="btn btn-secondary">Customize</button>
+          <button class="btn btn-primary">Accept All</button>
+        </div>
+      </div>
+      <div class="cookie-modal">
+        <div class="toggle-row"><span>Necessary <span style="color:var(--ink-faint)">— luôn bật</span></span><div class="toggle on locked"></div></div>
+        <div class="toggle-row"><span>Analytics</span><div class="toggle on"></div></div>
+        <div class="toggle-row"><span>Functionality</span><div class="toggle"></div></div>
+        <div class="toggle-row"><span>Advertising</span><div class="toggle"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAV / FOOTER -->
+  <section>
+    <h2>10 · Nav &amp; Footer</h2>
+    <div class="section-body">
+      <div class="nav-demo">
+        <div class="logo">Desk<span>holt</span></div>
+        <div class="links"><span>Standing Desks</span><span>Chairs</span><span>Lighting</span><span>Eco-Friendly</span><span>Blog</span></div>
+        <button class="btn btn-secondary" style="padding:8px 16px; font-size:13px;">Search</button>
+      </div>
+      <div style="height:var(--space-5)"></div>
+      <div class="footer-demo">
+        <div class="col"><h5>Deskholt</h5><a href="#">About</a><a href="#">Blog</a><a href="#">Affiliate Disclosure</a></div>
+        <div class="col"><h5>Legal</h5><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Do Not Sell My Info</a></div>
+        <div class="col"><h5>Danh mục</h5><a href="#">Standing Desks</a><a href="#">Task Chairs</a><a href="#">Cable Management</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCESSIBILITY -->
+  <section>
+    <h2>11 · Accessibility</h2>
+    <div class="section-body">
+      <table class="spec">
+        <tr><th>Hạng mục</th><th>Yêu cầu</th></tr>
+        <tr><td>Contrast</td><td>Ink #1F2421 trên Paper #F3F1EA đạt AAA. Ink-soft trên paper đạt AA cho text ≥14px.</td></tr>
+        <tr><td>Focus</td><td>Mọi phần tử tương tác (Go button, toggle, nav link) phải có outline focus 2px, không bao giờ <code>outline:none</code> mà không thay thế.</td></tr>
+        <tr><td>Badge</td><td>Không truyền trạng thái chỉ bằng màu — luôn kèm chấm + text (đã áp dụng ở mục 06).</td></tr>
+        <tr><td>Cookie modal</td><td>Bẫy focus trong modal, đóng bằng Esc, toggle điều khiển được bằng bàn phím (Space/Enter).</td></tr>
+        <tr><td>Reduced motion</td><td>Tất cả transition tôn trọng <code>prefers-reduced-motion: reduce</code> — tắt hover-slide, giữ đổi màu tức thời.</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- DEV HANDOFF -->
+  <section>
+    <h2>12 · Dev handoff — CSS Variables</h2>
+    <div class="section-body">
+      <p>Copy thẳng vào <code>globals.css</code> của Next.js. Font load qua <code>next/font/google</code> thay vì link tag khi build thật.</p>
+      <div class="code-block">:root{
+  --paper: #F3F1EA;
+  --card: #FBFAF6;
+  --ink: #1F2421;
+  --ink-soft: #565B54;
+  --walnut: #A8623E;
+  --blueprint: #2C5079;
+  --blueprint-deep: #1D3A57;
+  --sage: #566E4E;
+  --amber: #A9762E;
+  --brick: #A8432B;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
