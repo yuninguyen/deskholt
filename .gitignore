@@ -1,8 +1,12 @@
 node_modules
+.agents/
+.codex/
 .gitnexus
 .env
 .next
 .node
 prisma/dev.db
+prisma/dev.db.backup-*
 .claude/worktrees
 *.log
+*.tsbuildinfo

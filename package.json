@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "db:seed": "node --loader ts-node/register prisma/seed.ts"
@@ -27,6 +30,8 @@
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.41",
     "prisma": "^5.19.0",
     "tailwindcss": "^3.4.10",
