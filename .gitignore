@@ -5,3 +5,4 @@ node_modules
 .node
 prisma/dev.db
 .claude/worktrees
+*.log

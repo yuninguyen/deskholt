@@ -14,9 +14,13 @@ data now and wiring in the real affiliate tag later as a single find-and-replace
 
 ## Scope
 
-- 20 real products across the 5 core home-office categories already used by the schema:
-  `standing-desks`, `ergonomic-chairs`, `lighting`, `cable-management`, `monitor-accessories`
-  (~4 products per category).
+- 20 real products across the 4 core home-office categories the UI currently supports:
+  `standing-desks`, `ergonomic-chairs`, `lighting`, `cable-management` (5 products per
+  category).
+- `monitor-accessories` was deferred from this batch: the site's UI (`src/app/page.tsx`,
+  `src/app/category/[slug]/page.tsx`) only has 4 hardcoded categories today, so a 5th
+  category has nowhere to render. A future batch that adds `monitor-accessories` products
+  must also update the UI's category list first.
 - Single network per product for this batch: `amazon` only. Walmart/Target/Impact are
   skipped — no accounts exist for those networks yet, so no fabricated links.
 - This is Batch 1 of the larger 100–200 product goal from Stage-0.md Step 3; later batches

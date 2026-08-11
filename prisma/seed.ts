@@ -1,3 +1,12 @@
+// This is a destructive DEV-ONLY reseed script: main() wipes all Conversion, Click,
+// AffiliateLink, and Product rows before recreating them, which would destroy real
+// click/conversion history if ever run against a production database.
+//
+// Prices below are indicative snapshots as of 2026-08-11 and will drift over time.
+//
+// All `tracking_url`s use the placeholder `?tag=deskholt-pending` Amazon tag — this MUST
+// be replaced with the real Amazon Associates tag before any production use.
+
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -45,7 +54,7 @@ const products = [
     slug: 'autonomous-smartdesk-dual-motor-white',
     category: 'standing-desks',
     description: 'Budget-friendly dual-motor electric standing desk with a solid classic white top, popular as an entry point into sit-stand desks.',
-    specs: JSON.stringify({ height_range: '24.5" - 50"', motors: 'Dual Motor', desktop_material: 'Solid Classic Top' }),
+    specs: JSON.stringify({ height_range: '24.5" - 50"', motors: 'Dual Motor', desktop_finish: 'Solid Classic Top' }),
     is_sustainable: false,
     link: amazonLink('B01N5BXZI5', 429.0),
   },
@@ -211,6 +220,13 @@ const products = [
 ];
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'seed.ts is a destructive dev-only script and refuses to run when NODE_ENV=production ' +
+        '(it deletes all Conversion, Click, AffiliateLink, and Product rows).'
+    );
+  }
+
   console.log('Seeding Deskholt database with real Batch 1 home-office products...');
 
   await prisma.conversion.deleteMany();
@@ -227,7 +243,10 @@ async function main() {
         description: p.description,
         image_url: STOCK_IMAGE[p.category],
         specs: p.specs,
-        is_indexed: true,
+        // Not indexed for SEO yet: these products only have name/description/specs — no real
+        // user sentiment, reviews, or original photos yet (thin content per Constitution
+        // Principle V). Flip to true once a later batch adds genuine distinctive content.
+        is_indexed: false,
         is_sustainable: p.is_sustainable,
         affiliate_links: { create: [p.link] },
       },

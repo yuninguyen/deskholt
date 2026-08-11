@@ -53,6 +53,11 @@ export default async function ProductDetailPage({
 
   const lowestPrice = product.affiliate_links.find((l) => l.is_in_stock)?.price || product.affiliate_links[0]?.price;
 
+  // Only surface aggregateRating once we have a real, derivable rating/review count from
+  // user_sentiment — the current sentiment shape has no such fields, so this stays undefined
+  // rather than fabricating one. Do not hardcode placeholder values here.
+  const aggregateRating = undefined;
+
   return (
     <div className="space-y-12">
       {/* Schema Markup for Google & AI Search */}
@@ -61,13 +66,10 @@ export default async function ProductDetailPage({
           name: product.name,
           image: product.image_url,
           description: product.description || product.name,
-          sku: product.upc_code || product.id,
+          sku: product.upc_code || undefined,
           price: lowestPrice,
           priceCurrency: 'USD',
-          aggregateRating: {
-            ratingValue: 4.8,
-            reviewCount: 142,
-          },
+          aggregateRating,
         }}
       />
 
@@ -177,7 +179,7 @@ export default async function ProductDetailPage({
             {Object.entries(specsObj).map(([key, val]) => (
               <div key={key} className="p-4 rounded-xl bg-dark-800 border border-white/5">
                 <span className="text-xs text-gray-400 capitalize block">
-                  {key.replace('_', ' ')}
+                  {key.replaceAll('_', ' ')}
                 </span>
                 <span className="text-sm font-semibold text-white mt-1 block">{val}</span>
               </div>
