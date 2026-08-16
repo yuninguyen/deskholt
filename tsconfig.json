@@ -37,6 +37,8 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "productAttributeValidator-r2.ts",
+    "seed-standing-desks-v1-alpha-r2.ts"
   ]
 }

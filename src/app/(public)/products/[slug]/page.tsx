@@ -3,7 +3,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import ProductSchema from '@/components/ProductSchema';
-import { CheckCircle2, ExternalLink, Leaf, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
+import PriceTable from '@/components/ui/PriceTable';
+import Badge from '@/components/ui/Badge';
+import { CheckCircle2, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
 
 export const revalidate = 86400; // ISR 24h
 
@@ -59,6 +61,13 @@ export default async function ProductDetailPage({
   // rather than fabricating one. Do not hardcode placeholder values here.
   const aggregateRating = undefined;
 
+  const priceRows = product.affiliate_links.map((link) => ({
+    network: link.network.toUpperCase(),
+    price: link.price,
+    inStock: link.is_in_stock,
+    goHref: `/go/${product.slug}?network=${link.network}`,
+  }));
+
   return (
     <div className="space-y-12">
       {/* Schema Markup for Google & AI Search */}
@@ -75,23 +84,23 @@ export default async function ProductDetailPage({
       />
 
       {/* Breadcrumbs */}
-      <nav className="text-xs text-gray-400 flex items-center gap-2">
-        <Link href="/" className="hover:text-white transition-colors">
+      <nav className="flex items-center gap-2 text-xs text-ink-faint">
+        <Link href="/" className="transition-colors hover:text-ink">
           Home
         </Link>
         <span>/</span>
-        <Link href={`/category/${product.category}`} className="capitalize hover:text-white transition-colors">
+        <Link href={`/category/${product.category}`} className="capitalize transition-colors hover:text-ink">
           {product.category.replace('-', ' ')}
         </Link>
         <span>/</span>
-        <span className="text-gray-200 truncate max-w-xs">{product.name}</span>
+        <span className="max-w-xs truncate text-ink-soft">{product.name}</span>
       </nav>
 
       {/* Main Product Hero */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12">
         {/* Product Image */}
-        <div className="lg:col-span-5 rounded-3xl overflow-hidden glass-card p-4 border border-white/10">
-          <div className="relative h-96 w-full rounded-2xl overflow-hidden bg-dark-800">
+        <div className="rounded-lg border border-line-strong bg-card p-4 lg:col-span-5">
+          <div className="relative h-96 w-full overflow-hidden rounded-md bg-paper-alt">
             <Image
               src={product.image_url}
               alt={product.name}
@@ -100,92 +109,48 @@ export default async function ProductDetailPage({
               sizes="(min-width: 1024px) 42vw, 100vw"
               className="object-cover"
             />
-            {product.is_sustainable && (
-              <div className="absolute top-4 left-4 bg-dark-900/90 backdrop-blur border border-brand-500/40 text-brand-500 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 font-semibold">
-                <Leaf className="w-4 h-4" /> Sustainable Eco-Friendly Choice
-              </div>
-            )}
           </div>
         </div>
 
         {/* Product Info & Multi-Store Table */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="space-y-6 lg:col-span-7">
           <div>
-            <span className="text-xs uppercase tracking-wider text-brand-500 font-semibold">
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-walnut">
               Verified Product Review
             </span>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight mt-1">{product.name}</h1>
+            <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-ink">{product.name}</h1>
             {product.upc_code && (
-              <span className="text-xs text-gray-400 mt-1 block">UPC/SKU Code: {product.upc_code}</span>
+              <span className="mt-1 block text-xs text-ink-faint">UPC/SKU Code: {product.upc_code}</span>
             )}
           </div>
 
-          <p className="text-sm text-gray-300 leading-relaxed">{product.description}</p>
+          {product.is_sustainable && <Badge variant="eco" label="Sustainable Eco-Friendly Choice" />}
+
+          <p className="text-sm leading-relaxed text-ink-soft">{product.description}</p>
 
           {/* Multi-Store Price Comparison Table */}
-          <div className="glass-card rounded-2xl p-6 border border-white/10 space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-white/10">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-brand-500" /> Multi-Store Price Comparison
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink">
+                <ShoppingCart className="h-4 w-4 text-blueprint" /> Multi-Store Price Comparison
               </h2>
-              <span className="text-xs text-gray-400">Live prices & stock status</span>
+              <span className="text-xs text-ink-faint">Live prices &amp; stock status</span>
             </div>
 
-            <div className="space-y-3">
-              {product.affiliate_links.map((link) => {
-                const storeName = link.network.toUpperCase();
-
-                return (
-                  <div
-                    key={link.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-dark-800/80 border border-white/5 gap-4 hover:border-brand-500/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-dark-700 flex items-center justify-center font-bold text-xs tracking-wider text-white border border-white/10">
-                        {storeName.slice(0, 3)}
-                      </div>
-                      <div>
-                        <span className="text-sm font-bold text-white block">{storeName} Store</span>
-                        <span className="text-xs text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> In Stock & Ready to Ship
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                      <div className="text-right">
-                        <span className="text-xs text-gray-400 block">Price</span>
-                        <span className="text-xl font-extrabold text-white">${link.price.toFixed(2)}</span>
-                      </div>
-
-                      <a
-                        href={`/go/${product.slug}?network=${link.network}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-brand-500/20 transition-all hover:scale-105"
-                      >
-                        Buy at {storeName} <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <PriceTable rows={priceRows} />
           </div>
         </div>
       </div>
 
       {/* Product Technical Specifications */}
       {Object.keys(specsObj).length > 0 && (
-        <section className="glass-card rounded-2xl p-8 border border-white/10 space-y-4">
-          <h2 className="text-xl font-bold text-white">Technical Specifications</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="space-y-4 rounded-lg border border-line-strong bg-card p-8">
+          <h2 className="font-display text-xl font-semibold text-ink">Technical Specifications</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             {Object.entries(specsObj).map(([key, val]) => (
-              <div key={key} className="p-4 rounded-xl bg-dark-800 border border-white/5">
-                <span className="text-xs text-gray-400 capitalize block">
-                  {key.replaceAll('_', ' ')}
-                </span>
-                <span className="text-sm font-semibold text-white mt-1 block">{val}</span>
+              <div key={key} className="rounded-md border border-line bg-paper-alt p-4">
+                <span className="block text-xs capitalize text-ink-faint">{key.replaceAll('_', ' ')}</span>
+                <span className="mt-1 block font-mono text-sm font-semibold text-ink">{val}</span>
               </div>
             ))}
           </div>
@@ -194,32 +159,32 @@ export default async function ProductDetailPage({
 
       {/* User Sentiment Analysis (Aggregated from Reddit/Amazon reviews via LLM) */}
       {sentimentObj.summary && (
-        <section className="glass-card rounded-2xl p-8 border border-white/10 space-y-4">
+        <section className="space-y-4 rounded-lg border border-line-strong bg-card p-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <ThumbsUp className="w-5 h-5 text-brand-500" /> Aggregated Real-User Sentiment
+            <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-ink">
+              <ThumbsUp className="h-5 w-5 text-blueprint" /> Aggregated Real-User Sentiment
             </h2>
             {sentimentObj.positive_pct && (
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold">
+              <span className="rounded-full border border-sage/20 bg-sage-soft px-3 py-1 font-mono text-xs font-bold text-sage">
                 {sentimentObj.positive_pct}% Positive User Consensus
               </span>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <div className="p-5 rounded-xl bg-dark-800/80 border border-emerald-500/20 space-y-2">
-              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> What Buyers Love
+          <div className="grid grid-cols-1 gap-6 pt-2 md:grid-cols-2">
+            <div className="space-y-2 rounded-md border border-sage/20 bg-sage-soft/40 p-5">
+              <span className="flex items-center gap-1.5 font-mono text-xs font-bold text-sage">
+                <CheckCircle2 className="h-4 w-4" /> What Buyers Love
               </span>
-              <p className="text-sm text-gray-300">{sentimentObj.summary}</p>
+              <p className="text-sm text-ink-soft">{sentimentObj.summary}</p>
             </div>
 
             {sentimentObj.top_complaint && (
-              <div className="p-5 rounded-xl bg-dark-800/80 border border-amber-500/20 space-y-2">
-                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                  <XCircle className="w-4 h-4" /> Things to Keep in Mind
+              <div className="space-y-2 rounded-md border border-amber/20 bg-amber-soft/40 p-5">
+                <span className="flex items-center gap-1.5 font-mono text-xs font-bold text-amber">
+                  <XCircle className="h-4 w-4" /> Things to Keep in Mind
                 </span>
-                <p className="text-sm text-gray-300">{sentimentObj.top_complaint}</p>
+                <p className="text-sm text-ink-soft">{sentimentObj.top_complaint}</p>
               </div>
             )}
           </div>

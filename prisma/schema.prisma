@@ -3,40 +3,44 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Product {
-  id             String          @id @default(cuid())
+  id             String   @id @default(cuid())
   name           String
-  slug           String          @unique
+  slug           String   @unique
   category       String
   description    String?
   image_url      String
-  specs          String?         // Stored as JSON string in SQLite
+  specs          String? // Stored as JSON string in SQLite
   upc_code       String?
-  user_sentiment String?         // Stored as JSON string in SQLite
-  is_indexed     Boolean         @default(true)
-  is_sustainable Boolean         @default(false)
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt
+  user_sentiment String? // Stored as JSON string in SQLite
+  is_indexed     Boolean  @default(true)
+  is_sustainable Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
   affiliate_links AffiliateLink[]
   clicks          Click[]
+
+  // V1-alpha Attribute Engine (additive; existing fields/relations above unchanged)
+  variants           ProductVariant[]
+  product_attributes ProductAttribute[]
 
   @@map("products")
 }
 
 model AffiliateLink {
-  id             String   @id @default(cuid())
-  product_id     String
-  network        String   // amazon | walmart | target | awin | impact | cj
-  price          Float
-  raw_url        String
-  tracking_url   String
-  is_in_stock    Boolean  @default(true)
-  priority_order Int      @default(1)
+  id              String   @id @default(cuid())
+  product_id      String
+  network         String // amazon | walmart | target | awin | impact | cj
+  price           Float
+  raw_url         String
+  tracking_url    String
+  is_in_stock     Boolean  @default(true)
+  priority_order  Int      @default(1)
   last_crawled_at DateTime @default(now())
 
   product Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
@@ -72,4 +76,150 @@ model Conversion {
   click Click @relation(fields: [click_id], references: [click_id], onDelete: Cascade)
 
   @@map("conversions")
+}
+
+// ============================================================================
+// V1-ALPHA ATTRIBUTE ENGINE — additive layer on top of the models above.
+// Product.id stays a String cuid; these tables reference it as-is so
+// /product/[slug], /go/[slug], AffiliateLink, Click and Conversion are
+// untouched. See specs/001-admin-product-specifications/plan.md.
+// ============================================================================
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  category_attributes CategoryAttribute[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  name       String
+  website    String?
+  created_at DateTime @default(now())
+
+  @@map("brands")
+}
+
+model ProductVariant {
+  id         String   @id @default(cuid())
+  product_id String
+  sku        String?
+  size       String?
+  color      String?
+  material   String?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product            Product            @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  product_attributes ProductAttribute[]
+
+  @@index([product_id])
+  @@map("product_variants")
+}
+
+model AttributeDefinition {
+  id             String            @id @default(cuid())
+  key            String            @unique
+  label          String
+  scope          AttributeScope    @default(PRODUCT)
+  data_type      AttributeDataType
+  unit           String?
+  allowed_values Json?
+  is_filterable  Boolean           @default(false)
+  is_comparable  Boolean           @default(false)
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+
+  category_attributes CategoryAttribute[]
+  product_attributes  ProductAttribute[]
+
+  @@index([key])
+  @@map("attribute_definitions")
+}
+
+model CategoryAttribute {
+  id                      String   @id @default(cuid())
+  category_id             String
+  attribute_definition_id String
+  is_required             Boolean  @default(false)
+  display_order           Int      @default(0)
+  created_at              DateTime @default(now())
+
+  category             Category            @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  attribute_definition AttributeDefinition @relation(fields: [attribute_definition_id], references: [id], onDelete: Cascade)
+
+  @@unique([category_id, attribute_definition_id])
+  @@index([category_id])
+  @@map("category_attributes")
+}
+
+model ProductAttribute {
+  id                      String  @id @default(cuid())
+  product_id              String
+  variant_id              String?
+  attribute_definition_id String
+
+  value_string  String?
+  value_number  Decimal? @db.Decimal(18, 6)
+  value_boolean Boolean?
+
+  source_url  String?
+  source_type SourceType?
+  confidence  Confidence  @default(UNVERIFIED)
+  verified_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product              Product             @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  variant              ProductVariant?     @relation(fields: [variant_id], references: [id], onDelete: Cascade)
+  attribute_definition AttributeDefinition @relation(fields: [attribute_definition_id], references: [id], onDelete: Cascade)
+
+  // Real uniqueness is enforced by two manual PostgreSQL partial unique
+  // indexes (see prisma/partial-indexes.sql) — Prisma cannot express
+  // "unique per productId when variant_id IS NULL, unique per variant_id
+  // when NOT NULL" as a single composite @@unique.
+
+  @@index([product_id])
+  @@index([variant_id])
+  @@index([attribute_definition_id])
+  @@map("product_attributes")
+}
+
+enum AttributeScope {
+  PRODUCT
+  VARIANT
+  DERIVED
+}
+
+enum AttributeDataType {
+  DECIMAL
+  INTEGER
+  STRING
+  BOOLEAN
+  ENUM
+}
+
+enum SourceType {
+  MANUFACTURER
+  MANUAL
+  RETAILER
+  CERTIFICATION
+  OTHER
+}
+
+enum Confidence {
+  VERIFIED
+  LIKELY
+  UNVERIFIED
 }

@@ -1,0 +1,581 @@
+// ============================================================================
+// DESKHOLT — DATABASE V1-ALPHA R3
+// Lean Product Database V1.
+//
+// R3 changes (on top of R2):
+// - Added AttributeScope enum (PRODUCT / VARIANT / DERIVED) and
+//   AttributeDefinition.scope so Product-vs-Variant-vs-Derived classification
+//   is machine-readable, not just a comment. Admin logic should read this
+//   field instead of hardcoding key lists.
+//
+// R2 changes:
+// 1) Removed invalid Product.conversions relation.
+// 2) Merchant.networkId is nullable.
+// 3) New numeric/money fields use Decimal; legacy Float fields are untouched.
+// 4) ProductAttribute supports product-level + variant-level attributes.
+// 5) ProductAttribute uniqueness is enforced by MANUAL PostgreSQL partial
+//    unique indexes in the migration SQL (see companion file).
+// 6) MerchantProduct has isActive + lastCheckedAt.
+// 7) Product <-> Variant consistency must be validated by shared application
+//    validation (Admin + CSV Import).
+// 8) No Evidence Engine / Score / Best-For / Builder in V1.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// LEGACY AFFILIATE / TRACKING MODELS — KEEP EXISTING FIELDS/TYPES
+// ============================================================================
+
+model AffiliateNetwork {
+  id             Int      @id @default(autoincrement())
+  name           String
+  slug           String   @unique
+  logo           String?
+  isActive       Boolean  @default(true)
+  apiConfig      Json?
+  commissionRate String?
+  cookieDays     Int      @default(1)
+  lastSyncedAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  affiliateLinks AffiliateLink[]
+  reports        AffiliateReport[]
+  conversions    Conversion[]
+  merchants      Merchant[]
+}
+
+model AffiliateLink {
+  id            Int      @id @default(autoincrement())
+  productId     Int
+  networkId     Int
+  rawUrl        String
+  trackingUrl   String?
+  price         Float?   // legacy: intentionally unchanged
+  currency      String   @default("USD")
+  isInStock     Boolean  @default(true)
+  priorityOrder Int      @default(0)
+  lastCrawledAt DateTime?
+
+  product      Product          @relation(fields: [productId], references: [id])
+  network      AffiliateNetwork @relation(fields: [networkId], references: [id])
+  clicks       Click[]
+  priceHistory PriceHistory[]
+
+  @@index([productId])
+  @@index([networkId])
+  @@index([isInStock])
+  @@index([lastCrawledAt])
+}
+
+model Click {
+  id         Int      @id @default(autoincrement())
+  clickId    String   @unique
+  productId  Int
+  networkId  Int
+  linkId     Int?
+  sourcePage String?
+  ipHash     String?
+  userAgent  String?
+  usState    String?
+  createdAt  DateTime @default(now())
+
+  product       Product          @relation(fields: [productId], references: [id])
+  network       AffiliateNetwork @relation(fields: [networkId], references: [id])
+  affiliateLink AffiliateLink?   @relation(fields: [linkId], references: [id])
+  conversion    Conversion?
+
+  @@index([productId])
+  @@index([networkId])
+  @@index([createdAt])
+  @@index([clickId])
+}
+
+model Conversion {
+  id         Int      @id @default(autoincrement())
+  clickId    String   @unique
+  orderValue Float?   // legacy: intentionally unchanged
+  commission Float?   // legacy: intentionally unchanged
+  status     String   @default("pending")
+  networkId  Int
+  matchedAt  DateTime @default(now())
+
+  click   Click            @relation(fields: [clickId], references: [clickId])
+  network AffiliateNetwork @relation(fields: [networkId], references: [id])
+
+  @@index([clickId])
+  @@index([networkId])
+}
+
+model AffiliateReport {
+  id          Int      @id @default(autoincrement())
+  networkId   Int
+  date        DateTime @default(now())
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  commission  Float    @default(0) // legacy: intentionally unchanged
+  orderValue  Float    @default(0) // legacy: intentionally unchanged
+
+  network AffiliateNetwork @relation(fields: [networkId], references: [id])
+
+  @@unique([networkId, date])
+  @@index([date])
+}
+
+model PriceHistory {
+  id              Int      @id @default(autoincrement())
+  affiliateLinkId Int
+  price           Float    // legacy: intentionally unchanged
+  recordedAt      DateTime @default(now())
+
+  affiliateLink AffiliateLink @relation(fields: [affiliateLinkId], references: [id])
+
+  @@index([affiliateLinkId])
+  @@index([recordedAt])
+}
+
+// ============================================================================
+// LEGACY CONTENT MODELS — KEEP
+// ============================================================================
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  slug String @unique
+  name String
+
+  blogPosts BlogPost[]
+
+  @@index([slug])
+}
+
+model BlogPost {
+  id                 Int       @id @default(autoincrement())
+  slug               String    @unique
+  title              String
+  content            String
+  excerpt            String?
+  featuredImage      String?
+  author             String?
+  assignee           String?
+  categoryId         Int?
+  publishedAt        DateTime?
+  isPublished        Boolean   @default(false)
+  views              Int       @default(0)
+  metaTitle          String?
+  metaDesc           String?
+  ogTitle            String?
+  ogDesc              String?
+  ogImage            String?
+  canonicalUrl       String?
+  disclosureOverride String?
+  lockedBy           String?
+  lockedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  category  Category?          @relation(fields: [categoryId], references: [id])
+  tags      Tag[]
+  products  BlogPostProduct[]
+  revisions BlogPostRevision[]
+
+  @@index([slug])
+  @@index([publishedAt])
+  @@index([isPublished])
+  @@index([categoryId])
+}
+
+model BlogPostProduct {
+  id         Int    @id @default(autoincrement())
+  blogPostId Int
+  productId  Int
+  blockType  String
+  layout     String?
+  position   Int    @default(0)
+
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@index([blogPostId])
+  @@index([productId])
+}
+
+model BlogPostRevision {
+  id         Int      @id @default(autoincrement())
+  blogPostId Int
+  content    String
+  editedBy   String?
+  createdAt  DateTime @default(now())
+
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id])
+
+  @@index([blogPostId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// V1 CORE — EXISTING MODELS MODIFIED WITHOUT DROPPING LEGACY FIELDS
+// ============================================================================
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  name        String
+  description String?
+  imageUrl    String?
+  metaTitle   String?
+  metaDesc    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // V1: category tree support. V1 may still use only standing-desks.
+  parentId Int?
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+
+  products           Product[]
+  blogPosts          BlogPost[]
+  categoryAttributes CategoryAttribute[]
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Product {
+  id            Int      @id @default(autoincrement())
+  name          String
+  slug          String   @unique
+  categoryId    Int
+  description   String?
+  imageUrl      String?
+  specs         Json?    // legacy/free-form only; typed comparable specs go to ProductAttribute
+  upcCode       String?
+  userSentiment Json?
+  isIndexed     Boolean  @default(false)
+  isSustainable Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // V1 identity additions.
+  brandId     Int?
+  status      ProductStatus @default(ACTIVE)
+  series      String?
+  modelNumber String?
+
+  category          Category          @relation(fields: [categoryId], references: [id])
+  brand             Brand?            @relation(fields: [brandId], references: [id])
+  affiliateLinks    AffiliateLink[]
+  clicks            Click[]
+  blogMentions      BlogPostProduct[]
+  variants          ProductVariant[]
+  productAttributes ProductAttribute[]
+  merchantProducts  MerchantProduct[]
+
+  // NOTE: Product.conversions intentionally removed.
+  // Conversion is related to Product indirectly through Click.
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isIndexed])
+  @@index([isSustainable])
+  @@index([brandId])
+  @@index([status])
+}
+
+enum ProductStatus {
+  ACTIVE
+  DISCONTINUED
+  ARCHIVED
+}
+
+// ============================================================================
+// NEW V1 ENTITIES
+// ============================================================================
+
+model Brand {
+  id        Int         @id @default(autoincrement())
+  name      String
+  slug      String      @unique
+  website   String?
+  logoUrl   String?
+  country   String?
+  status    BrandStatus @default(ACTIVE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  products Product[]
+
+  @@index([slug])
+}
+
+enum BrandStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model ProductVariant {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  sku       String?
+  size      String?  // display/manufacturer label, e.g. "60 x 30"
+  color     String?
+  material  String?
+
+  // Canonical dimensions in mm.
+  width Decimal? @db.Decimal(10, 2)
+  depth Decimal? @db.Decimal(10, 2)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product           Product            @relation(fields: [productId], references: [id])
+  merchantProducts  MerchantProduct[]
+  productAttributes ProductAttribute[]
+
+  @@index([productId])
+  @@index([sku])
+}
+
+model AttributeDefinition {
+  id            Int               @id @default(autoincrement())
+  key           String            @unique
+  label         String
+  dataType      AttributeDataType
+  // R3: scope máy-đọc-được — thay cho việc chỉ ghi PRODUCT/VARIANT/DERIVED
+  // trong comment. Admin dùng field này để biết nhập giá trị ở Product hay
+  // Variant, và để cảnh báo/khoanh vùng riêng các attribute DERIVED (suy
+  // luận, chưa phải số đo thô từ nhà sản xuất).
+  scope         AttributeScope    @default(PRODUCT)
+  unit          String?
+  isFilterable  Boolean           @default(false)
+  isComparable  Boolean           @default(false)
+  allowedValues Json?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  categoryAttributes CategoryAttribute[]
+  productAttributes  ProductAttribute[]
+
+  @@index([key])
+  @@index([scope])
+}
+
+enum AttributeDataType {
+  DECIMAL
+  INTEGER
+  STRING
+  BOOLEAN
+  ENUM
+}
+
+enum AttributeScope {
+  PRODUCT
+  VARIANT
+  DERIVED
+}
+
+model CategoryAttribute {
+  id                    Int      @id @default(autoincrement())
+  categoryId            Int
+  attributeDefinitionId Int
+  isRequired            Boolean  @default(false)
+  displayOrder          Int      @default(0)
+  createdAt             DateTime @default(now())
+
+  category            Category            @relation(fields: [categoryId], references: [id])
+  attributeDefinition AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id])
+
+  @@unique([categoryId, attributeDefinitionId])
+  @@index([categoryId])
+  @@index([attributeDefinitionId])
+}
+
+model ProductAttribute {
+  id                    Int @id @default(autoincrement())
+  productId             Int
+  variantId             Int?
+  attributeDefinitionId Int
+
+  valueString  String?
+  valueNumber  Decimal? @db.Decimal(18, 6)
+  valueBoolean Boolean?
+
+  sourceUrl  String?
+  sourceType SourceType?
+  confidence Confidence @default(UNVERIFIED)
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product             Product             @relation(fields: [productId], references: [id])
+  variant             ProductVariant?     @relation(fields: [variantId], references: [id])
+  attributeDefinition AttributeDefinition @relation(fields: [attributeDefinitionId], references: [id])
+
+  // IMPORTANT:
+  // Prisma cannot express the two required PostgreSQL partial unique indexes
+  // in this schema. Add them manually in migration.sql:
+  //
+  // product-level:
+  // UNIQUE(productId, attributeDefinitionId) WHERE variantId IS NULL
+  //
+  // variant-level:
+  // UNIQUE(variantId, attributeDefinitionId) WHERE variantId IS NOT NULL
+  //
+  // Application validation must also verify:
+  // if variantId != null => variant.productId === productId.
+
+  @@index([productId])
+  @@index([variantId])
+  @@index([attributeDefinitionId])
+  @@index([attributeDefinitionId, valueNumber])
+  @@index([confidence])
+}
+
+enum SourceType {
+  MANUFACTURER
+  MANUAL
+  RETAILER
+  CERTIFICATION
+  OTHER
+}
+
+enum Confidence {
+  VERIFIED
+  LIKELY
+  UNVERIFIED
+}
+
+model Merchant {
+  id        Int            @id @default(autoincrement())
+  networkId Int?
+  name      String
+  slug      String         @unique
+  website   String?
+  logoUrl   String?
+  status    MerchantStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Nullable: a Merchant can be tracked before Deskholt has an affiliate
+  // network/program relationship for it.
+  network          AffiliateNetwork? @relation(fields: [networkId], references: [id])
+  merchantProducts MerchantProduct[]
+
+  @@index([networkId])
+  @@index([slug])
+}
+
+enum MerchantStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model MerchantProduct {
+  id         Int @id @default(autoincrement())
+  productId  Int
+  variantId  Int?
+  merchantId Int
+
+  merchantSku       String?
+  merchantProductId String?
+  productUrl        String
+  affiliateUrl      String?
+  matchMethod       MatchMethod @default(MANUAL)
+
+  isActive      Boolean   @default(true)
+  lastCheckedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  product  Product         @relation(fields: [productId], references: [id])
+  variant  ProductVariant? @relation(fields: [variantId], references: [id])
+  merchant Merchant        @relation(fields: [merchantId], references: [id])
+  offers   Offer[]
+
+  // Application layer should apply the same Product <-> Variant validator
+  // used by ProductAttribute when variantId is present.
+
+  @@index([productId])
+  @@index([variantId])
+  @@index([merchantId])
+  @@index([lastCheckedAt])
+  @@index([isActive])
+}
+
+enum MatchMethod {
+  MANUAL
+  UPC
+  MODEL_NUMBER
+  OTHER
+}
+
+model Offer {
+  id                Int @id @default(autoincrement())
+  merchantProductId Int
+
+  // New money fields use Decimal. Legacy AffiliateLink/PriceHistory Float
+  // fields remain untouched.
+  price        Decimal  @db.Decimal(12, 2)
+  currency     String   @default("USD")
+  availability Availability @default(UNKNOWN)
+  shippingCost Decimal? @db.Decimal(12, 2)
+
+  // V1 treats Offer rows as observations/snapshots.
+  observedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  merchantProduct MerchantProduct @relation(fields: [merchantProductId], references: [id])
+
+  @@index([merchantProductId])
+  @@index([merchantProductId, observedAt])
+  @@index([observedAt])
+  @@index([availability, observedAt])
+}
+
+enum Availability {
+  IN_STOCK
+  OUT_OF_STOCK
+  PREORDER
+  UNKNOWN
+}
+
+// ============================================================================
+// V1 APPLICATION / MIGRATION RULES (documentation only)
+// ============================================================================
+//
+// 1. Canonical units:
+//    length      = mm
+//    weight/load = kg
+//    speed       = mm/s
+//    warranty    = months
+//
+// 2. ProductAttribute:
+//    - exactly one value column should be populated according to dataType.
+//    - Admin + CSV Import MUST use one shared validator.
+//    - if variantId exists, variant.productId MUST equal productId.
+//
+// 3. Multi-value / derived fields:
+//    - do not add generic JSON storage yet.
+//    - available widths/depths/finishes should first be tested as derivable
+//      from ProductVariant.
+//    - derived judgments such as dual_monitor_suitable must be classified
+//      DERIVED/QUESTIONABLE during the 10-product ontology test.
+//
+// 4. Offer:
+//    - append observations; current offer = latest observedAt.
+//    - no public Price History chart in V1.
+//
+// 5. V1 scope deliberately excludes:
+//    EvidenceSource, ProductEvidence, ProductClaim, ProductScore, UseCase,
+//    ProductUseCase, Workspace Builder, accounts, saved builds, price alerts.
+// ============================================================================
