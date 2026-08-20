@@ -6,6 +6,17 @@ import ProductSchema from '@/components/ProductSchema';
 import PriceTable from '@/components/ui/PriceTable';
 import Badge from '@/components/ui/Badge';
 import { CheckCircle2, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
+import { loadSpecificationData, filterPublicDisplayRows, type SpecRow } from '@/lib/products/specificationRows';
+
+function formatSpecValue(row: SpecRow): string {
+  const existing = row.existing;
+  if (!existing) return '';
+  if (row.dataType === 'BOOLEAN') return existing.valueBoolean ? 'Yes' : 'No';
+  if (existing.valueNumber !== null) {
+    return row.unit ? `${existing.valueNumber} ${row.unit}` : `${existing.valueNumber}`;
+  }
+  return existing.valueString ?? '';
+}
 
 export const revalidate = 86400; // ISR 24h
 
@@ -53,6 +64,10 @@ export default async function ProductDetailPage({
       sentimentObj = {};
     }
   }
+
+  const specData = await loadSpecificationData(prisma, product.id);
+  const defaultVariantId = specData?.variants.find((v) => v.isActive)?.id ?? null;
+  const structuredRows = filterPublicDisplayRows(specData?.rows ?? [], defaultVariantId);
 
   const lowestPrice = product.affiliate_links.find((l) => l.is_in_stock)?.price || product.affiliate_links[0]?.price;
 
@@ -143,18 +158,35 @@ export default async function ProductDetailPage({
       </div>
 
       {/* Product Technical Specifications */}
-      {Object.keys(specsObj).length > 0 && (
+      {structuredRows.length > 0 ? (
         <section className="space-y-4 rounded-lg border border-line-strong bg-card p-8">
           <h2 className="font-display text-xl font-semibold text-ink">Technical Specifications</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-            {Object.entries(specsObj).map(([key, val]) => (
-              <div key={key} className="rounded-md border border-line bg-paper-alt p-4">
-                <span className="block text-xs capitalize text-ink-faint">{key.replaceAll('_', ' ')}</span>
-                <span className="mt-1 block font-mono text-sm font-semibold text-ink">{val}</span>
+            {structuredRows.map((row) => (
+              <div key={row.rowKey} className="rounded-md border border-line bg-paper-alt p-4">
+                <span className="block text-xs capitalize text-ink-faint">
+                  {row.label}
+                  {row.variantLabel ? ` (${row.variantLabel})` : ''}
+                </span>
+                <span className="mt-1 block font-mono text-sm font-semibold text-ink">{formatSpecValue(row)}</span>
               </div>
             ))}
           </div>
         </section>
+      ) : (
+        Object.keys(specsObj).length > 0 && (
+          <section className="space-y-4 rounded-lg border border-line-strong bg-card p-8">
+            <h2 className="font-display text-xl font-semibold text-ink">Technical Specifications</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              {Object.entries(specsObj).map(([key, val]) => (
+                <div key={key} className="rounded-md border border-line bg-paper-alt p-4">
+                  <span className="block text-xs capitalize text-ink-faint">{key.replaceAll('_', ' ')}</span>
+                  <span className="mt-1 block font-mono text-sm font-semibold text-ink">{val}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
       )}
 
       {/* User Sentiment Analysis (Aggregated from Reddit/Amazon reviews via LLM) */}

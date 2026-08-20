@@ -142,3 +142,18 @@ export async function loadSpecificationData(
 function variantLabel(v: { sku: string | null; size: string | null; color: string | null; material: string | null }): string {
   return [v.size, v.color, v.material].filter(Boolean).join(' / ') || v.sku || 'Variant';
 }
+
+// Public product page display filter: keep only rows with a saved value, scoped to
+// PRODUCT-level attributes plus VARIANT-level attributes for the given default variant.
+// DERIVED rows are excluded (inferred judgments, not manufacturer facts — not shown publicly).
+export function filterPublicDisplayRows(rows: SpecRow[], defaultVariantId: string | null): SpecRow[] {
+  return rows.filter((row) => {
+    if (row.existing === null) return false;
+    const hasValue =
+      row.existing.valueString !== null || row.existing.valueNumber !== null || row.existing.valueBoolean !== null;
+    if (!hasValue) return false;
+    if (row.scope === 'PRODUCT') return true;
+    if (row.scope === 'VARIANT') return row.variantId === defaultVariantId;
+    return false;
+  });
+}

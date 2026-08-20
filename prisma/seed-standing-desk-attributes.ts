@@ -31,15 +31,15 @@ type AttributeSeed = {
 
 const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
   // --- Dimensions (Product-level) ---
-  { key: 'min_height_mm', label: 'Minimum Height', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'mm', isFilterable: true, isComparable: true, isRequired: true },
-  { key: 'max_height_mm', label: 'Maximum Height', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'mm', isFilterable: true, isComparable: true, isRequired: true },
-  { key: 'max_load_kg', label: 'Maximum Load Capacity', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'kg', isFilterable: true, isComparable: true, isRequired: true },
-  { key: 'product_weight_kg', label: 'Product Weight', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'kg', isFilterable: false, isComparable: true, isRequired: false },
+  { key: 'min_height_in', label: 'Minimum Height', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'max_height_in', label: 'Maximum Height', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'max_load_lb', label: 'Maximum Load Capacity', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'lb', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'product_weight_lb', label: 'Product Weight', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'lb', isFilterable: false, isComparable: true, isRequired: false },
 
   // --- Desktop dimensions (Variant-level) ---
-  { key: 'desktop_width_mm', label: 'Desktop Width', scope: 'VARIANT', dataType: 'DECIMAL', unit: 'mm', isFilterable: true, isComparable: true, isRequired: true },
-  { key: 'desktop_depth_mm', label: 'Desktop Depth', scope: 'VARIANT', dataType: 'DECIMAL', unit: 'mm', isFilterable: true, isComparable: true, isRequired: true },
-  { key: 'desktop_thickness_mm', label: 'Desktop Thickness', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'mm', isFilterable: false, isComparable: true, isRequired: false },
+  { key: 'desktop_width_in', label: 'Desktop Width', scope: 'VARIANT', dataType: 'DECIMAL', unit: 'in', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'desktop_depth_in', label: 'Desktop Depth', scope: 'VARIANT', dataType: 'DECIMAL', unit: 'in', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'desktop_thickness_in', label: 'Desktop Thickness', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: false, isComparable: true, isRequired: false },
 
   // --- Mechanism (Product-level) ---
   {
@@ -53,7 +53,7 @@ const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
     allowedValues: ['ELECTRIC', 'MANUAL_CRANK', 'PNEUMATIC', 'FIXED'],
   },
   { key: 'motor_count', label: 'Motor Count', scope: 'PRODUCT', dataType: 'INTEGER', isFilterable: true, isComparable: true, isRequired: true },
-  { key: 'lifting_speed_mm_s', label: 'Lifting Speed', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'mm/s', isFilterable: false, isComparable: true, isRequired: false },
+  { key: 'lifting_speed_in_s', label: 'Lifting Speed', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in/s', isFilterable: false, isComparable: true, isRequired: false },
   { key: 'noise_db', label: 'Noise Level', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'dB', isFilterable: false, isComparable: true, isRequired: false },
   { key: 'anti_collision', label: 'Anti-Collision', scope: 'PRODUCT', dataType: 'BOOLEAN', isFilterable: true, isComparable: false, isRequired: false },
   { key: 'memory_presets', label: 'Memory Presets', scope: 'PRODUCT', dataType: 'INTEGER', isFilterable: false, isComparable: true, isRequired: false },
@@ -80,8 +80,8 @@ const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
     isRequired: false,
     allowedValues: ['STEEL', 'ALUMINUM'],
   },
-  { key: 'frame_width_min_mm', label: 'Frame Width (Min)', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'mm', isFilterable: false, isComparable: true, isRequired: false },
-  { key: 'frame_width_max_mm', label: 'Frame Width (Max)', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'mm', isFilterable: false, isComparable: true, isRequired: false },
+  { key: 'frame_width_min_in', label: 'Frame Width (Min)', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: false, isComparable: true, isRequired: false },
+  { key: 'frame_width_max_in', label: 'Frame Width (Max)', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: false, isComparable: true, isRequired: false },
   { key: 'crossbar', label: 'Has Crossbar', scope: 'PRODUCT', dataType: 'BOOLEAN', isFilterable: false, isComparable: false, isRequired: false },
   { key: 'casters_compatible', label: 'Casters Compatible', scope: 'PRODUCT', dataType: 'BOOLEAN', isFilterable: true, isComparable: false, isRequired: false },
 
