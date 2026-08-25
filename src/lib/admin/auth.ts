@@ -38,22 +38,46 @@ async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   return toHex(signature);
 }
 
-export async function createSessionToken(): Promise<string> {
-  const secret = process.env.ADMIN_SESSION_SECRET;
-  const password = process.env.ADMIN_PASSWORD ?? '';
-  if (!secret) {
-    throw new Error('ADMIN_SESSION_SECRET is not set');
+type AdminAuthConfig = {
+  password: string;
+  sessionSecret: string;
+};
+
+function readAdminAuthConfig(): AdminAuthConfig | null {
+  const password = process.env.ADMIN_PASSWORD;
+  const sessionSecret = process.env.ADMIN_SESSION_SECRET;
+
+  if (
+    password === undefined ||
+    password === '' ||
+    sessionSecret === undefined ||
+    sessionSecret === ''
+  ) {
+    return null;
   }
-  return hmacSha256Hex(secret, password);
+
+  return { password, sessionSecret };
 }
 
-export function isCorrectPassword(candidate: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD ?? '';
-  return timingSafeStringEqual(candidate, expected);
+async function createSessionToken(config: AdminAuthConfig): Promise<string> {
+  return hmacSha256Hex(config.sessionSecret, config.password);
+}
+
+export async function authenticateAdmin(candidate: string): Promise<string | null> {
+  const config = readAdminAuthConfig();
+  if (!config || !timingSafeStringEqual(candidate, config.password)) {
+    return null;
+  }
+
+  return createSessionToken(config);
 }
 
 export async function isValidSessionToken(token: string | undefined | null): Promise<boolean> {
   if (!token) return false;
-  const expected = await createSessionToken();
+
+  const config = readAdminAuthConfig();
+  if (!config) return false;
+
+  const expected = await createSessionToken(config);
   return timingSafeStringEqual(token, expected);
 }

@@ -2,17 +2,18 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { ADMIN_SESSION_COOKIE, createSessionToken, isCorrectPassword } from '@/lib/admin/auth';
+import { ADMIN_SESSION_COOKIE, authenticateAdmin } from '@/lib/admin/auth';
+import { sanitizeAdminRedirect } from '@/lib/admin/redirect';
 
 export async function loginAction(formData: FormData) {
   const password = String(formData.get('password') ?? '');
-  const from = String(formData.get('from') ?? '/admin/products');
+  const from = sanitizeAdminRedirect(String(formData.get('from') ?? ''));
+  const token = await authenticateAdmin(password);
 
-  if (!isCorrectPassword(password)) {
+  if (token === null) {
     redirect(`/admin/login?error=1&from=${encodeURIComponent(from)}`);
   }
 
-  const token = await createSessionToken();
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
@@ -22,5 +23,5 @@ export async function loginAction(formData: FormData) {
     maxAge: 60 * 60 * 24 * 7,
   });
 
-  redirect(from || '/admin/products');
+  redirect(from);
 }
