@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
@@ -7,6 +8,13 @@ import PriceTable from '@/components/ui/PriceTable';
 import Badge from '@/components/ui/Badge';
 import { CheckCircle2, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
 import { loadSpecificationData, filterPublicDisplayRows, type SpecRow } from '@/lib/products/specificationRows';
+import {
+  CATALOG_CURRENCY,
+  STRUCTURED_OFFER_MAX_AGE_MS,
+  buildOfferPresentation,
+  toProductStructuredOffer,
+  type OfferSelectionPolicy,
+} from '@/lib/products/productStructuredData';
 
 function formatSpecValue(row: SpecRow): string {
   const existing = row.existing;
@@ -18,14 +26,14 @@ function formatSpecValue(row: SpecRow): string {
   return existing.valueString ?? '';
 }
 
-export const revalidate = 86400; // ISR 24h
-
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  await connection();
+  const now = new Date();
 
   const product = await prisma.product.findUnique({
     where: { slug },
@@ -34,6 +42,7 @@ export default async function ProductDetailPage({
         orderBy: [
           { is_in_stock: 'desc' },
           { priority_order: 'asc' },
+          { id: 'asc' },
         ],
       },
     },
@@ -69,18 +78,30 @@ export default async function ProductDetailPage({
   const defaultVariantId = specData?.variants.find((v) => v.isActive)?.id ?? null;
   const structuredRows = filterPublicDisplayRows(specData?.rows ?? [], defaultVariantId);
 
-  const lowestPrice = product.affiliate_links.find((l) => l.is_in_stock)?.price || product.affiliate_links[0]?.price;
+  const offerPolicy: OfferSelectionPolicy = {
+    now,
+    maxAgeMs: STRUCTURED_OFFER_MAX_AGE_MS,
+    currency: CATALOG_CURRENCY,
+  };
+  const offerPresentation = buildOfferPresentation(product.affiliate_links, offerPolicy);
+  const structuredOffer = toProductStructuredOffer(
+    offerPresentation.canonicalOffer,
+    CATALOG_CURRENCY
+  );
 
   // Only surface aggregateRating once we have a real, derivable rating/review count from
   // user_sentiment — the current sentiment shape has no such fields, so this stays undefined
   // rather than fabricating one. Do not hardcode placeholder values here.
   const aggregateRating = undefined;
 
-  const priceRows = product.affiliate_links.map((link) => ({
-    network: link.network.toUpperCase(),
-    price: link.price,
-    inStock: link.is_in_stock,
-    goHref: `/go/${product.slug}?network=${link.network}`,
+  const priceRows = offerPresentation.rows.map((row) => ({
+    id: row.offer.id,
+    network: row.offer.network.toUpperCase(),
+    price: row.displayPrice,
+    availability: row.availability,
+    observedAt: row.observedAt,
+    isBestCurrentOffer: row.isBestCurrentOffer,
+    goHref: `/go/${product.slug}?network=${row.offer.network}`,
   }));
 
   return (
@@ -92,8 +113,7 @@ export default async function ProductDetailPage({
           image: product.image_url,
           description: product.description || product.name,
           sku: product.upc_code || undefined,
-          price: lowestPrice,
-          priceCurrency: 'USD',
+          offer: structuredOffer,
           aggregateRating,
         }}
       />
@@ -149,7 +169,7 @@ export default async function ProductDetailPage({
               <h2 className="flex items-center gap-2 font-display text-base font-semibold text-ink">
                 <ShoppingCart className="h-4 w-4 text-blueprint" /> Multi-Store Price Comparison
               </h2>
-              <span className="text-xs text-ink-faint">Live prices &amp; stock status</span>
+              <span className="text-xs text-ink-faint">Retailer prices &amp; stock status</span>
             </div>
 
             <PriceTable rows={priceRows} />
