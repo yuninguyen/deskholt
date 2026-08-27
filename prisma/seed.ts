@@ -243,11 +243,9 @@ async function main() {
         description: p.description,
         image_url: STOCK_IMAGE[p.category],
         specs: p.specs,
-        // This data is real but currently lacks distinctive content (real user sentiment,
-        // genuine photos) per Constitution Principle V. Indexed for now since the site isn't
-        // public yet — this MUST be revisited (either add real sentiment/photos, or flip back
-        // to is_indexed: false) before any production deploy.
-        is_indexed: true,
+        // Seeded Products remain fail-closed until an administrator explicitly publishes them.
+        status: 'DRAFT',
+        is_indexed: false,
         is_sustainable: p.is_sustainable,
         affiliate_links: { create: [p.link] },
       },

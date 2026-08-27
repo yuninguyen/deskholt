@@ -1,0 +1,311 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import test from 'node:test';
+import { evaluateProductAccess } from '../src/lib/products/productAccessPolicy.ts';
+import { createProductPublishingAction } from '../src/app/(admin)/admin/products/actions.ts';
+
+const adminProductsPageSource = readFileSync(
+  join(process.cwd(), 'src/app/(admin)/admin/products/page.tsx'),
+  'utf8'
+);
+
+const PRODUCT_ID = '00000000-0000-4000-8000-000000000036';
+
+type ProductStatus = 'DRAFT' | 'ACTIVE' | 'BLOCKED' | 'ARCHIVED';
+type StoredState = { status: ProductStatus; is_indexed: boolean };
+type ProductPublishingActionDependencies = {
+  requireAdmin(): Promise<void>;
+  publishingStore: {
+    setLifecycle(productId: string, status: ProductStatus): Promise<number>;
+    enableIndexWhenActive(productId: string): Promise<number>;
+    disableIndex(productId: string): Promise<number>;
+    findPublishingState(productId: string): Promise<StoredState | null>;
+  };
+  revalidatePath(path: string): void;
+  redirect(path: string): never;
+};
+
+function form(entries: Record<string, string>) {
+  const data = new FormData();
+  for (const [key, value] of Object.entries(entries)) data.set(key, value);
+  return data;
+}
+
+function actionHarness(initial: StoredState | null) {
+  let state = initial;
+  const writes: unknown[] = [];
+  const invalidations: string[] = [];
+  const redirects: string[] = [];
+
+  const dependencies: ProductPublishingActionDependencies = {
+    requireAdmin: async () => undefined,
+    publishingStore: {
+      setLifecycle: async (productId, status) => {
+        if (!state) return 0;
+        writes.push({ operation: 'setLifecycle', productId, status, is_indexed: false });
+        state = { status, is_indexed: false };
+        return 1;
+      },
+      enableIndexWhenActive: async (productId) => {
+        if (!state || state.status !== 'ACTIVE') return 0;
+        writes.push({ operation: 'enableIndexWhenActive', productId, is_indexed: true });
+        state = { ...state, is_indexed: true };
+        return 1;
+      },
+      disableIndex: async (productId) => {
+        if (!state) return 0;
+        writes.push({ operation: 'disableIndex', productId, is_indexed: false });
+        state = { ...state, is_indexed: false };
+        return 1;
+      },
+      findPublishingState: async () => state,
+    },
+    revalidatePath: (path: string) => invalidations.push(path),
+    redirect: (path: string) => {
+      redirects.push(path);
+      throw new Error(`NEXT_REDIRECT:${path}`);
+    },
+  };
+
+  return {
+    action: createProductPublishingAction(dependencies),
+    writes,
+    invalidations,
+    redirects,
+    getState: () => state,
+  };
+}
+
+async function captureRedirect(action: (data: FormData) => Promise<void>, data: FormData) {
+  await assert.rejects(() => action(data), /NEXT_REDIRECT:/);
+}
+
+test('Admin Products heading gives plain operational guidance', () => {
+  assert.match(adminProductsPageSource, /Manage product publication and search-index visibility\./);
+  assert.doesNotMatch(adminProductsPageSource, /V1-alpha/);
+  assert.doesNotMatch(adminProductsPageSource, /fail-closed controls/);
+});
+
+test('Admin Products maps stable publishing error reasons to operator-facing feedback', () => {
+  assert.match(adminProductsPageSource, /invalid-input[\s\S]*Invalid publishing request/);
+  assert.match(adminProductsPageSource, /missing[\s\S]*Product could not be found/);
+  assert.match(adminProductsPageSource, /active-only[\s\S]*Set the lifecycle to Active before enabling indexing/);
+  assert.doesNotMatch(adminProductsPageSource, /Set the lifecycle to ACTIVE before enabling indexing/);
+  assert.match(adminProductsPageSource, /concurrency-conflict[\s\S]*changed while the command was running/);
+  assert.match(adminProductsPageSource, /aria-live="polite"/);
+});
+
+test('Admin Products presents stored and effective Product state as operator-facing badge copy', () => {
+  assert.match(adminProductsPageSource, /DRAFT: 'Draft'/);
+  assert.match(adminProductsPageSource, /ACTIVE: 'Active'/);
+  assert.match(adminProductsPageSource, /BLOCKED: 'Blocked'/);
+  assert.match(adminProductsPageSource, /ARCHIVED: 'Archived'/);
+  assert.match(adminProductsPageSource, /Index saved: \{product\.is_indexed \? 'enabled' : 'disabled'\}/);
+  assert.match(adminProductsPageSource, /eligible: 'Eligible for public listings and indexing'/);
+  assert.match(adminProductsPageSource, /'explicit-noindex': 'Public, excluded from indexing'/);
+  assert.match(adminProductsPageSource, /draft: 'Draft—not public'/);
+  assert.match(adminProductsPageSource, /blocked: 'Blocked—not public'/);
+  assert.match(adminProductsPageSource, /archived: 'Archived—not public'/);
+  assert.doesNotMatch(adminProductsPageSource, />stored: \{product\.status\}</);
+  assert.doesNotMatch(adminProductsPageSource, />stored index: \{String\(product\.is_indexed\)\}</);
+  assert.doesNotMatch(adminProductsPageSource, />effective: \{decision\.reason\}</);
+});
+
+test('Admin Products identifies and focuses the Product targeted by redirect feedback', () => {
+  assert.match(adminProductsPageSource, /const isFeedbackTarget = query\.productId === product\.id/);
+  assert.match(adminProductsPageSource, /id={`product-\$\{product\.id\}`}/);
+  assert.match(adminProductsPageSource, /tabIndex=\{isFeedbackTarget \? 0 : undefined\}/);
+  const targetedRowOpeningTag = adminProductsPageSource.match(/<div\s+key=\{product\.id\}[^>]*>/)?.[0];
+  assert.ok(targetedRowOpeningTag);
+  assert.doesNotMatch(targetedRowOpeningTag, /autoFocus=/);
+  assert.match(
+    adminProductsPageSource,
+    /<select[\s\S]*?autoFocus=\{isFeedbackTarget\}[\s\S]*?>/
+  );
+  assert.match(adminProductsPageSource, /isFeedbackTarget[\s\S]*ring-/);
+});
+
+test('Admin Products explains inactive disabled Enable index controls accessibly', () => {
+  assert.match(
+    adminProductsPageSource,
+    /aria-describedby=\{isEnableDisabled \? enableIndexHelpId : undefined\}/
+  );
+  assert.match(adminProductsPageSource, /id=\{enableIndexHelpId\}/);
+  assert.match(adminProductsPageSource, /Set lifecycle to Active to enable indexing\./);
+  assert.doesNotMatch(adminProductsPageSource, /Set lifecycle to ACTIVE to enable indexing\./);
+});
+
+test('successful lifecycle save mutates before invalidating homepage and redirecting', async () => {
+  const harness = actionHarness({ status: 'ACTIVE', is_indexed: true });
+
+  await captureRedirect(
+    harness.action,
+    form({ productId: PRODUCT_ID, command: 'set-lifecycle', status: 'BLOCKED' })
+  );
+
+  assert.deepEqual(harness.writes, [
+    {
+      operation: 'setLifecycle',
+      productId: PRODUCT_ID,
+      status: 'BLOCKED',
+      is_indexed: false,
+    },
+  ]);
+  assert.deepEqual(harness.invalidations, ['/']);
+  assert.deepEqual(harness.redirects, ['/admin/products?saved=1&productId=' + PRODUCT_ID]);
+  assert.deepEqual(harness.getState(), { status: 'BLOCKED', is_indexed: false });
+});
+
+test('successful enable invalidates only homepage and redirects after save', async () => {
+  const harness = actionHarness({ status: 'ACTIVE', is_indexed: false });
+
+  await captureRedirect(
+    harness.action,
+    form({ productId: PRODUCT_ID, command: 'enable-index' })
+  );
+
+  assert.deepEqual(harness.writes, [
+    { operation: 'enableIndexWhenActive', productId: PRODUCT_ID, is_indexed: true },
+  ]);
+  assert.deepEqual(harness.invalidations, ['/']);
+  assert.deepEqual(harness.redirects, ['/admin/products?saved=1&productId=' + PRODUCT_ID]);
+});
+
+test('non-active enable rejection has zero writes and zero invalidation', async () => {
+  const harness = actionHarness({ status: 'DRAFT', is_indexed: false });
+
+  await captureRedirect(
+    harness.action,
+    form({ productId: PRODUCT_ID, command: 'enable-index' })
+  );
+
+  assert.deepEqual(harness.writes, []);
+  assert.deepEqual(harness.invalidations, []);
+  assert.deepEqual(harness.redirects, [
+    '/admin/products?error=active-only&productId=' + PRODUCT_ID,
+  ]);
+  assert.deepEqual(harness.getState(), { status: 'DRAFT', is_indexed: false });
+});
+
+test('zero-row active classification redirects as concurrency conflict without invalidation', async () => {
+  const harness = actionHarness({ status: 'ACTIVE', is_indexed: false });
+  harness.action = createProductPublishingAction({
+    requireAdmin: async () => undefined,
+    publishingStore: {
+      setLifecycle: async () => 0,
+      enableIndexWhenActive: async () => 0,
+      disableIndex: async () => 0,
+      findPublishingState: async () => ({ status: 'ACTIVE', is_indexed: false }),
+    },
+    revalidatePath: (path: string) => harness.invalidations.push(path),
+    redirect: (path: string) => {
+      harness.redirects.push(path);
+      throw new Error(`NEXT_REDIRECT:${path}`);
+    },
+  });
+
+  await captureRedirect(
+    harness.action,
+    form({ productId: PRODUCT_ID, command: 'enable-index' })
+  );
+
+  assert.deepEqual(harness.invalidations, []);
+  assert.deepEqual(harness.redirects, [
+    '/admin/products?error=concurrency-conflict&productId=' + PRODUCT_ID,
+  ]);
+});
+
+test('invalid input and missing Product redirect to controlled errors without invalidation', async () => {
+  const invalid = actionHarness({ status: 'ACTIVE', is_indexed: false });
+  await captureRedirect(invalid.action, form({ productId: 'invalid', command: 'enable-index' }));
+  assert.deepEqual(invalid.writes, []);
+  assert.deepEqual(invalid.invalidations, []);
+  assert.match(invalid.redirects[0] ?? '', /error=invalid-input/);
+
+  const missing = actionHarness(null);
+  await captureRedirect(
+    missing.action,
+    form({ productId: PRODUCT_ID, command: 'disable-index' })
+  );
+  assert.deepEqual(missing.writes, []);
+  assert.deepEqual(missing.invalidations, []);
+  assert.deepEqual(missing.redirects, ['/admin/products?error=missing&productId=' + PRODUCT_ID]);
+});
+
+test('unexpected persistence failures propagate and never report success', async () => {
+  const invalidations: string[] = [];
+  const redirects: string[] = [];
+  const action = createProductPublishingAction({
+    requireAdmin: async () => undefined,
+    publishingStore: {
+      setLifecycle: async () => {
+        throw new Error('database unavailable');
+      },
+      enableIndexWhenActive: async () => 0,
+      disableIndex: async () => 0,
+      findPublishingState: async () => null,
+    },
+    revalidatePath: (path: string) => invalidations.push(path),
+    redirect: (path: string) => {
+      redirects.push(path);
+      throw new Error(`NEXT_REDIRECT:${path}`);
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      action(
+        form({ productId: PRODUCT_ID, command: 'set-lifecycle', status: 'ACTIVE' })
+      ),
+    /database unavailable/
+  );
+  assert.deepEqual(invalidations, []);
+  assert.deepEqual(redirects, []);
+});
+
+test('post-command stored state maps to the required public-surface outcomes', async () => {
+  const harness = actionHarness({ status: 'DRAFT', is_indexed: true });
+
+  await captureRedirect(
+    harness.action,
+    form({ productId: PRODUCT_ID, command: 'set-lifecycle', status: 'ACTIVE' })
+  );
+  assert.deepEqual(harness.getState(), { status: 'ACTIVE', is_indexed: false });
+  assert.deepEqual(evaluateProductAccess(harness.getState()!), {
+    reason: 'explicit-noindex',
+    isPublic: true,
+    isIndexable: false,
+    isListable: false,
+    isInSitemap: false,
+    isCommerceEligible: true,
+    robots: { index: false, follow: true },
+  });
+
+  const enable = actionHarness(harness.getState());
+  await captureRedirect(enable.action, form({ productId: PRODUCT_ID, command: 'enable-index' }));
+  assert.deepEqual(evaluateProductAccess(enable.getState()!), {
+    reason: 'eligible',
+    isPublic: true,
+    isIndexable: true,
+    isListable: true,
+    isInSitemap: true,
+    isCommerceEligible: true,
+    robots: { index: true, follow: true },
+  });
+
+  const archive = actionHarness(enable.getState());
+  await captureRedirect(
+    archive.action,
+    form({ productId: PRODUCT_ID, command: 'set-lifecycle', status: 'ARCHIVED' })
+  );
+  assert.deepEqual(evaluateProductAccess(archive.getState()!), {
+    reason: 'archived',
+    isPublic: false,
+    isIndexable: false,
+    isListable: false,
+    isInSitemap: false,
+    isCommerceEligible: false,
+    robots: null,
+  });
+});

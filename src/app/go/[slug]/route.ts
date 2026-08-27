@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
 import { appendClickId, getClientIp, hashIp, selectAffiliateLink } from '@/lib/clickTracking';
 import { v4 as uuidv4 } from 'uuid';
+import { evaluateProductAccess } from '@/lib/products/productAccessPolicy';
 
 export async function GET(
   request: NextRequest,
@@ -26,7 +27,16 @@ export async function GET(
       },
     });
 
-    if (!product || product.affiliate_links.length === 0) {
+    if (!product) {
+      return NextResponse.redirect(new URL('/', request.url), 302);
+    }
+
+    const access = evaluateProductAccess(product);
+    if (!access.isCommerceEligible) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    if (product.affiliate_links.length === 0) {
       return NextResponse.redirect(new URL('/', request.url), 302);
     }
 

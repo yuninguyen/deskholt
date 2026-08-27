@@ -1,20 +1,27 @@
+import { createHash } from 'node:crypto';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { connection } from 'next/server';
 import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import ProductSchema from '@/components/ProductSchema';
+import { getCanonicalSiteUrl } from '@/lib/siteUrl';
+import { buildProductMetadata } from '@/lib/products/productMetadata';
+import { getProductPageData } from '@/lib/products/productPageData';
+import {
+  afterProductPageConsumer,
+  beforeProductPageConsumer,
+} from '@/lib/products/productPageCacheProbe';
 import PriceTable from '@/components/ui/PriceTable';
 import Badge from '@/components/ui/Badge';
 import { CheckCircle2, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
 import { loadSpecificationData, filterPublicDisplayRows, type SpecRow } from '@/lib/products/specificationRows';
-import {
-  CATALOG_CURRENCY,
-  STRUCTURED_OFFER_MAX_AGE_MS,
-  buildOfferPresentation,
-  toProductStructuredOffer,
-  type OfferSelectionPolicy,
-} from '@/lib/products/productStructuredData';
+import { CATALOG_CURRENCY, toProductStructuredOffer } from '@/lib/products/productStructuredData';
+
+function probeResultVersion(result: Awaited<ReturnType<typeof getProductPageData>>): string {
+  const versionedResult = { ...result, evaluatedAt: undefined };
+  return createHash('sha256').update(JSON.stringify(versionedResult)).digest('hex');
+}
 
 function formatSpecValue(row: SpecRow): string {
   const existing = row.existing;
@@ -26,31 +33,45 @@ function formatSpecValue(row: SpecRow): string {
   return existing.valueString ?? '';
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const probeSession = await beforeProductPageConsumer('metadata', slug);
+  const result = await getProductPageData(slug);
+  await afterProductPageConsumer(probeSession, {
+    resultVersion: probeResultVersion(result),
+    evaluatedAt: result.evaluatedAt,
+  });
+  if (result.kind !== 'public') notFound();
+
+  return buildProductMetadata({
+    product: result.product,
+    decision: result.decision,
+    siteUrl: getCanonicalSiteUrl(
+      process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL
+    ),
+  });
+}
+
 export default async function ProductDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  await connection();
-  const now = new Date();
-
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      affiliate_links: {
-        orderBy: [
-          { is_in_stock: 'desc' },
-          { priority_order: 'asc' },
-          { id: 'asc' },
-        ],
-      },
-    },
+  const probeSession = await beforeProductPageConsumer('body', slug);
+  const pageData = await getProductPageData(slug);
+  await afterProductPageConsumer(probeSession, {
+    resultVersion: probeResultVersion(pageData),
+    evaluatedAt: pageData.evaluatedAt,
   });
-
-  if (!product) {
+  if (pageData.kind !== 'public') {
     return notFound();
   }
+  const { product, offerPresentation } = pageData;
 
   // Parse specs and user sentiment safely
   let specsObj: Record<string, string> = {};
@@ -78,12 +99,6 @@ export default async function ProductDetailPage({
   const defaultVariantId = specData?.variants.find((v) => v.isActive)?.id ?? null;
   const structuredRows = filterPublicDisplayRows(specData?.rows ?? [], defaultVariantId);
 
-  const offerPolicy: OfferSelectionPolicy = {
-    now,
-    maxAgeMs: STRUCTURED_OFFER_MAX_AGE_MS,
-    currency: CATALOG_CURRENCY,
-  };
-  const offerPresentation = buildOfferPresentation(product.affiliate_links, offerPolicy);
   const structuredOffer = toProductStructuredOffer(
     offerPresentation.canonicalOffer,
     CATALOG_CURRENCY
@@ -151,7 +166,7 @@ export default async function ProductDetailPage({
         <div className="space-y-6 lg:col-span-7">
           <div>
             <span className="font-mono text-xs font-semibold uppercase tracking-wider text-walnut">
-              Verified Product Review
+              Specifications &amp; Buying Analysis
             </span>
             <h1 className="mt-1 font-display text-3xl font-bold tracking-tight text-ink">{product.name}</h1>
             {product.upc_code && (

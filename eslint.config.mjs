@@ -15,6 +15,5 @@ export default defineConfig([
     '.next/**',
     'node_modules/**',
     'next-env.d.ts',
-    'prisma/seed.js',
   ]),
 ]);

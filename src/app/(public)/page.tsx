@@ -3,12 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { ArrowRight, Leaf } from 'lucide-react';
 import ProductCard from '@/components/ui/ProductCard';
 import type { BadgeProps } from '@/components/ui/Badge';
+import { INDEXABLE_PRODUCT_WHERE } from '@/lib/products/productAccessPolicy';
 
 export const revalidate = 86400; // ISR: 24h
 
 export default async function HomePage() {
   const products = await prisma.product.findMany({
-    where: { is_indexed: true },
+    where: INDEXABLE_PRODUCT_WHERE,
     include: {
       affiliate_links: {
         where: { is_in_stock: true },

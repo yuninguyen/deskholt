@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    staticGenerationMaxConcurrency: 1,
+    staticGenerationMinPagesPerWorker: 1000,
+  },
   images: {
     remotePatterns: [
       {

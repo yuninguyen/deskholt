@@ -1,10 +1,10 @@
 import Link from 'next/link';
+import { connection } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Leaf } from 'lucide-react';
 import ProductCard from '@/components/ui/ProductCard';
 import type { BadgeProps } from '@/components/ui/Badge';
-
-export const revalidate = 86400; // ISR: 24h
+import { INDEXABLE_PRODUCT_WHERE } from '@/lib/products/productAccessPolicy';
 
 export default async function CategoryPage({
   params,
@@ -13,6 +13,7 @@ export default async function CategoryPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ eco?: string }>;
 }) {
+  await connection();
   const { slug } = await params;
   const { eco } = await searchParams;
   const isEcoFilter = eco === 'true';
@@ -28,8 +29,8 @@ export default async function CategoryPage({
 
   const products = await prisma.product.findMany({
     where: {
+      ...INDEXABLE_PRODUCT_WHERE,
       category: slug,
-      is_indexed: true,
       ...(isEcoFilter ? { is_sustainable: true } : {}),
     },
     include: {

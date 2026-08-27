@@ -7,20 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  BLOCKED
+  ARCHIVED
+}
+
 model Product {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
-  slug           String   @unique
+  slug           String        @unique
   category       String
   description    String?
   image_url      String
   specs          String? // Stored as JSON string in SQLite
   upc_code       String?
   user_sentiment String? // Stored as JSON string in SQLite
-  is_indexed     Boolean  @default(true)
-  is_sustainable Boolean  @default(false)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  status         ProductStatus @default(DRAFT)
+  is_indexed     Boolean       @default(false)
+  is_sustainable Boolean       @default(false)
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
 
   affiliate_links AffiliateLink[]
   clicks          Click[]
