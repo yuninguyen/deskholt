@@ -1,6 +1,6 @@
 # P0-A3 M2 Baseline Artifact Packet
 
-**Status: AWAITING HUMAN APPROVAL — no M2 approval has been supplied in this session.**
+**Status at capture: AWAITING HUMAN APPROVAL. This is a pre-approval snapshot; approval was subsequently recorded in [`m2-baseline-artifact-approval.md`](m2-baseline-artifact-approval.md).**
 
 ## Proposed artifact
 
