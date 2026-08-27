@@ -1,0 +1,48 @@
+P0-B FINAL FRESH VERIFICATION TRANSCRIPT (sanitized)
+Date: 2026-08-28
+Worktree: C:\laragon\www\deskholt\.worktrees\p0-b-click-data-durability
+
+AUTOMATED GATES
+- npm run lint: PASS, exit 0, zero warnings/errors.
+- npx tsc --noEmit: PASS, exit 0, no diagnostics.
+- npm test: PASS, exit 0.
+  tests=210 suites=0 pass=210 fail=0 cancelled=0 skipped=0 todo=0 duration_ms=2045.4506
+
+DISPOSABLE POSTGRESQL GUARD
+- originalDatasourceConsulted=no
+- explicitOwnedDatabaseUrlSuppliedToDbChildren=yes
+- host=127.0.0.1
+- port=59258
+- highPort=yes
+- auth=trust
+- ownedDatabase=deskholt_p0b_da9d08a5d026452a
+- ownedRoot=C:\laragon\www\deskholt\.worktrees\p0-b-click-data-durability\.superpowers\sdd\2026-08-28-p0-b-click-data-durability\pg-owned-da9d08a5d026452ab0fd13faaebb9d68
+- existingServerUsed=no
+
+MIGRATIONS
+- 20260827014500_baseline_existing_schema: APPLIED
+- 20260827020000_p0_a3_basic_index_gate: APPLIED
+- all migrations successfully applied
+
+ACTUAL /go ROUTE AGAINST OWNED POSTGRESQL
+- normal: redirect=302 merchant=yes attempts=1 rows=1 failureEvents=0
+- transient P1001: redirect=302 merchant=yes attempts=2 sameClickId=yes rows=1 failureEvents=0
+- permanent P2003: redirect=302 merchant=yes attempts=1 rows=0 structuredSanitizedFailureEvents=1
+- fixture cleanup: product=0 affiliateLinks=0 clicks=0
+- manual verifier: tests=1 pass=1 fail=0 duration_ms=630.0076
+
+PRODUCTION BUILD AGAINST OWNED MIGRATED DATABASE
+- prisma generate: PASS
+- Next.js 16.3.0 optimized compilation: PASS
+- TypeScript build phase: PASS
+- static page generation: 13/13 PASS
+- /go/[slug]: dynamic server-rendered route
+- npm run build: PASS, exit 0
+
+CLEANUP
+- preStopStatusExit=0
+- clusterStop=confirmed mode=fast
+- ownedDirectoryDeleted=confirmed remaining=no
+- interrupted prior capture cluster was separately stopped and removed; no owned cluster residue remained before this final run
+
+FINAL STATUS: PASS
