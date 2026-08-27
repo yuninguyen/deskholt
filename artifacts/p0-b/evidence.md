@@ -77,16 +77,16 @@ Before deployment, operations must stop any externally managed legacy worker and
 
 ## Scope audit
 
-The scope comparison is the **uncommitted working-tree delta** against both `HEAD` and `origin/main`, which are the same commit: `079de128c693f28b9c837dfca92fc8effa4f0512` (`079de12`). It is not a comparison against stale local `main`; local `main` currently resolves to `bbe101cd3b71e1e976f4e82b3456200be12f9c1e`.
+The committed implementation scope is the branch delta from `origin/main@079de12` to implementation commit `e08ac41`. It is not a comparison against stale local `main`, which remains behind the remote base.
 
-GitNexus reports its index at commit `079de12`, but that index excludes relationships introduced only by uncommitted files/edits. GitNexus status/impact information is therefore supplemental; Git status plus tracked and untracked working-tree path audits are the controlling scope evidence.
+GitNexus was indexed at committed base `079de12` and could not model relationships introduced by the then-uncommitted helper/route edits. Its status/impact output was supplemental; Git status/diff, tracked-plus-untracked path inspection, test/build evidence, and the operator-approved fallback were the controlling pre-commit scope checks.
 
-The working-tree delta remains confined to the planned route, click-persistence helper, legacy worker removal, route/persistence tests, P0-B artifacts, canonical plan checklist, and ignored verification scratch. No Spec 001, seed, migration, Prisma schema, package manifest, or unrelated source file is modified.
+The committed delta is confined to the planned route, click-persistence helper, legacy worker removal, route/persistence tests, P0-B artifacts, and canonical plan. No Spec 001, seed, migration, Prisma schema, package manifest, or unrelated source file is included.
 
-## Task 5 checkbox decision
+## Task 5 completion
 
 - Step 1: **checked** — current lint, TypeScript, full-suite, and isolated build evidence is recorded.
 - Step 2: **checked** — actual normal/transient/permanent `/go` scenarios passed against brand-new owned PostgreSQL (`verification-transcript.txt:27-32`).
 - Step 3: **checked** — final evidence retains architecture, gates, route transcript, trade-off, metric caveat, bounds, and cleanup.
-- Step 4: **checked via documented CLI/Git fallback** — scope comparison is against `HEAD`/`origin/main@079de12`; no commit attempted.
-- Step 5: **unchecked** — no commit, push, PR, or merge.
+- Step 4: **checked via operator-approved CLI/Git fallback** — `gitnexus_detect_changes()` was unavailable; scoped fallback verification completed before commit.
+- Step 5: **checked** — branch `p0-b-click-data-durability` was pushed and PR #4 opened against `main`: https://github.com/yuninguyen/deskholt/pull/4. Implementation HEAD `e08ac41` was reported mergeable with both GitHub checks successful before the checklist-only follow-up commit.
