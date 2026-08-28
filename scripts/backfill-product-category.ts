@@ -25,10 +25,8 @@ export function resolveCategoryBackfill(
   products: readonly ResolverProduct[],
   categories: readonly ResolverCategory[],
 ): CategoryBackfillResult {
-  const byName = new Map<string, ResolverCategory>();
   const bySlug = new Map<string, ResolverCategory>();
   for (const category of [...categories].sort((a, b) => a.id.localeCompare(b.id))) {
-    byName.set(normalize(category.name), category);
     bySlug.set(normalize(category.slug), category);
   }
 
@@ -36,7 +34,7 @@ export function resolveCategoryBackfill(
   const unchanged: CategoryBackfillResult['unchanged'] = [];
   const unmatched: CategoryBackfillResult['unmatched'] = [];
   for (const product of [...products].sort((a, b) => a.id.localeCompare(b.id))) {
-    const category = byName.get(normalize(product.category)) ?? bySlug.get(normalize(product.category));
+    const category = bySlug.get(normalize(product.category));
     if (!category) {
       unmatched.push({ productId: product.id, slug: product.slug, category: product.category });
     } else if (product.category_id === category.id) {

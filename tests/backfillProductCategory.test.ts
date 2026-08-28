@@ -8,16 +8,26 @@ test('resolves matching category names and only proposes necessary updates', () 
     { id: 'cat-office', name: 'Office Chairs', slug: 'office-chairs' },
   ];
   const products = [
-    { id: 'p1', slug: 'desk-one', category: 'Standing Desks', category_id: null },
-    { id: 'p2', slug: 'desk-two', category: 'Standing Desks', category_id: 'cat-standing' },
-    { id: 'p3', slug: 'chair-one', category: 'Office Chairs', category_id: 'cat-standing' },
+    { id: 'p1', slug: 'desk-one', category: 'standing-desks', category_id: null },
+    { id: 'p2', slug: 'desk-two', category: 'standing-desks', category_id: 'cat-standing' },
+    { id: 'p3', slug: 'chair-one', category: 'office-chairs', category_id: 'cat-standing' },
   ];
 
   assert.deepEqual(resolveCategoryBackfill(products, categories), {
     updates: [{ productId: 'p1', categoryId: 'cat-standing' }, { productId: 'p3', categoryId: 'cat-office' }],
-    unchanged: [{ productId: 'p2', slug: 'desk-two', category: 'Standing Desks' }],
+    unchanged: [{ productId: 'p2', slug: 'desk-two', category: 'standing-desks' }],
     unmatched: [],
   });
+});
+
+test('does not match a legacy category name when it is not the category slug', () => {
+  const result = resolveCategoryBackfill(
+    [{ id: 'p-name-only', slug: 'name-only', category: 'Standing Desks', category_id: null }],
+    [{ id: 'cat', name: 'Standing Desks', slug: 'standing-desks' }],
+  );
+
+  assert.deepEqual(result.updates, []);
+  assert.deepEqual(result.unmatched, [{ productId: 'p-name-only', slug: 'name-only', category: 'Standing Desks' }]);
 });
 
 test('reports unmatched products with id, slug, and category without proposing an update', () => {
@@ -32,11 +42,11 @@ test('reports unmatched products with id, slug, and category without proposing a
 
 test('is deterministic and idempotent, while a changed category string resolves anew', () => {
   const categories = [{ id: 'cat-a', name: 'Alpha', slug: 'alpha' }, { id: 'cat-b', name: 'Beta', slug: 'beta' }];
-  const products = [{ id: 'p1', slug: 'one', category: 'Alpha', category_id: 'cat-b' }];
+  const products = [{ id: 'p1', slug: 'one', category: 'alpha', category_id: 'cat-b' }];
   const first = resolveCategoryBackfill(products, categories);
   const second = resolveCategoryBackfill(products, categories);
 
   assert.deepEqual(first, second);
   assert.deepEqual(first.updates, [{ productId: 'p1', categoryId: 'cat-a' }]);
-  assert.deepEqual(resolveCategoryBackfill([{ ...products[0], category: 'Beta', category_id: 'cat-b' }], categories).updates, []);
+  assert.deepEqual(resolveCategoryBackfill([{ ...products[0], category: 'beta', category_id: 'cat-b' }], categories).updates, []);
 });
