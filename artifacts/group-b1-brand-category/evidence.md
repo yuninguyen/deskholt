@@ -32,7 +32,7 @@ The production validator and `loadSpecificationData` tests both exercise an exis
 - `npm run lint`: PASS (`eslint . --max-warnings=0`).
 - `npx tsc --noEmit`: PASS.
 - `npm test`: PASS, `260` tests, `260` passed, `0` failed.
-- `npm run build`: attempted against disposable DB in the combined verification command, but the command exceeded the 180-second harness timeout while Next build workers remained active. Earlier build without a database failed only because `DATABASE_URL` was absent during prerender; no code compilation/type error was reported. Therefore build is not claimed green in this evidence.
+- `npm run build`: PASS in a standalone bounded run with disposable `DATABASE_URL`; Prisma Client generation PASS, Next/Turbopack compilation PASS, TypeScript PASS, page data collection PASS, and static page generation PASS (`13/13`). The earlier combined verifier's 180-second outer timeout remains historical context only; it is superseded by this standalone result.
 
 ## Scope / exclusions and detect-changes fallback
 
