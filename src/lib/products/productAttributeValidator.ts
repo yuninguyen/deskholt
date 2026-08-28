@@ -45,17 +45,24 @@ export async function validateProductAttributeInput(
 
   const product = await prisma.product.findUnique({
     where: { id: input.productId },
-    select: { id: true, category: true },
+    select: {
+      id: true,
+      category: true,
+      category_id: true,
+      category_ref: { select: { id: true, name: true } },
+    },
   });
 
   if (!product) {
     return fail(`productId=${input.productId} không tồn tại.`);
   }
 
-  const category = await prisma.category.findUnique({
-    where: { slug: product.category },
-    select: { id: true, name: true },
-  });
+  const category = product.category_id !== null
+    ? product.category_ref
+    : await prisma.category.findUnique({
+        where: { slug: product.category },
+        select: { id: true, name: true },
+      });
 
   if (!category) {
     return fail(`Category "${product.category}" chưa được khai báo trong Attribute Engine.`);
