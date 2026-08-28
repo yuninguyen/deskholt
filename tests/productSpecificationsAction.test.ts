@@ -55,6 +55,8 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
   let transactions = 0;
   let validations = 0;
   let nowCalls = 0;
+  const savedDrafts: Array<{ productId: string; rows: Record<string, unknown> }> = [];
+  const clearedDraftProducts: string[] = [];
   const existingRecords = new Map(
     rows
       .filter((value) => value.existing)
@@ -100,6 +102,13 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
       nowCalls += 1;
       return fixedNow;
     },
+    saveDraft: (draftProductId, draftRows) => {
+      savedDrafts.push({ productId: draftProductId, rows: draftRows });
+      return 'opaque_test_token';
+    },
+    clearProductDrafts: (draftProductId) => {
+      clearedDraftProducts.push(draftProductId);
+    },
     redirect: (path) => {
       redirects.push(path);
       throw new Error(`NEXT_REDIRECT:${path}`);
@@ -113,6 +122,8 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
     getTransactions: () => transactions,
     getValidations: () => validations,
     getNowCalls: () => nowCalls,
+    savedDrafts,
+    clearedDraftProducts,
     validatedDefinitionIds,
   };
 }
@@ -377,4 +388,48 @@ test('an earlier valid row plus a later invalid row prevents every transaction w
   assert.equal(testHarness.getTransactions(), 0);
   assert.deepEqual(testHarness.writes, []);
   assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('validation failure saves only row-keyed draft strings and appends its opaque token', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: 'not a url',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  assert.deepEqual(testHarness.savedDrafts, [
+    {
+      productId,
+      rows: {
+        [value.rowKey]: {
+          value: '48.5',
+          sourceUrl: 'not a url',
+          sourceType: 'MANUFACTURER',
+          confidence: 'VERIFIED',
+        },
+      },
+    },
+  ]);
+  const redirectUrl = new URL(testHarness.redirects[0] ?? '', 'https://deskholt.test');
+  assert.equal(redirectUrl.searchParams.get('draft'), 'opaque_test_token');
+  assert.doesNotMatch(redirectUrl.href, /48\.5|manufacturer/i);
+  assert.deepEqual(testHarness.clearedDraftProducts, []);
+});
+
+test('successful save creates no draft and clears every prior draft for the Product', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({ [`value__${value.rowKey}`]: '48.5' }));
+
+  assert.deepEqual(testHarness.savedDrafts, []);
+  assert.deepEqual(testHarness.clearedDraftProducts, [productId]);
+  assert.deepEqual(testHarness.redirects, [`/admin/products/${productId}/specifications?saved=1`]);
 });
