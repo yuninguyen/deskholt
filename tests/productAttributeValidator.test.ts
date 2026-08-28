@@ -114,6 +114,41 @@ test('validator preserves relation integrity when a non-null category relation i
   assert.equal(categoryLookups, 0);
 });
 
+test('validator preserves legacy success semantics with exactly one slug lookup', async () => {
+  let categoryLookups = 0;
+  let categoryArgs: unknown;
+  const fixture = makeFixture();
+  const prisma = fakePrisma(fixture);
+  (prisma.category.findUnique as unknown as (args: unknown) => Promise<unknown>) = async (args) => {
+    categoryLookups += 1;
+    categoryArgs = args;
+    return fixture.category;
+  };
+  const result = await validateProductAttributeInput(prisma, input());
+  assert.deepEqual(result, { valid: true, errors: [] });
+  assert.equal(categoryLookups, 1);
+  assert.deepEqual(categoryArgs, {
+    where: { slug: 'standing-desks' },
+    select: { id: true, name: true },
+  });
+});
+
+test('validator preserves legacy error semantics with exactly one slug lookup', async () => {
+  let categoryLookups = 0;
+  const fixture = makeFixture({ category: null });
+  const prisma = fakePrisma(fixture);
+  (prisma.category.findUnique as unknown as () => Promise<unknown>) = async () => {
+    categoryLookups += 1;
+    return null;
+  };
+  const result = await validateProductAttributeInput(prisma, input());
+  assert.deepEqual(result, {
+    valid: false,
+    errors: ['Category "standing-desks" chưa được khai báo trong Attribute Engine.'],
+  });
+  assert.equal(categoryLookups, 1);
+});
+
 test('validator rejects an unknown attribute definition', async () => {
   const result = await validate(makeFixture({ definition: null }));
   assert.equal(result.valid, false);

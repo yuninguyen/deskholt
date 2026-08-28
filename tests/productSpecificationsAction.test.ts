@@ -151,16 +151,73 @@ test('specification loader uses category relation and avoids slug lookup', async
 
 test('specification loader falls back to one slug lookup for legacy products', async () => {
   let categoryLookups = 0;
-  const definition = { id: definitionId, scope: 'PRODUCT', data_type: 'DECIMAL', key: 'height', label: 'Height', unit: null, allowed_values: null };
+  const definition = {
+    id: definitionId,
+    scope: 'PRODUCT',
+    data_type: 'DECIMAL',
+    key: 'height',
+    label: 'Height',
+    unit: null,
+    allowed_values: null,
+  };
   const prisma = {
-    product: { findUnique: async () => ({ id: productId, name: 'Desk', slug: 'desk', category: 'legacy', category_id: null, category_ref: null }) },
-    category: { findUnique: async () => { categoryLookups += 1; return { id: 'cat-1', name: 'Standing', category_attributes: [{ attribute_definition: definition, is_required: true, display_order: 1 }] }; } },
+    product: {
+      findUnique: async () => ({
+        id: productId,
+        name: 'Desk',
+        slug: 'desk',
+        category: 'legacy',
+        category_id: null,
+        category_ref: null,
+      }),
+    },
+    category: {
+      findUnique: async (args: unknown) => {
+        categoryLookups += 1;
+        assert.deepEqual(args, {
+          where: { slug: 'legacy' },
+          include: {
+            category_attributes: {
+              include: { attribute_definition: true },
+              orderBy: { display_order: 'asc' },
+            },
+          },
+        });
+        return {
+          id: 'cat-1',
+          name: 'Standing',
+          category_attributes: [{ attribute_definition: definition, is_required: true, display_order: 1 }],
+        };
+      },
+    },
     productVariant: { findMany: async () => [] },
     productAttribute: { findMany: async () => [] },
   };
   const result = await loadSpecificationData(prisma as never, productId);
   assert.equal(result?.categoryName, 'Standing');
   assert.equal(categoryLookups, 1);
+});
+
+test('specification loader returns null without slug lookup for missing non-null relation', async () => {
+  let categoryLookups = 0;
+  const prisma = {
+    product: {
+      findUnique: async () => ({
+        id: productId,
+        name: 'Desk',
+        slug: 'desk',
+        category: 'legacy',
+        category_id: 'cat-1',
+        category_ref: null,
+      }),
+    },
+    category: { findUnique: async () => { categoryLookups += 1; return null; } },
+    productVariant: { findMany: async () => [] },
+    productAttribute: { findMany: async () => [] },
+  };
+  const result = await loadSpecificationData(prisma as never, productId);
+  assert.equal(result, null);
+  assert.equal(categoryLookups, 0);
 });
 
 test('source-without-value rejects before transaction with zero writes', async () => {
