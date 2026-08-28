@@ -19,6 +19,8 @@ model Product {
   name           String
   slug           String        @unique
   category       String
+  category_id    String?
+  brand_id       String?
   description    String?
   image_url      String
   specs          String? // Stored as JSON string in SQLite
@@ -32,6 +34,11 @@ model Product {
 
   affiliate_links AffiliateLink[]
   clicks          Click[]
+  category_ref    Category? @relation(fields: [category_id], references: [id])
+  brand           Brand?    @relation(fields: [brand_id], references: [id])
+
+  @@index([category_id])
+  @@index([brand_id])
 
   // V1-alpha Attribute Engine (additive; existing fields/relations above unchanged)
   variants           ProductVariant[]
@@ -103,6 +110,7 @@ model Category {
   updated_at  DateTime @updatedAt
 
   category_attributes CategoryAttribute[]
+  products            Product[]
 
   @@map("categories")
 }
@@ -113,6 +121,8 @@ model Brand {
   name       String
   website    String?
   created_at DateTime @default(now())
+
+  products   Product[]
 
   @@map("brands")
 }
