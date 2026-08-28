@@ -32,7 +32,7 @@ Status: COMPLETE
 - Impact: `saveSpecificationsAction` LOW. Shared `loadSpecificationData` is HIGH-impact across Admin action/page and public Product detail, so it was deliberately left unchanged.
 - RED reproduced: no testable action factory existed; all six behavioral tests failed before implementation.
 - Added a framework-neutral `specificationSaveAction` dependency boundary and retained a minimal async `'use server'` production wrapper.
-- Added 6 tests proving source-without-value rejection before transaction, blank skip, clear-to-delete, update/create semantics, one shared VERIFIED timestamp, LIKELY null timestamp, redirect-after-success, and zero writes when any row is invalid.
+- Added 6 tests proving source-without-value rejection before transaction, blank skip, clear-to-delete, update/create semantics, one shared VERIFIED timestamp across an update and create with one `now()` call, LIKELY null timestamp, redirect-after-success, and zero writes after validating an earlier valid row plus a later invalid row with row-specific outcomes.
 - Focused Spec 001 regression: 24/24 PASS.
 - Focused ESLint: PASS, zero warnings.
 - TypeScript no-emit: PASS.

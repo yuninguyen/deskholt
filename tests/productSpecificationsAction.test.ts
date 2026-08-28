@@ -48,24 +48,29 @@ function form(entries: Record<string, string>): FormData {
 
 type Write = { operation: string; args: unknown };
 
-function harness(rows: SpecRow[], validationErrors: string[] = []) {
+function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]> = {}) {
   const writes: Write[] = [];
   const redirects: string[] = [];
+  const validatedDefinitionIds: string[] = [];
   let transactions = 0;
   let validations = 0;
-  let existingRecord: { id: string } | null = rows.some((value) => value.existing)
-    ? { id: 'cm-existing-attribute' }
-    : null;
+  let nowCalls = 0;
+  const existingRecords = new Map(
+    rows
+      .filter((value) => value.existing)
+      .map((value) => [value.attributeDefinitionId, { id: `existing-${value.attributeDefinitionId}` }])
+  );
 
   const tx = {
     productAttribute: {
       findFirst: async (args: unknown) => {
         writes.push({ operation: 'findFirst', args });
-        return existingRecord;
+        const definition = (args as { where: { attribute_definition_id: string } }).where
+          .attribute_definition_id;
+        return existingRecords.get(definition) ?? null;
       },
       delete: async (args: unknown) => {
         writes.push({ operation: 'delete', args });
-        existingRecord = null;
         return args;
       },
       update: async (args: unknown) => {
@@ -74,7 +79,6 @@ function harness(rows: SpecRow[], validationErrors: string[] = []) {
       },
       create: async (args: unknown) => {
         writes.push({ operation: 'create', args });
-        existingRecord = { id: 'cm-created-attribute' };
         return args;
       },
     },
@@ -82,17 +86,20 @@ function harness(rows: SpecRow[], validationErrors: string[] = []) {
 
   const dependencies: SaveSpecificationsDependencies = {
     loadSpecificationData: async () => specificationData(rows),
-    validateProductAttributeInput: async () => {
+    validateProductAttributeInput: async (input) => {
       validations += 1;
-      return validationErrors.length > 0
-        ? { valid: false, errors: validationErrors }
-        : { valid: true, errors: [] };
+      validatedDefinitionIds.push(input.attributeDefinitionId);
+      const errors = validationErrorsByRow[input.attributeDefinitionId] ?? [];
+      return errors.length > 0 ? { valid: false, errors } : { valid: true, errors: [] };
     },
     transaction: async (callback) => {
       transactions += 1;
       return callback(tx as never);
     },
-    now: () => fixedNow,
+    now: () => {
+      nowCalls += 1;
+      return fixedNow;
+    },
     redirect: (path) => {
       redirects.push(path);
       throw new Error(`NEXT_REDIRECT:${path}`);
@@ -105,6 +112,8 @@ function harness(rows: SpecRow[], validationErrors: string[] = []) {
     redirects,
     getTransactions: () => transactions,
     getValidations: () => validations,
+    getNowCalls: () => nowCalls,
+    validatedDefinitionIds,
   };
 }
 
@@ -160,8 +169,8 @@ test('clearing an existing row deletes it inside the transaction', async () => {
   assert.deepEqual(testHarness.writes.map((entry) => entry.operation), ['findFirst', 'delete']);
 });
 
-test('VERIFIED update sets one shared save timestamp', async () => {
-  const value = row({
+test('VERIFIED update and create share one save timestamp', async () => {
+  const updateRow = row({
     existing: {
       valueString: null,
       valueNumber: 48.5,
@@ -171,21 +180,34 @@ test('VERIFIED update sets one shared save timestamp', async () => {
       confidence: 'LIKELY',
     },
   });
-  const testHarness = harness([value]);
+  const createRow = row({
+    rowKey: 'cm33333333333333333333__p',
+    attributeDefinitionId: 'cm33333333333333333333',
+    key: 'min_height_in',
+    label: 'Minimum Height',
+  });
+  const testHarness = harness([updateRow, createRow]);
 
   await redirecting(
     testHarness.action,
     form({
-      [`value__${value.rowKey}`]: '49.25',
-      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
-      [`confidence__${value.rowKey}`]: 'VERIFIED',
+      [`value__${updateRow.rowKey}`]: '49.25',
+      [`sourceType__${updateRow.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${updateRow.rowKey}`]: 'VERIFIED',
+      [`value__${createRow.rowKey}`]: '24.5',
+      [`sourceType__${createRow.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${createRow.rowKey}`]: 'VERIFIED',
     })
   );
 
   const update = testHarness.writes.find((entry) => entry.operation === 'update');
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
   assert.ok(update);
-  assert.deepEqual((update.args as { data: { verified_at: Date } }).data.verified_at, fixedNow);
-  assert.equal(testHarness.getValidations(), 1);
+  assert.ok(create);
+  assert.equal((update.args as { data: { verified_at: Date } }).data.verified_at, fixedNow);
+  assert.equal((create.args as { data: { verified_at: Date } }).data.verified_at, fixedNow);
+  assert.equal(testHarness.getNowCalls(), 1);
+  assert.equal(testHarness.getValidations(), 2);
 });
 
 test('LIKELY create clears verified timestamp and persists parsed source fields', async () => {
@@ -213,14 +235,18 @@ test('LIKELY create clears verified timestamp and persists parsed source fields'
   assert.equal(data.confidence, 'LIKELY');
 });
 
-test('one invalid non-blank row prevents every transaction write', async () => {
+test('an earlier valid row plus a later invalid row prevents every transaction write', async () => {
   const validRow = row();
   const invalidRow = row({
     rowKey: 'cm33333333333333333333__p',
     attributeDefinitionId: 'cm33333333333333333333',
     label: 'Minimum Height',
   });
-  const testHarness = harness([validRow, invalidRow], ['scope mismatch']);
+  const validationErrorsByRow = {
+    [validRow.attributeDefinitionId]: [],
+    [invalidRow.attributeDefinitionId]: ['scope mismatch'],
+  };
+  const testHarness = harness([validRow, invalidRow], validationErrorsByRow);
 
   await redirecting(
     testHarness.action,
@@ -230,8 +256,12 @@ test('one invalid non-blank row prevents every transaction write', async () => {
     })
   );
 
-  assert.equal(testHarness.getTransactions(), 0);
   assert.equal(testHarness.getValidations(), 2);
+  assert.deepEqual(testHarness.validatedDefinitionIds, [
+    validRow.attributeDefinitionId,
+    invalidRow.attributeDefinitionId,
+  ]);
+  assert.equal(testHarness.getTransactions(), 0);
   assert.deepEqual(testHarness.writes, []);
   assert.match(testHarness.redirects[0] ?? '', /error=1/);
 });
