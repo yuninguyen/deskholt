@@ -192,9 +192,11 @@ test('VERIFIED update and create share one save timestamp', async () => {
     testHarness.action,
     form({
       [`value__${updateRow.rowKey}`]: '49.25',
+      [`sourceUrl__${updateRow.rowKey}`]: 'https://manufacturer.example/update-specs',
       [`sourceType__${updateRow.rowKey}`]: 'MANUFACTURER',
       [`confidence__${updateRow.rowKey}`]: 'VERIFIED',
       [`value__${createRow.rowKey}`]: '24.5',
+      [`sourceUrl__${createRow.rowKey}`]: 'https://manufacturer.example/create-specs',
       [`sourceType__${createRow.rowKey}`]: 'MANUFACTURER',
       [`confidence__${createRow.rowKey}`]: 'VERIFIED',
     })
@@ -208,6 +210,117 @@ test('VERIFIED update and create share one save timestamp', async () => {
   assert.equal((create.args as { data: { verified_at: Date } }).data.verified_at, fixedNow);
   assert.equal(testHarness.getNowCalls(), 1);
   assert.equal(testHarness.getValidations(), 2);
+});
+
+test('VERIFIED with an empty source URL rejects before transaction with zero writes', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: '',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  assert.equal(testHarness.getTransactions(), 0);
+  assert.deepEqual(testHarness.writes, []);
+  assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('VERIFIED with a non-URL source rejects before transaction with zero writes', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: 'not a url',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  assert.equal(testHarness.getTransactions(), 0);
+  assert.deepEqual(testHarness.writes, []);
+  assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('VERIFIED with an empty or invalid source type rejects before transaction with zero writes', async () => {
+  for (const sourceType of ['', 'NOT_A_SOURCE_TYPE']) {
+    const value = row();
+    const testHarness = harness([value]);
+
+    await redirecting(
+      testHarness.action,
+      form({
+        [`value__${value.rowKey}`]: '48.5',
+        [`sourceUrl__${value.rowKey}`]: 'https://manufacturer.example/specs',
+        [`sourceType__${value.rowKey}`]: sourceType,
+        [`confidence__${value.rowKey}`]: 'VERIFIED',
+      })
+    );
+
+    assert.equal(testHarness.getTransactions(), 0, `sourceType=${JSON.stringify(sourceType)}`);
+    assert.deepEqual(testHarness.writes, [], `sourceType=${JSON.stringify(sourceType)}`);
+    assert.match(testHarness.redirects[0] ?? '', /error=1/);
+  }
+});
+
+test('VERIFIED with a valid absolute URL and source type persists verified timestamp', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: 'https://manufacturer.example/specs',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
+  assert.ok(create);
+  const data = (create.args as {
+    data: { verified_at: Date; source_url: string; source_type: SourceType; confidence: Confidence };
+  }).data;
+  assert.equal(data.verified_at, fixedNow);
+  assert.equal(data.source_url, 'https://manufacturer.example/specs');
+  assert.equal(data.source_type, 'MANUFACTURER');
+  assert.equal(data.confidence, 'VERIFIED');
+});
+
+test('LIKELY and UNVERIFIED accept empty source fields without VERIFIED source policy', async () => {
+  for (const confidence of ['LIKELY', 'UNVERIFIED'] satisfies Confidence[]) {
+    const value = row();
+    const testHarness = harness([value]);
+
+    await redirecting(
+      testHarness.action,
+      form({
+        [`value__${value.rowKey}`]: '48.5',
+        [`sourceUrl__${value.rowKey}`]: '',
+        [`sourceType__${value.rowKey}`]: '',
+        [`confidence__${value.rowKey}`]: confidence,
+      })
+    );
+
+    const create = testHarness.writes.find((entry) => entry.operation === 'create');
+    assert.ok(create, `confidence=${confidence}`);
+    const data = (create.args as {
+      data: { verified_at: Date | null; source_url: string | null; source_type: SourceType | null; confidence: Confidence };
+    }).data;
+    assert.equal(data.verified_at, null);
+    assert.equal(data.source_url, null);
+    assert.equal(data.source_type, null);
+    assert.equal(data.confidence, confidence);
+  }
 });
 
 test('LIKELY create clears verified timestamp and persists parsed source fields', async () => {
