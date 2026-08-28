@@ -5,6 +5,15 @@ const CONFIDENCES = ['VERIFIED', 'LIKELY', 'UNVERIFIED'] as const;
 
 function SpecRowFields({ row }: { row: SpecRow }) {
   const existing = row.existing;
+  const allowedEnumValues = row.allowedValues ?? [];
+  const staleEnumValue =
+    row.dataType === 'ENUM' &&
+    existing?.valueString !== null &&
+    existing?.valueString !== undefined &&
+    !allowedEnumValues.includes(existing.valueString)
+      ? existing.valueString
+      : null;
+  const staleEnumHelpId = `${row.rowKey}-stale-enum`;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 py-3 border-b border-gray-800 last:border-b-0">
@@ -31,18 +40,30 @@ function SpecRowFields({ row }: { row: SpecRow }) {
             <option value="false">False</option>
           </select>
         ) : row.dataType === 'ENUM' ? (
-          <select
-            name={`value__${row.rowKey}`}
-            defaultValue={existing?.valueString ?? ''}
-            className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
-          >
-            <option value="">—</option>
-            {(row.allowedValues ?? []).map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
+          <div className="space-y-1">
+            <select
+              name={`value__${row.rowKey}`}
+              defaultValue={existing?.valueString ?? ''}
+              aria-invalid={staleEnumValue !== null}
+              aria-describedby={staleEnumValue !== null ? staleEnumHelpId : undefined}
+              className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
+            >
+              <option value="">—</option>
+              {staleEnumValue !== null && (
+                <option value={staleEnumValue}>{staleEnumValue} (stored value — no longer allowed)</option>
+              )}
+              {allowedEnumValues.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            {staleEnumValue !== null && (
+              <p id={staleEnumHelpId} role="alert" className="text-xs text-amber-300">
+                Giá trị ENUM đã lưu không còn nằm trong danh sách cho phép. Chọn giá trị mới trước khi lưu.
+              </p>
+            )}
+          </div>
         ) : row.dataType === 'DECIMAL' || row.dataType === 'INTEGER' ? (
           <input
             type="number"
@@ -112,7 +133,6 @@ export default function ProductSpecificationsForm({
 }) {
   const productRows = data.rows.filter((r) => r.variantId === null);
   const activeVariants = data.variants.filter((v) => v.isActive);
-  const hasVariantScopedRows = data.rows.some((r) => r.variantId !== null);
 
   return (
     <form action={action} className="space-y-8">
@@ -129,9 +149,11 @@ export default function ProductSpecificationsForm({
         </div>
       </section>
 
-      {activeVariants.length === 0 && hasVariantScopedRows === false && data.variants.length === 0 && (
+      {activeVariants.length === 0 && (
         <div className="rounded-xl border border-amber-800 bg-amber-950/40 px-4 py-3 text-sm text-amber-300">
-          Sản phẩm này chưa có Variant. Hãy tạo Variant trước để nhập specs cấp Variant.
+          {data.variants.length === 0
+            ? 'Sản phẩm này chưa có Variant. Hãy tạo Variant trước để nhập specs cấp Variant.'
+            : 'Sản phẩm này không có Variant đang hoạt động. Hãy tạo hoặc kích hoạt Variant trước để nhập specs cấp Variant.'}
         </div>
       )}
 
