@@ -45,6 +45,24 @@ Exact query-proof tests and observed spy counts:
 - `npm test`: PASS, `263` tests, `263` passed, `0` failed (final exact-slug collision regressions included).
 - `npm run build`: PASS in a standalone bounded run with disposable `DATABASE_URL`; Prisma Client generation PASS, Next/Turbopack compilation PASS, TypeScript PASS, page data collection PASS, and static page generation PASS (`13/13`). The earlier combined verifier's 180-second outer timeout remains historical context only; it is superseded by this standalone result.
 
+## Connected Vercel/Neon preview migration
+
+After PR #7's first Vercel build exposed the expected deployment ordering gate (`P2022`: the connected database did not yet have `products.category_id`), the owner explicitly authorized migrating the temporary Vercel/Neon preview integration database under `docs/operations/deployment-strategy.md`.
+
+Secret-free preflight fingerprint:
+
+- Vercel project: `yuninguyens-projects/deskholt`, PR preview branch `group-b1-brand-category-relations`.
+- Datasource provider/host suffix: Neon, `aws.neon.tech`; PostgreSQL `18.6`; database `neondb`; role `neondb_owner`.
+- Pre-migration counts: `20` Products, `0` Categories, `0` Brands.
+- Pre-migration history: the baseline and P0-A3 index-gate migrations were finished; the Group B-1 migration was absent.
+- GitHub Actions `check` for the reviewed PR head was successful before the preview migration.
+
+Executed only the reviewed migration through `prisma migrate deploy`: `20260828120000_add_product_brand_category_relations`. Postcheck confirmed both columns nullable, both indexes present, both FKs present with `SET NULL`/`CASCADE`, the migration marked finished, and Product/Category/Brand counts preserved at `20/0/0`.
+
+The real backfill script was then run as authorized. Because this preview database has no Category rows, it safely reported all `20` Products as unmatched and performed `0` updates; `category_id` and `brand_id` therefore remain null for all Products. No Category content was invented and the explicitly excluded Standing Desk/default-Variant content seed was not run. This is the planned report-and-preserve behavior for missing Category matches, not a backfill failure.
+
+Temporary Vercel OIDC/environment files and local project-link metadata were deleted immediately after the postcheck; no datasource URL or credential is recorded here.
+
 ## Scope / exclusions and detect-changes fallback
 
 No P0-A/P0-B paths, Spec 001 form-correctness files, Brand population, Admin Product UI, default Variant, Available Options, Merchant/Offer models, or unrelated production code were changed. The only intended Task 4 documentation commits are the plan checkbox updates and this evidence document; resolver and regression-test changes are tracked separately in this review fix. GitNexus MCP `detect-changes` was unavailable in this delegated runtime; fallback review was `git status --short` plus manual diff/path review before commit. PR/push Step 4 completed with PR #7 (`https://github.com/yuninguyen/deskholt/pull/7`) against `main`; the initial reviewed head `c372d22` reported both GitHub checks successful before this documentation-only completion commit. Final head/check state is verified separately after push.
