@@ -11,7 +11,7 @@
 - `Category` **is** read today, but only via an implicit string join, duplicated in two places:
   - `src/lib/products/productAttributeValidator.ts:55-58`: `prisma.category.findUnique({ where: { slug: product.category } })`
   - `src/lib/products/specificationRows.ts:53-54`: the same pattern.
-  
+
   Both do a **second round-trip query** to resolve the category by slug instead of using a real Prisma relation/`include`. This is the "legacy dual-read" pattern the blueprint's P1 scope list explicitly names — it works, but it's not a real relation and can silently drift (e.g. a `Product.category` value with no matching `Category` row fails validation with a message rather than a schema-enforced link).
 
 ## What this plan does
