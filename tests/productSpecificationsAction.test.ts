@@ -5,6 +5,7 @@ import {
   createSaveSpecificationsAction,
   type SaveSpecificationsDependencies,
 } from '../src/lib/products/specificationSaveAction';
+import { loadSpecificationData } from '../src/lib/products/specificationRows';
 import type { SpecificationData, SpecRow } from '../src/lib/products/specificationRows';
 
 const productId = 'cm12345678901234567890';
@@ -131,6 +132,36 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
 async function redirecting(action: (data: FormData) => Promise<void>, data: FormData) {
   await assert.rejects(() => action(data), /NEXT_REDIRECT:/);
 }
+
+test('specification loader uses category relation and avoids slug lookup', async () => {
+  let categoryLookups = 0;
+  let productArgs: unknown;
+  const definition = { id: definitionId, scope: 'PRODUCT', data_type: 'DECIMAL', key: 'height', label: 'Height', unit: null, allowed_values: null };
+  const prisma = {
+    product: { findUnique: async (args: unknown) => { productArgs = args; return { id: productId, name: 'Desk', slug: 'desk', category: 'legacy', category_id: 'cat-1', category_ref: { id: 'cat-1', name: 'Standing', category_attributes: [{ attribute_definition: definition, is_required: true, display_order: 1 }] } }; } },
+    category: { findUnique: async () => { categoryLookups += 1; return null; } },
+    productVariant: { findMany: async () => [] },
+    productAttribute: { findMany: async () => [] },
+  };
+  const result = await loadSpecificationData(prisma as never, productId);
+  assert.equal(result?.categoryName, 'Standing');
+  assert.equal(categoryLookups, 0);
+  assert.match(JSON.stringify(productArgs), /category_ref/);
+});
+
+test('specification loader falls back to one slug lookup for legacy products', async () => {
+  let categoryLookups = 0;
+  const definition = { id: definitionId, scope: 'PRODUCT', data_type: 'DECIMAL', key: 'height', label: 'Height', unit: null, allowed_values: null };
+  const prisma = {
+    product: { findUnique: async () => ({ id: productId, name: 'Desk', slug: 'desk', category: 'legacy', category_id: null, category_ref: null }) },
+    category: { findUnique: async () => { categoryLookups += 1; return { id: 'cat-1', name: 'Standing', category_attributes: [{ attribute_definition: definition, is_required: true, display_order: 1 }] }; } },
+    productVariant: { findMany: async () => [] },
+    productAttribute: { findMany: async () => [] },
+  };
+  const result = await loadSpecificationData(prisma as never, productId);
+  assert.equal(result?.categoryName, 'Standing');
+  assert.equal(categoryLookups, 1);
+});
 
 test('source-without-value rejects before transaction with zero writes', async () => {
   const value = row();

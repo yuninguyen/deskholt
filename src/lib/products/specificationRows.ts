@@ -46,19 +46,35 @@ export async function loadSpecificationData(
 ): Promise<SpecificationData | null> {
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { id: true, name: true, slug: true, category: true },
-  });
-  if (!product) return null;
-
-  const category = await prisma.category.findUnique({
-    where: { slug: product.category },
-    include: {
-      category_attributes: {
-        include: { attribute_definition: true },
-        orderBy: { display_order: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      category: true,
+      category_id: true,
+      category_ref: {
+        include: {
+          category_attributes: {
+            include: { attribute_definition: true },
+            orderBy: { display_order: 'asc' },
+          },
+        },
       },
     },
   });
+  if (!product) return null;
+
+  const category = product.category_id !== null
+    ? product.category_ref
+    : await prisma.category.findUnique({
+        where: { slug: product.category },
+        include: {
+          category_attributes: {
+            include: { attribute_definition: true },
+            orderBy: { display_order: 'asc' },
+          },
+        },
+      });
   if (!category) return null;
 
   const allVariants = await prisma.productVariant.findMany({

@@ -14,7 +14,7 @@ type Fixture = {
     data_type: AttributeDataType;
     allowed_values: unknown;
   };
-  product: null | { id: string; category: string };
+  product: null | { id: string; category: string; category_id: string | null; category_ref: { id: string; name: string } | null };
   category: null | { id: string; name: string };
   categoryAttribute: null | { id: string };
   variant: null | { id: string; product_id: string };
@@ -33,7 +33,7 @@ function makeFixture(overrides: Partial<Fixture> = {}): Fixture {
       data_type: 'DECIMAL',
       allowed_values: null,
     },
-    product: { id: productId, category: 'standing-desks' },
+    product: { id: productId, category: 'standing-desks', category_id: null, category_ref: null },
     category: { id: 'cm42345678901234567890', name: 'Standing Desks' },
     categoryAttribute: { id: 'cm52345678901234567890' },
     variant: { id: variantId, product_id: productId },
@@ -73,6 +73,46 @@ function input(overrides: Partial<ProductAttributeInput> = {}): ProductAttribute
 async function validate(fixture: Fixture, overrides: Partial<ProductAttributeInput> = {}) {
   return validateProductAttributeInput(fakePrisma(fixture), input(overrides));
 }
+
+test('validator uses the product category relation without a slug lookup', async () => {
+  let categoryLookups = 0;
+  let productArgs: unknown;
+  const fixture = makeFixture({
+    product: { id: productId, category: 'legacy-slug', category_id: 'cm42345678901234567890', category_ref: { id: 'cm42345678901234567890', name: 'Standing Desks' } },
+  });
+  const prisma = fakePrisma(fixture);
+  (prisma.product.findUnique as unknown as (args: unknown) => Promise<unknown>) = async (args) => {
+    productArgs = args;
+    return fixture.product;
+  };
+  (prisma.category.findUnique as unknown as () => Promise<unknown>) = async () => {
+    categoryLookups += 1;
+    return fixture.category;
+  };
+  const result = await validateProductAttributeInput(prisma, input());
+  assert.deepEqual(result, { valid: true, errors: [] });
+  assert.equal(categoryLookups, 0);
+  assert.match(JSON.stringify(productArgs), /category_id/);
+  assert.match(JSON.stringify(productArgs), /category_ref/);
+});
+
+test('validator preserves relation integrity when a non-null category relation is missing', async () => {
+  let categoryLookups = 0;
+  const fixture = makeFixture({
+    product: { id: productId, category: 'legacy-slug', category_id: 'cm42345678901234567890', category_ref: null },
+  });
+  const prisma = fakePrisma(fixture);
+  (prisma.category.findUnique as unknown as () => Promise<unknown>) = async () => {
+    categoryLookups += 1;
+    return fixture.category;
+  };
+  const result = await validateProductAttributeInput(prisma, input());
+  assert.deepEqual(result, {
+    valid: false,
+    errors: ['Category "legacy-slug" chưa được khai báo trong Attribute Engine.'],
+  });
+  assert.equal(categoryLookups, 0);
+});
 
 test('validator rejects an unknown attribute definition', async () => {
   const result = await validate(makeFixture({ definition: null }));
