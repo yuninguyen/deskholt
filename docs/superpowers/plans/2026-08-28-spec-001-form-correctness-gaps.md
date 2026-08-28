@@ -75,6 +75,6 @@ Pick the simplest mechanism that satisfies this (in-memory Map keyed by token is
 
 - [x] **Step 1:** Manually exercise the flow in dev: submit a form with one row `VERIFIED` + empty source → confirm redirect shows the error AND every other row's typed value (including in a different section) is still visible; fix the one bad row and resubmit → confirm it saves and the draft is gone (reload the page — values should now come from DB, not a stale draft).
 - [x] **Step 2:** Record evidence in `artifacts/spec-001-form-correctness/evidence.md`: test output, manual verification transcript, and explicit confirmation that Gap A and Gap B are both closed per the blueprint's P1 checklist wording.
-- [ ] **Step 3:** Push the branch, open a PR against `main` (same flow as PR #3/#4/#5: isolated worktree, own branch, CI green, `mergeable_state: clean`). Do not merge locally.
+- [x] **Step 3:** Push the branch, open a PR against `main` (same flow as PR #3/#4/#5: isolated worktree, own branch, CI green, `mergeable_state: clean`). Do not merge locally. PR: https://github.com/yuninguyen/deskholt/pull/6 — CI/mergeable state verified after the completion commit.
 
 **After this lands:** Group A of the P1 audit is closed. Group B (Brand/Category relations, explicit default variant, Available Options, AffiliateNetwork/Merchant/MerchantProduct/Offer, Admin Sources/Offers/queue UI) remains and needs its own architecture-decision-first plan, similar in spirit to the P0-B plan's "Required architecture decision" step, before any implementation starts.

@@ -288,3 +288,12 @@ Observed:
 - `.tmp-task5*` count `0`.
 
 The cleanup PowerShell command itself ended with exit code 1 only because its final diagnostic `Get-NetTCPConnection` returned no matching listener; all preceding stop/removal operations succeeded, and a separate follow-up cleanup check passed.
+
+## Pull request
+
+- Branch: `spec-001-form-correctness-gaps`
+- Pull request: https://github.com/yuninguyen/deskholt/pull/6
+- Base: `main`
+- Initial reviewed head: `e9d8ac5f9c21392f31ab7e10213d7c41d1787255`
+- The PR was created only after fresh local verification and a clean whole-branch review with no Critical or Important findings.
+- The final documentation-only completion commit records this PR and does not modify runtime behavior.
