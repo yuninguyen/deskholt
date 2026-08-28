@@ -1,7 +1,7 @@
 # Group B-1 / Task 4 verification evidence
 
 Date: 2026-08-29
-Base: `ad7eab8`; correction verification commit: pending
+Base: `ad7eab8`; initial evidence: `c843eac`; standalone build evidence: `6386c0c`; specification-save acceptance evidence: `2c19741`
 Worktree: `C:\laragon\www\deskholt\.worktrees\group-b1-brand-category-relations`
 
 ## Disposable PostgreSQL 18 flow
