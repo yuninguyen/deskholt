@@ -20,6 +20,48 @@ test('resolves matching category names and only proposes necessary updates', () 
   });
 });
 
+test('matches case-distinct slugs to the exact category IDs', () => {
+  const categories = [
+    { id: 'cat-lower', name: 'Standing Desks', slug: 'standing-desks' },
+    { id: 'cat-upper', name: 'Standing Desks (Upper)', slug: 'Standing-Desks' },
+  ];
+  const products = [
+    { id: 'p-lower', slug: 'lower', category: 'standing-desks', category_id: null },
+    { id: 'p-upper', slug: 'upper', category: 'Standing-Desks', category_id: null },
+  ];
+
+  assert.deepEqual(resolveCategoryBackfill(products, categories).updates, [
+    { productId: 'p-lower', categoryId: 'cat-lower' },
+    { productId: 'p-upper', categoryId: 'cat-upper' },
+  ]);
+});
+
+test('does not match whitespace or case variants without an exact slug', () => {
+  const result = resolveCategoryBackfill(
+    [{ id: 'p-variant', slug: 'variant', category: ' Standing-Desks ', category_id: null }],
+    [{ id: 'cat', name: 'Standing Desks', slug: 'standing-desks' }],
+  );
+
+  assert.deepEqual(result.updates, []);
+  assert.deepEqual(result.unmatched, [{ productId: 'p-variant', slug: 'variant', category: ' Standing-Desks ' }]);
+});
+
+test('resolves unrelated exact slugs despite normalized collisions elsewhere', () => {
+  const result = resolveCategoryBackfill(
+    [
+      { id: 'p-exact', slug: 'exact', category: 'office-chairs', category_id: null },
+      { id: 'p-ambiguous', slug: 'ambiguous', category: 'STANDING-DESKS', category_id: null },
+    ],
+    [
+      { id: 'cat-upper', name: 'Upper', slug: 'Standing-Desks' },
+      { id: 'cat-office', name: 'Office', slug: 'office-chairs' },
+    ],
+  );
+
+  assert.deepEqual(result.updates, [{ productId: 'p-exact', categoryId: 'cat-office' }]);
+  assert.deepEqual(result.unmatched, [{ productId: 'p-ambiguous', slug: 'ambiguous', category: 'STANDING-DESKS' }]);
+});
+
 test('does not match a legacy category name when it is not the category slug', () => {
   const result = resolveCategoryBackfill(
     [{ id: 'p-name-only', slug: 'name-only', category: 'Standing Desks', category_id: null }],

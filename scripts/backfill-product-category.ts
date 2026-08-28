@@ -19,22 +19,20 @@ export type CategoryBackfillResult = {
   unmatched: Array<{ productId: string; slug: string; category: string }>;
 };
 
-const normalize = (value: string) => value.trim().toLocaleLowerCase();
-
 export function resolveCategoryBackfill(
   products: readonly ResolverProduct[],
   categories: readonly ResolverCategory[],
 ): CategoryBackfillResult {
   const bySlug = new Map<string, ResolverCategory>();
-  for (const category of [...categories].sort((a, b) => a.id.localeCompare(b.id))) {
-    bySlug.set(normalize(category.slug), category);
+  for (const category of categories) {
+    bySlug.set(category.slug, category);
   }
 
   const updates: CategoryBackfillResult['updates'] = [];
   const unchanged: CategoryBackfillResult['unchanged'] = [];
   const unmatched: CategoryBackfillResult['unmatched'] = [];
   for (const product of [...products].sort((a, b) => a.id.localeCompare(b.id))) {
-    const category = bySlug.get(normalize(product.category));
+    const category = bySlug.get(product.category);
     if (!category) {
       unmatched.push({ productId: product.id, slug: product.slug, category: product.category });
     } else if (product.category_id === category.id) {
