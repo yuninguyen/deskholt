@@ -1,165 +1,19 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { Confidence, SourceType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { loadSpecificationData, rowKeyOf, type SpecRow } from '@/lib/products/specificationRows';
+import { loadSpecificationData } from '@/lib/products/specificationRows';
+import { createSaveSpecificationsAction } from '@/lib/products/specificationSaveAction';
 import { validateProductAttributeInput } from '@/lib/products/productAttributeValidator';
 
-type ParsedRow =
-  | { kind: 'skip'; row: SpecRow }
-  | { kind: 'delete'; row: SpecRow }
-  | {
-      kind: 'write';
-      row: SpecRow;
-      valueString: string | null;
-      valueNumber: number | null;
-      valueBoolean: boolean | null;
-      sourceUrl: string | null;
-      sourceType: SourceType | null;
-      confidence: Confidence;
-    };
+const saveSpecifications = createSaveSpecificationsAction({
+  loadSpecificationData: (productId) => loadSpecificationData(prisma, productId),
+  validateProductAttributeInput: (input) => validateProductAttributeInput(prisma, input),
+  transaction: (callback) => prisma.$transaction(callback),
+  now: () => new Date(),
+  redirect,
+});
 
-export async function saveSpecificationsAction(formData: FormData) {
-  const productId = String(formData.get('productId') ?? '');
-  const data = await loadSpecificationData(prisma, productId);
-  if (!data) {
-    throw new Error(`Product ${productId} không tồn tại hoặc chưa có Category schema.`);
-  }
-
-  const parsedRows: ParsedRow[] = [];
-  const errors: string[] = [];
-
-  for (const row of data.rows) {
-    const rawValue = String(formData.get(`value__${row.rowKey}`) ?? '').trim();
-    const rawSourceUrl = String(formData.get(`sourceUrl__${row.rowKey}`) ?? '').trim();
-    const rawSourceType = String(formData.get(`sourceType__${row.rowKey}`) ?? '').trim();
-    const rawConfidence = String(formData.get(`confidence__${row.rowKey}`) ?? 'UNVERIFIED').trim();
-
-    const rowLabel = row.variantLabel ? `${row.label} (${row.variantLabel})` : row.label;
-
-    if (rawValue === '') {
-      if (rawSourceUrl !== '' || rawSourceType !== '') {
-        errors.push(`${rowLabel}: có Source URL/Type nhưng không có Value.`);
-        continue;
-      }
-      if (row.existing) {
-        parsedRows.push({ kind: 'delete', row });
-      } else {
-        parsedRows.push({ kind: 'skip', row });
-      }
-      continue;
-    }
-
-    let valueString: string | null = null;
-    let valueNumber: number | null = null;
-    let valueBoolean: boolean | null = null;
-
-    if (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') {
-      const n = Number(rawValue);
-      if (!Number.isFinite(n)) {
-        errors.push(`${rowLabel}: giá trị "${rawValue}" không phải số hợp lệ.`);
-        continue;
-      }
-      valueNumber = n;
-    } else if (row.dataType === 'BOOLEAN') {
-      if (rawValue !== 'true' && rawValue !== 'false') {
-        errors.push(`${rowLabel}: giá trị boolean không hợp lệ.`);
-        continue;
-      }
-      valueBoolean = rawValue === 'true';
-    } else {
-      valueString = rawValue;
-    }
-
-    const validation = await validateProductAttributeInput(prisma, {
-      productId: data.product.id,
-      variantId: row.variantId,
-      attributeDefinitionId: row.attributeDefinitionId,
-      valueString,
-      valueNumber,
-      valueBoolean,
-    });
-
-    if (!validation.valid) {
-      errors.push(...validation.errors.map((e) => `${rowLabel}: ${e}`));
-      continue;
-    }
-
-    const confidence: Confidence = ['VERIFIED', 'LIKELY', 'UNVERIFIED'].includes(rawConfidence)
-      ? (rawConfidence as Confidence)
-      : 'UNVERIFIED';
-    const sourceType: SourceType | null =
-      rawSourceType && ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'].includes(rawSourceType)
-        ? (rawSourceType as SourceType)
-        : null;
-
-    parsedRows.push({
-      kind: 'write',
-      row,
-      valueString,
-      valueNumber,
-      valueBoolean,
-      sourceUrl: rawSourceUrl || null,
-      sourceType,
-      confidence,
-    });
-  }
-
-  if (errors.length > 0) {
-    const summary = errors.slice(0, 5).join(' | ');
-    redirect(
-      `/admin/products/${productId}/specifications?error=1&count=${errors.length}&detail=${encodeURIComponent(summary)}`
-    );
-  }
-
-  await prisma.$transaction(async (tx) => {
-    for (const parsed of parsedRows) {
-      if (parsed.kind === 'skip') continue;
-
-      const where = {
-        product_id: data.product.id,
-        attribute_definition_id: parsed.row.attributeDefinitionId,
-        variant_id: parsed.row.variantId,
-      };
-
-      const existing = await tx.productAttribute.findFirst({ where });
-
-      if (parsed.kind === 'delete') {
-        if (existing) {
-          await tx.productAttribute.delete({ where: { id: existing.id } });
-        }
-        continue;
-      }
-
-      const verifiedAt = parsed.confidence === 'VERIFIED' ? new Date() : null;
-      const writeData = {
-        value_string: parsed.valueString,
-        value_number: parsed.valueNumber,
-        value_boolean: parsed.valueBoolean,
-        source_url: parsed.sourceUrl,
-        source_type: parsed.sourceType,
-        confidence: parsed.confidence,
-        verified_at: verifiedAt,
-      };
-
-      if (existing) {
-        await tx.productAttribute.update({ where: { id: existing.id }, data: writeData });
-      } else {
-        await tx.productAttribute.create({
-          data: {
-            product_id: data.product.id,
-            variant_id: parsed.row.variantId,
-            attribute_definition_id: parsed.row.attributeDefinitionId,
-            ...writeData,
-          },
-        });
-      }
-    }
-  });
-
-  redirect(`/admin/products/${productId}/specifications?saved=1`);
+export async function saveSpecificationsAction(formData: FormData): Promise<void> {
+  return saveSpecifications(formData);
 }
-
-// Re-exported so callers can build stable rowKeys client-side if ever needed.
-export { rowKeyOf };

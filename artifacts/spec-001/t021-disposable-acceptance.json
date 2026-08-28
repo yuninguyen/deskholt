@@ -1,0 +1,65 @@
+{
+  "target": {
+    "hostname": "127.0.0.1",
+    "port": 58939,
+    "database": "postgres",
+    "disposable": true
+  },
+  "seed": {
+    "definitionCount": 35,
+    "categoryAttributeCount": 35,
+    "activeVariantCount": 5
+  },
+  "protectedBefore": {
+    "counts": {
+      "products": 20,
+      "affiliateLinks": 20,
+      "clicks": 0,
+      "conversions": 0
+    },
+    "hash": "d9f4fce33a4fa1904a36985a3c7a63aeaa54a406928d350346fc1cfd37c30f2a"
+  },
+  "protectedAfter": {
+    "counts": {
+      "products": 20,
+      "affiliateLinks": 20,
+      "clicks": 0,
+      "conversions": 0
+    },
+    "hash": "d9f4fce33a4fa1904a36985a3c7a63aeaa54a406928d350346fc1cfd37c30f2a"
+  },
+  "initialCompleteness": [
+    {
+      "slug": "autonomous-smartdesk-dual-motor-white",
+      "met": 0,
+      "total": 9
+    },
+    {
+      "slug": "flexispot-e7-pro-standing-desk-black",
+      "met": 0,
+      "total": 9
+    },
+    {
+      "slug": "fully-jarvis-standing-desk-bamboo-48x30",
+      "met": 0,
+      "total": 9
+    }
+  ],
+  "targetProduct": "autonomous-smartdesk-dual-motor-white",
+  "fullCompletenessAfterSave": {
+    "met": 9,
+    "total": 9
+  },
+  "completenessAfterClear": {
+    "met": 8,
+    "total": 9
+  },
+  "requiredRowsWritten": 9,
+  "verifiedRows": 9,
+  "clearToDeleteRowKey": "cmtbwxum30001c6y7uaiy7u4j__p",
+  "redirects": [
+    "/admin/products/cmtbwxu890004mwghkueow52o/specifications?saved=1",
+    "/admin/products/cmtbwxu890004mwghkueow52o/specifications?saved=1"
+  ],
+  "acceptance": "PASS"
+}
