@@ -42,9 +42,9 @@ Exact query-proof tests and observed spy counts:
 
 - `npm run lint`: PASS (`eslint . --max-warnings=0`).
 - `npx tsc --noEmit`: PASS.
-- `npm test`: PASS, `260` tests, `260` passed, `0` failed.
+- `npm test`: PASS, `263` tests, `263` passed, `0` failed (final exact-slug collision regressions included).
 - `npm run build`: PASS in a standalone bounded run with disposable `DATABASE_URL`; Prisma Client generation PASS, Next/Turbopack compilation PASS, TypeScript PASS, page data collection PASS, and static page generation PASS (`13/13`). The earlier combined verifier's 180-second outer timeout remains historical context only; it is superseded by this standalone result.
 
 ## Scope / exclusions and detect-changes fallback
 
-No P0-A/P0-B paths, Spec 001 form-correctness files, Brand population, Admin Product UI, default Variant, Available Options, Merchant/Offer models, or unrelated production code were changed. The only intended Task 4 documentation commits are the plan checkbox updates and this evidence document; resolver and regression-test changes are tracked separately in this review fix. GitNexus MCP `detect-changes` was unavailable in this delegated runtime; fallback review was `git status --short` plus manual diff/path review before commit. PR/push Step 4 remains unchecked and was not attempted.
+No P0-A/P0-B paths, Spec 001 form-correctness files, Brand population, Admin Product UI, default Variant, Available Options, Merchant/Offer models, or unrelated production code were changed. The only intended Task 4 documentation commits are the plan checkbox updates and this evidence document; resolver and regression-test changes are tracked separately in this review fix. GitNexus MCP `detect-changes` was unavailable in this delegated runtime; fallback review was `git status --short` plus manual diff/path review before commit. PR/push Step 4 completed with PR #7 (`https://github.com/yuninguyen/deskholt/pull/7`) against `main`; the initial reviewed head `c372d22` reported both GitHub checks successful before this documentation-only completion commit. Final head/check state is verified separately after push.
