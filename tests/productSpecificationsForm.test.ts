@@ -164,7 +164,7 @@ test('Specifications form merges exact draft strings over existing and blank row
         value: 'Draft Walnut',
         sourceUrl: 'https://draft.example/variant?raw=1&keep=2',
         sourceType: 'CERTIFICATION',
-        confidence: 'UNVERIFIED',
+        confidence: 'LIKELY',
       },
     }
   );
@@ -180,5 +180,16 @@ test('Specifications form merges exact draft strings over existing and blank row
     html,
     new RegExp(`name="sourceUrl__${variantRowKey}"[^>]*value="https://draft.example/variant\\?raw=1&amp;keep=2"`)
   );
-  assert.match(html, /<option value="CERTIFICATION" selected="">CERTIFICATION<\/option>/);
+  assert.match(
+    html,
+    new RegExp(
+      `name="sourceType__${variantRowKey}"(?:(?!<\\/select>)[\\s\\S])*?<option value="CERTIFICATION" selected="">CERTIFICATION<\\/option>(?:(?!<\\/select>)[\\s\\S])*?<\\/select>`
+    )
+  );
+  assert.match(
+    html,
+    new RegExp(
+      `name="confidence__${variantRowKey}"(?:(?!<\\/select>)[\\s\\S])*?<option value="LIKELY" selected="">LIKELY<\\/option>(?:(?!<\\/select>)[\\s\\S])*?<\\/select>`
+    )
+  );
 });

@@ -1,0 +1,218 @@
+✔ source-without-value rejects before transaction with zero writes (21.2958ms)
+✔ blank new row is skipped and successful save redirects with zero writes (0.5238ms)
+✔ clearing an existing row deletes it inside the transaction (0.5216ms)
+✔ VERIFIED update and create share one save timestamp (0.8004ms)
+✔ VERIFIED with an empty source URL rejects before transaction with zero writes (0.3116ms)
+✔ VERIFIED with a non-URL source rejects before transaction with zero writes (0.2651ms)
+✔ VERIFIED with empty source type rejects before transaction with zero writes (0.246ms)
+✔ VERIFIED with invalid source type rejects before transaction with zero writes (0.1974ms)
+✔ VERIFIED with a valid absolute URL and source type persists verified timestamp (0.4173ms)
+✔ LIKELY and UNVERIFIED accept empty source fields without VERIFIED source policy (0.5831ms)
+✔ LIKELY create clears verified timestamp and persists parsed source fields (0.2386ms)
+✔ an earlier valid row plus a later invalid row prevents every transaction write (0.2769ms)
+✖ validation failure saves only row-keyed draft strings and appends its opaque token (3.6447ms)
+✖ successful save creates no draft and clears every prior draft for the Product (0.5141ms)
+✔ Specifications form warns when the Product has no Variants (7.6498ms)
+✔ Specifications form warns when every existing Variant is inactive (0.5033ms)
+✔ Specifications form does not show the missing-active-Variant warning when one is active (0.3744ms)
+✔ Specifications form preserves and flags a stored ENUM value removed from allowedValues (1.2305ms)
+✖ Specifications form merges exact draft strings over existing and blank rows across Product and Variant sections (2.6262ms)
+(node:38932) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ page consumes the opaque token for the awaited current Product and passes the draft to the form (2.8516ms)
+✖ page falls back to existing data when the draft token is missing (0.3682ms)
+✖ page falls back to existing data when the draft token is expired (0.306ms)
+✖ page falls back to existing data when the draft token is wrong Product (0.3824ms)
+✖ page falls back to existing data when the draft token is already consumed (0.3567ms)
+node:internal/modules/cjs/loader:1475
+  const err = new Error(message);
+              ^
+
+Error: Cannot find module '../src/lib/products/specificationDraftStore'
+Require stack:
+- C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\specificationDraftStore.test.ts
+    at node:internal/modules/cjs/loader:1475:15
+    at m._resolveFilename (file:///C:/laragon/www/deskholt/.worktrees/spec-001-form-correctness-gaps/node_modules/tsx/dist/register-B7jrtLTO.mjs:1:789)
+    at nextResolveSimple (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\node_modules\tsx\dist\register-D46fvsV_.cjs:4:1004)
+    at C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\node_modules\tsx\dist\register-D46fvsV_.cjs:3:2630
+    at C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\node_modules\tsx\dist\register-D46fvsV_.cjs:3:1542
+    at resolveTsPaths (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\node_modules\tsx\dist\register-D46fvsV_.cjs:4:760)
+    at Module._resolveFilename (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\node_modules\tsx\dist\register-D46fvsV_.cjs:4:1102)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1048:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1072:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1093:12) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\laragon\\www\\deskholt\\.worktrees\\spec-001-form-correctness-gaps\\tests\\specificationDraftStore.test.ts'
+  ]
+}
+
+Node.js v25.8.1
+✖ tests\specificationDraftStore.test.ts (274.3217ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 16
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 410.2186
+
+✖ failing tests:
+
+test at tests\productSpecificationsAction.test.ts:2:12271
+✖ validation failure saves only row-keyed draft strings and appends its opaque token (3.6447ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + []
+  - [
+  -   {
+  -     productId: 'cm12345678901234567890',
+  -     rows: {
+  -       cm22345678901234567890__p: {
+  -         confidence: 'VERIFIED',
+  -         sourceType: 'MANUFACTURER',
+  -         sourceUrl: 'not a url',
+  -         value: '48.5'
+  -       }
+  -     }
+  -   }
+  - ]
+
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsAction.test.ts:410:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ { productId: 'cm12345678901234567890', rows: [Object] } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsAction.test.ts:2:13471
+✖ successful save creates no draft and clears every prior draft for the Product (0.5141ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + []
+  - [
+  -   'cm12345678901234567890'
+  - ]
+
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsAction.test.ts:442:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'cm12345678901234567890' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsForm.test.ts:2:3401
+✖ Specifications form merges exact draft strings over existing and blank rows across Product and Variant sections (2.6262ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /name="value__cm22345678901234567890__p"[^>]*value="49.250"/. Input:
+
+  `<form class="space-y-8" action="javascript:throw new Error(&#x27;React form unexpectedly submitted.&#x27;)"><input type="hidden" name="productId" value="cm12345678901234567890"/><section><h2 class="text-sm font-bold text-white uppercase tracking-wide mb-2">Product-level</h2><div class="rounded-xl border border-gray-800 px-4"><div class="grid grid-cols-1 sm:grid-cols-12 gap-3 py-3 border-b border-gray-800 last:border-b-0"><div class="sm:col-span-3"><div class="text-sm font-medium text-white">Maximum Height<span class="text-red-400 ml-1">*</span></div><div class="text-xs text-gray-500">in</div></div><div class="sm:col-span-2"><input type="number" step="any" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="value__cm22345678901234567890__p" value="48.5"/></div><div class="sm:col-span-4"><input type="text" placeholder="Source URL" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="sourceUrl__cm22345678901234567890__p" value="https://existing.example/product"/></div><div class="sm:col-span-2"><select name="sourceType__cm22345678901234567890__p" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="">Source type</option><option value="MANUFACTURER">MANUFACTURER</option><option value="MANUAL">MANUAL</option><option value="RETAILER" selected="">RETAILER</option><option value="CERTIFICATION">CERTIFICATION</option><option value="OTHER">OTHER</option></select></div><div class="sm:col-span-1"><select name="confidence__cm22345678901234567890__p" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="VERIFIED">VERIFIED</option><option value="LIKELY" selected="">LIKELY</option><option value="UNVERIFIED">UNVERIFIED</option></select></div></div></div></section><section><h2 class="text-sm font-bold text-white uppercase tracking-wide mb-2">Variant: Walnut top</h2><div class="rounded-xl border border-gray-800 px-4"><div class="grid grid-cols-1 sm:grid-cols-12 gap-3 py-3 border-b border-gray-800 last:border-b-0"><div class="sm:col-span-3"><div class="text-sm font-medium text-white">Finish</div></div><div class="sm:col-span-2"><input type="text" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="value__cm33333333333333333333__cm09876543210987654321" value=""/></div><div class="sm:col-span-4"><input type="text" placeholder="Source URL" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="sourceUrl__cm33333333333333333333__cm09876543210987654321" value=""/></div><div class="sm:col-span-2"><select name="sourceType__cm33333333333333333333__cm09876543210987654321" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="" selected="">Source type</option><option value="MANUFACTURER">MANUFACTURER</option><option value="MANUAL">MANUAL</option><option value="RETAILER">RETAILER</option><option value="CERTIFICATION">CERTIFICATION</option><option value="OTHER">OTHER</option></select></div><div class="sm:col-span-1"><select name="confidence__cm33333333333333333333__cm09876543210987654321" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="VERIFIED">VERIFIED</option><option value="LIKELY">LIKELY</option><option value="UNVERIFIED" selected="">UNVERIFIED</option></select></div></div></div></section><button type="submit" class="rounded-md bg-blue-600 px-6 py-2.5 font-semibold text-white hover:bg-blue-500">Lưu Specifications</button></form><script>addEventListener("submit",function(a){if(!a.defaultPrevented){var c=a.target,d=a.submitter,e=c.action,b=d;if(d){var f=d.getAttribute("formAction");null!=f&&(e=f,b=null)}"javascript:throw new Error('React form unexpectedly submitted.')"===e&&(a.preventDefault(),b?(a=document.createElement("input"),a.name=b.name,a.value=b.value,b.parentNode.insertBefore(a,b),b=new FormData(c),a.parentNode.removeChild(a)):b=new FormData(c),a=c.ownerDocument||c,(a.$$reactFormReplay=a.$$reactFormReplay||[]).push(c,d,b))}});</script>`
+
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsForm.test.ts:172:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<form class="space-y-8" action="javascript:throw new Error(&#x27;React form unexpectedly submitted.&#x27;)"><input type="hidden" name="productId" value="cm12345678901234567890"/><section><h2 class="text-sm font-bold text-white uppercase tracking-wide mb-2">Product-level</h2><div class="rounded-xl border border-gray-800 px-4"><div class="grid grid-cols-1 sm:grid-cols-12 gap-3 py-3 border-b border-gray-800 last:border-b-0"><div class="sm:col-span-3"><div class="text-sm font-medium text-white">Maximum Height<span class="text-red-400 ml-1">*</span></div><div class="text-xs text-gray-500">in</div></div><div class="sm:col-span-2"><input type="number" step="any" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="value__cm22345678901234567890__p" value="48.5"/></div><div class="sm:col-span-4"><input type="text" placeholder="Source URL" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="sourceUrl__cm22345678901234567890__p" value="https://existing.example/product"/></div><div class="sm:col-span-2"><select name="sourceType__cm22345678901234567890__p" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="">Source type</option><option value="MANUFACTURER">MANUFACTURER</option><option value="MANUAL">MANUAL</option><option value="RETAILER" selected="">RETAILER</option><option value="CERTIFICATION">CERTIFICATION</option><option value="OTHER">OTHER</option></select></div><div class="sm:col-span-1"><select name="confidence__cm22345678901234567890__p" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="VERIFIED">VERIFIED</option><option value="LIKELY" selected="">LIKELY</option><option value="UNVERIFIED">UNVERIFIED</option></select></div></div></div></section><section><h2 class="text-sm font-bold text-white uppercase tracking-wide mb-2">Variant: Walnut top</h2><div class="rounded-xl border border-gray-800 px-4"><div class="grid grid-cols-1 sm:grid-cols-12 gap-3 py-3 border-b border-gray-800 last:border-b-0"><div class="sm:col-span-3"><div class="text-sm font-medium text-white">Finish</div></div><div class="sm:col-span-2"><input type="text" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="value__cm33333333333333333333__cm09876543210987654321" value=""/></div><div class="sm:col-span-4"><input type="text" placeholder="Source URL" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white" name="sourceUrl__cm33333333333333333333__cm09876543210987654321" value=""/></div><div class="sm:col-span-2"><select name="sourceType__cm33333333333333333333__cm09876543210987654321" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="" selected="">Source type</option><option value="MANUFACTURER">MANUFACTURER</option><option value="MANUAL">MANUAL</option><option value="RETAILER">RETAILER</option><option value="CERTIFICATION">CERTIFICATION</option><option value="OTHER">OTHER</option></select></div><div class="sm:col-span-1"><select name="confidence__cm33333333333333333333__cm09876543210987654321" class="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"><option value="VERIFIED">VERIFIED</option><option value="LIKELY">LIKELY</option><option value="UNVERIFIED" selected="">UNVERIFIED</option></select></div></div></div></section><button type="submit" class="rounded-md bg-blue-600 px-6 py-2.5 font-semibold text-white hover:bg-blue-500">Lưu Specifications</button></form><script>addEventListener("submit",function(a){if(!a.defaultPrevented){var c=a.target,d=a.submitter,e=c.action,b=d;if(d){var f=d.getAttribute("formAction");null!=f&&(e=f,b=null)}"javascript:throw new Error('React form unexpectedly submitted.')"===e&&(a.preventDefault(),b?(a=document.createElement("input"),a.name=b.name,a.value=b.value,b.parentNode.insertBefore(a,b),b=new FormData(c),a.parentNode.removeChild(a)):b=new FormData(c),a=c.ownerDocument||c,(a.$$reactFormReplay=a.$$reactFormReplay||[]).push(c,d,b))}});</script>`,
+    expected: /name="value__cm22345678901234567890__p"[^>]*value="49.250"/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsPage.test.ts:2:3772
+✖ page consumes the opaque token for the awaited current Product and passes the draft to the form (2.8516ms)
+  AssertionError [ERR_ASSERTION]: page must export createProductSpecificationsPage for draft consumption
+      at renderPage (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:105:10)
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:124:23)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsPage.test.ts:2:4163
+✖ page falls back to existing data when the draft token is missing (0.3682ms)
+  AssertionError [ERR_ASSERTION]: page must export createProductSpecificationsPage for draft consumption
+      at renderPage (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:105:10)
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:132:23)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsPage.test.ts:2:4510
+✖ page falls back to existing data when the draft token is expired (0.306ms)
+  AssertionError [ERR_ASSERTION]: page must export createProductSpecificationsPage for draft consumption
+      at renderPage (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:105:10)
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:143:25)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsPage.test.ts:2:4510
+✖ page falls back to existing data when the draft token is wrong Product (0.3824ms)
+  AssertionError [ERR_ASSERTION]: page must export createProductSpecificationsPage for draft consumption
+      at renderPage (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:105:10)
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:143:25)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\productSpecificationsPage.test.ts:2:4510
+✖ page falls back to existing data when the draft token is already consumed (0.3567ms)
+  AssertionError [ERR_ASSERTION]: page must export createProductSpecificationsPage for draft consumption
+      at renderPage (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:105:10)
+      at TestContext.<anonymous> (C:\laragon\www\deskholt\.worktrees\spec-001-form-correctness-gaps\tests\productSpecificationsPage.test.ts:143:25)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\specificationDraftStore.test.ts:1:1
+✖ tests\specificationDraftStore.test.ts (274.3217ms)
+  'test failed'

@@ -40,14 +40,17 @@ test('takeDraft returns the exact row-keyed strings once and then consumes the t
   assert.equal(store.takeDraft(productA, token), null);
 });
 
-test('takeDraft expires a draft after five minutes', () => {
+test('takeDraft remains readable through five minutes minus 1ms and expires at exactly five minutes', () => {
   let now = Date.parse('2026-08-28T10:00:00.000Z');
   const store = createSpecificationDraftStore({ now: () => now });
-  const token = store.saveDraft(productA, rows());
+  const readableToken = store.saveDraft(productA, rows('48.5'));
+  const expiredToken = store.saveDraft(productA, rows('49.25'));
 
-  now += 5 * 60 * 1000;
+  now += 5 * 60 * 1000 - 1;
+  assert.deepEqual(store.takeDraft(productA, readableToken), rows('48.5'));
 
-  assert.equal(store.takeDraft(productA, token), null);
+  now += 1;
+  assert.equal(store.takeDraft(productA, expiredToken), null);
 });
 
 test('takeDraft never serves or consumes a token through the wrong Product', () => {

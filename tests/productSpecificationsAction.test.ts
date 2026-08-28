@@ -261,8 +261,11 @@ test('VERIFIED with a non-URL source rejects before transaction with zero writes
   assert.match(testHarness.redirects[0] ?? '', /error=1/);
 });
 
-test('VERIFIED with an empty or invalid source type rejects before transaction with zero writes', async () => {
-  for (const sourceType of ['', 'NOT_A_SOURCE_TYPE']) {
+for (const { sourceType, diagnostic } of [
+  { sourceType: '', diagnostic: 'empty source type' },
+  { sourceType: 'NOT_A_SOURCE_TYPE', diagnostic: 'invalid source type' },
+]) {
+  test(`VERIFIED with ${diagnostic} rejects before transaction with zero writes`, async () => {
     const value = row();
     const testHarness = harness([value]);
 
@@ -276,11 +279,11 @@ test('VERIFIED with an empty or invalid source type rejects before transaction w
       })
     );
 
-    assert.equal(testHarness.getTransactions(), 0, `sourceType=${JSON.stringify(sourceType)}`);
-    assert.deepEqual(testHarness.writes, [], `sourceType=${JSON.stringify(sourceType)}`);
+    assert.equal(testHarness.getTransactions(), 0);
+    assert.deepEqual(testHarness.writes, []);
     assert.match(testHarness.redirects[0] ?? '', /error=1/);
-  }
-});
+  });
+}
 
 test('VERIFIED with a valid absolute URL and source type persists verified timestamp', async () => {
   const value = row();
@@ -418,8 +421,14 @@ test('validation failure saves only row-keyed draft strings and appends its opaq
     },
   ]);
   const redirectUrl = new URL(testHarness.redirects[0] ?? '', 'https://deskholt.test');
-  assert.equal(redirectUrl.searchParams.get('draft'), 'opaque_test_token');
-  assert.doesNotMatch(redirectUrl.href, /48\.5|manufacturer/i);
+  assert.equal(redirectUrl.pathname, `/admin/products/${productId}/specifications`);
+  assert.deepEqual([...redirectUrl.searchParams.entries()], [
+    ['error', '1'],
+    ['count', '1'],
+    ['detail', 'Maximum Height: VERIFIED requires a valid source URL and source type.'],
+    ['draft', 'opaque_test_token'],
+  ]);
+  assert.doesNotMatch(redirectUrl.search, /48\.5|not(?:%20|\+)a(?:%20|\+)url|manufacturer|value__|sourceUrl__|sourceType__|confidence__|rows|data|payload/i);
   assert.deepEqual(testHarness.clearedDraftProducts, []);
 });
 
