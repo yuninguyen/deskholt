@@ -6,6 +6,7 @@ jspm_packages/
 .agents/
 .codex/
 .gitnexus/
+.superpowers/sdd/
 .claude/worktrees/
 .claude/settings.local.json
 

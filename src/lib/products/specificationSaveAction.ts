@@ -1,4 +1,9 @@
 import { Confidence, Prisma, SourceType } from '@prisma/client';
+import {
+  clearProductSpecificationDrafts,
+  saveSpecificationDraft,
+  type SpecificationDraftRows,
+} from './specificationDraftStore';
 import type { SpecificationData, SpecRow } from './specificationRows';
 import type {
   ProductAttributeInput,
@@ -24,6 +29,8 @@ export type SaveSpecificationsDependencies = {
   validateProductAttributeInput(input: ProductAttributeInput): Promise<ValidationResult>;
   transaction(callback: (tx: Prisma.TransactionClient) => Promise<void>): Promise<void>;
   now(): Date;
+  saveDraft?(productId: string, rows: SpecificationDraftRows): string;
+  clearProductDrafts?(productId: string): void;
   redirect(path: string): never;
 };
 
@@ -37,6 +44,17 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
 
     const parsedRows: ParsedRow[] = [];
     const errors: string[] = [];
+    const draftRows: SpecificationDraftRows = Object.fromEntries(
+      data.rows.map((row) => [
+        row.rowKey,
+        {
+          value: String(formData.get(`value__${row.rowKey}`) ?? ''),
+          sourceUrl: String(formData.get(`sourceUrl__${row.rowKey}`) ?? ''),
+          sourceType: String(formData.get(`sourceType__${row.rowKey}`) ?? ''),
+          confidence: String(formData.get(`confidence__${row.rowKey}`) ?? ''),
+        },
+      ])
+    );
 
     for (const row of data.rows) {
       const rawValue = String(formData.get(`value__${row.rowKey}`) ?? '').trim();
@@ -96,6 +114,12 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
         rawSourceType && ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'].includes(rawSourceType)
           ? (rawSourceType as SourceType)
           : null;
+      const hasValidSourceUrl = URL.canParse(rawSourceUrl);
+
+      if (confidence === 'VERIFIED' && (!hasValidSourceUrl || !sourceType)) {
+        errors.push(`${rowLabel}: VERIFIED requires a valid source URL and source type.`);
+        continue;
+      }
 
       parsedRows.push({
         kind: 'write',
@@ -111,8 +135,9 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
 
     if (errors.length > 0) {
       const summary = errors.slice(0, 5).join(' | ');
+      const draftToken = (dependencies.saveDraft ?? saveSpecificationDraft)(productId, draftRows);
       dependencies.redirect(
-        `/admin/products/${productId}/specifications?error=1&count=${errors.length}&detail=${encodeURIComponent(summary)}`
+        `/admin/products/${productId}/specifications?error=1&count=${errors.length}&detail=${encodeURIComponent(summary)}&draft=${encodeURIComponent(draftToken)}`
       );
     }
 
@@ -158,6 +183,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
       }
     });
 
+    (dependencies.clearProductDrafts ?? clearProductSpecificationDrafts)(productId);
     dependencies.redirect(`/admin/products/${productId}/specifications?saved=1`);
   };
 }

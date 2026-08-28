@@ -55,6 +55,8 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
   let transactions = 0;
   let validations = 0;
   let nowCalls = 0;
+  const savedDrafts: Array<{ productId: string; rows: Record<string, unknown> }> = [];
+  const clearedDraftProducts: string[] = [];
   const existingRecords = new Map(
     rows
       .filter((value) => value.existing)
@@ -100,6 +102,13 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
       nowCalls += 1;
       return fixedNow;
     },
+    saveDraft: (draftProductId, draftRows) => {
+      savedDrafts.push({ productId: draftProductId, rows: draftRows });
+      return 'opaque_test_token';
+    },
+    clearProductDrafts: (draftProductId) => {
+      clearedDraftProducts.push(draftProductId);
+    },
     redirect: (path) => {
       redirects.push(path);
       throw new Error(`NEXT_REDIRECT:${path}`);
@@ -113,6 +122,8 @@ function harness(rows: SpecRow[], validationErrorsByRow: Record<string, string[]
     getTransactions: () => transactions,
     getValidations: () => validations,
     getNowCalls: () => nowCalls,
+    savedDrafts,
+    clearedDraftProducts,
     validatedDefinitionIds,
   };
 }
@@ -192,9 +203,11 @@ test('VERIFIED update and create share one save timestamp', async () => {
     testHarness.action,
     form({
       [`value__${updateRow.rowKey}`]: '49.25',
+      [`sourceUrl__${updateRow.rowKey}`]: 'https://manufacturer.example/update-specs',
       [`sourceType__${updateRow.rowKey}`]: 'MANUFACTURER',
       [`confidence__${updateRow.rowKey}`]: 'VERIFIED',
       [`value__${createRow.rowKey}`]: '24.5',
+      [`sourceUrl__${createRow.rowKey}`]: 'https://manufacturer.example/create-specs',
       [`sourceType__${createRow.rowKey}`]: 'MANUFACTURER',
       [`confidence__${createRow.rowKey}`]: 'VERIFIED',
     })
@@ -208,6 +221,120 @@ test('VERIFIED update and create share one save timestamp', async () => {
   assert.equal((create.args as { data: { verified_at: Date } }).data.verified_at, fixedNow);
   assert.equal(testHarness.getNowCalls(), 1);
   assert.equal(testHarness.getValidations(), 2);
+});
+
+test('VERIFIED with an empty source URL rejects before transaction with zero writes', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: '',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  assert.equal(testHarness.getTransactions(), 0);
+  assert.deepEqual(testHarness.writes, []);
+  assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('VERIFIED with a non-URL source rejects before transaction with zero writes', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: 'not a url',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  assert.equal(testHarness.getTransactions(), 0);
+  assert.deepEqual(testHarness.writes, []);
+  assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+for (const { sourceType, diagnostic } of [
+  { sourceType: '', diagnostic: 'empty source type' },
+  { sourceType: 'NOT_A_SOURCE_TYPE', diagnostic: 'invalid source type' },
+]) {
+  test(`VERIFIED with ${diagnostic} rejects before transaction with zero writes`, async () => {
+    const value = row();
+    const testHarness = harness([value]);
+
+    await redirecting(
+      testHarness.action,
+      form({
+        [`value__${value.rowKey}`]: '48.5',
+        [`sourceUrl__${value.rowKey}`]: 'https://manufacturer.example/specs',
+        [`sourceType__${value.rowKey}`]: sourceType,
+        [`confidence__${value.rowKey}`]: 'VERIFIED',
+      })
+    );
+
+    assert.equal(testHarness.getTransactions(), 0);
+    assert.deepEqual(testHarness.writes, []);
+    assert.match(testHarness.redirects[0] ?? '', /error=1/);
+  });
+}
+
+test('VERIFIED with a valid absolute URL and source type persists verified timestamp', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: 'https://manufacturer.example/specs',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
+  assert.ok(create);
+  const data = (create.args as {
+    data: { verified_at: Date; source_url: string; source_type: SourceType; confidence: Confidence };
+  }).data;
+  assert.equal(data.verified_at, fixedNow);
+  assert.equal(data.source_url, 'https://manufacturer.example/specs');
+  assert.equal(data.source_type, 'MANUFACTURER');
+  assert.equal(data.confidence, 'VERIFIED');
+});
+
+test('LIKELY and UNVERIFIED accept empty source fields without VERIFIED source policy', async () => {
+  for (const confidence of ['LIKELY', 'UNVERIFIED'] satisfies Confidence[]) {
+    const value = row();
+    const testHarness = harness([value]);
+
+    await redirecting(
+      testHarness.action,
+      form({
+        [`value__${value.rowKey}`]: '48.5',
+        [`sourceUrl__${value.rowKey}`]: '',
+        [`sourceType__${value.rowKey}`]: '',
+        [`confidence__${value.rowKey}`]: confidence,
+      })
+    );
+
+    const create = testHarness.writes.find((entry) => entry.operation === 'create');
+    assert.ok(create, `confidence=${confidence}`);
+    const data = (create.args as {
+      data: { verified_at: Date | null; source_url: string | null; source_type: SourceType | null; confidence: Confidence };
+    }).data;
+    assert.equal(data.verified_at, null);
+    assert.equal(data.source_url, null);
+    assert.equal(data.source_type, null);
+    assert.equal(data.confidence, confidence);
+  }
 });
 
 test('LIKELY create clears verified timestamp and persists parsed source fields', async () => {
@@ -264,4 +391,54 @@ test('an earlier valid row plus a later invalid row prevents every transaction w
   assert.equal(testHarness.getTransactions(), 0);
   assert.deepEqual(testHarness.writes, []);
   assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('validation failure saves only row-keyed draft strings and appends its opaque token', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(
+    testHarness.action,
+    form({
+      [`value__${value.rowKey}`]: '48.5',
+      [`sourceUrl__${value.rowKey}`]: 'not a url',
+      [`sourceType__${value.rowKey}`]: 'MANUFACTURER',
+      [`confidence__${value.rowKey}`]: 'VERIFIED',
+    })
+  );
+
+  assert.deepEqual(testHarness.savedDrafts, [
+    {
+      productId,
+      rows: {
+        [value.rowKey]: {
+          value: '48.5',
+          sourceUrl: 'not a url',
+          sourceType: 'MANUFACTURER',
+          confidence: 'VERIFIED',
+        },
+      },
+    },
+  ]);
+  const redirectUrl = new URL(testHarness.redirects[0] ?? '', 'https://deskholt.test');
+  assert.equal(redirectUrl.pathname, `/admin/products/${productId}/specifications`);
+  assert.deepEqual([...redirectUrl.searchParams.entries()], [
+    ['error', '1'],
+    ['count', '1'],
+    ['detail', 'Maximum Height: VERIFIED requires a valid source URL and source type.'],
+    ['draft', 'opaque_test_token'],
+  ]);
+  assert.doesNotMatch(redirectUrl.search, /48\.5|not(?:%20|\+)a(?:%20|\+)url|manufacturer|value__|sourceUrl__|sourceType__|confidence__|rows|data|payload/i);
+  assert.deepEqual(testHarness.clearedDraftProducts, []);
+});
+
+test('successful save creates no draft and clears every prior draft for the Product', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({ [`value__${value.rowKey}`]: '48.5' }));
+
+  assert.deepEqual(testHarness.savedDrafts, []);
+  assert.deepEqual(testHarness.clearedDraftProducts, [productId]);
+  assert.deepEqual(testHarness.redirects, [`/admin/products/${productId}/specifications?saved=1`]);
 });

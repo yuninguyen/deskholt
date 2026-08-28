@@ -1,17 +1,24 @@
+import type { SpecificationDraftRows } from '@/lib/products/specificationDraftStore';
 import type { SpecificationData, SpecRow } from '@/lib/products/specificationRows';
 
 const SOURCE_TYPES = ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'] as const;
 const CONFIDENCES = ['VERIFIED', 'LIKELY', 'UNVERIFIED'] as const;
 
-function SpecRowFields({ row }: { row: SpecRow }) {
+function SpecRowFields({ row, draft }: { row: SpecRow; draft?: SpecificationDraftRows[string] }) {
   const existing = row.existing;
+  const existingValue =
+    row.dataType === 'BOOLEAN'
+      ? existing?.valueBoolean === null || existing?.valueBoolean === undefined
+        ? ''
+        : String(existing.valueBoolean)
+      : row.dataType === 'DECIMAL' || row.dataType === 'INTEGER'
+        ? existing?.valueNumber ?? ''
+        : existing?.valueString ?? '';
+  const value = draft?.value ?? existingValue;
   const allowedEnumValues = row.allowedValues ?? [];
   const staleEnumValue =
-    row.dataType === 'ENUM' &&
-    existing?.valueString !== null &&
-    existing?.valueString !== undefined &&
-    !allowedEnumValues.includes(existing.valueString)
-      ? existing.valueString
+    row.dataType === 'ENUM' && value !== '' && !allowedEnumValues.includes(String(value))
+      ? String(value)
       : null;
   const staleEnumHelpId = `${row.rowKey}-stale-enum`;
 
@@ -32,7 +39,7 @@ function SpecRowFields({ row }: { row: SpecRow }) {
         {row.dataType === 'BOOLEAN' ? (
           <select
             name={`value__${row.rowKey}`}
-            defaultValue={existing?.valueBoolean === null || existing?.valueBoolean === undefined ? '' : String(existing.valueBoolean)}
+            defaultValue={value}
             className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
           >
             <option value="">—</option>
@@ -43,7 +50,7 @@ function SpecRowFields({ row }: { row: SpecRow }) {
           <div className="space-y-1">
             <select
               name={`value__${row.rowKey}`}
-              defaultValue={existing?.valueString ?? ''}
+              defaultValue={value}
               aria-invalid={staleEnumValue !== null}
               aria-describedby={staleEnumValue !== null ? staleEnumHelpId : undefined}
               className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
@@ -69,14 +76,14 @@ function SpecRowFields({ row }: { row: SpecRow }) {
             type="number"
             step={row.dataType === 'INTEGER' ? '1' : 'any'}
             name={`value__${row.rowKey}`}
-            defaultValue={existing?.valueNumber ?? ''}
+            defaultValue={value}
             className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
           />
         ) : (
           <input
             type="text"
             name={`value__${row.rowKey}`}
-            defaultValue={existing?.valueString ?? ''}
+            defaultValue={value}
             className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
           />
         )}
@@ -87,7 +94,7 @@ function SpecRowFields({ row }: { row: SpecRow }) {
           type="text"
           name={`sourceUrl__${row.rowKey}`}
           placeholder="Source URL"
-          defaultValue={existing?.sourceUrl ?? ''}
+          defaultValue={draft?.sourceUrl ?? existing?.sourceUrl ?? ''}
           className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
         />
       </div>
@@ -95,7 +102,7 @@ function SpecRowFields({ row }: { row: SpecRow }) {
       <div className="sm:col-span-2">
         <select
           name={`sourceType__${row.rowKey}`}
-          defaultValue={existing?.sourceType ?? ''}
+          defaultValue={draft?.sourceType ?? existing?.sourceType ?? ''}
           className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
         >
           <option value="">Source type</option>
@@ -110,7 +117,7 @@ function SpecRowFields({ row }: { row: SpecRow }) {
       <div className="sm:col-span-1">
         <select
           name={`confidence__${row.rowKey}`}
-          defaultValue={existing?.confidence ?? 'UNVERIFIED'}
+          defaultValue={draft?.confidence ?? existing?.confidence ?? 'UNVERIFIED'}
           className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
         >
           {CONFIDENCES.map((c) => (
@@ -126,9 +133,11 @@ function SpecRowFields({ row }: { row: SpecRow }) {
 
 export default function ProductSpecificationsForm({
   data,
+  draft,
   action,
 }: {
   data: SpecificationData;
+  draft?: SpecificationDraftRows;
   action: (formData: FormData) => void | Promise<void>;
 }) {
   const productRows = data.rows.filter((r) => r.variantId === null);
@@ -141,7 +150,7 @@ export default function ProductSpecificationsForm({
         <h2 className="text-sm font-bold text-white uppercase tracking-wide mb-2">Product-level</h2>
         <div className="rounded-xl border border-gray-800 px-4">
           {productRows.map((row) => (
-            <SpecRowFields key={row.rowKey} row={row} />
+            <SpecRowFields key={row.rowKey} row={row} draft={draft?.[row.rowKey]} />
           ))}
           {productRows.length === 0 && (
             <div className="py-6 text-center text-sm text-gray-500">Không có attribute product-level nào.</div>
@@ -167,7 +176,7 @@ export default function ProductSpecificationsForm({
             </h2>
             <div className="rounded-xl border border-gray-800 px-4">
               {rows.map((row) => (
-                <SpecRowFields key={row.rowKey} row={row} />
+                <SpecRowFields key={row.rowKey} row={row} draft={draft?.[row.rowKey]} />
               ))}
             </div>
           </section>
