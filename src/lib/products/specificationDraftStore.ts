@@ -24,8 +24,16 @@ export function createSpecificationDraftStore(
   const now = options.now ?? Date.now;
   const drafts = new Map<string, StoredDraft>();
 
+  function pruneExpired(): void {
+    const currentTime = now();
+    for (const [token, draft] of drafts) {
+      if (currentTime >= draft.expiresAt) drafts.delete(token);
+    }
+  }
+
   return {
     saveDraft(productId: string, rows: SpecificationDraftRows): string {
+      pruneExpired();
       const token = randomUUID();
       drafts.set(token, { productId, rows, expiresAt: now() + DEFAULT_TTL_MS });
       return token;

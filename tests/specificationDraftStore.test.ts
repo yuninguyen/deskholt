@@ -53,6 +53,19 @@ test('takeDraft remains readable through five minutes minus 1ms and expires at e
   assert.equal(store.takeDraft(productA, expiredToken), null);
 });
 
+test('saveDraft opportunistically prunes expired abandoned tokens', () => {
+  const startedAt = Date.parse('2026-08-28T10:00:00.000Z');
+  let now = startedAt;
+  const store = createSpecificationDraftStore({ now: () => now });
+  const abandonedToken = store.saveDraft(productA, rows('48.5'));
+
+  now += 5 * 60 * 1000;
+  store.saveDraft(productB, rows('30'));
+
+  now = startedAt + 5 * 60 * 1000 - 1;
+  assert.equal(store.takeDraft(productA, abandonedToken), null);
+});
+
 test('takeDraft never serves or consumes a token through the wrong Product', () => {
   const store = createSpecificationDraftStore();
   const draft = rows();
