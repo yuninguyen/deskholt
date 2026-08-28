@@ -96,6 +96,12 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
         rawSourceType && ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'].includes(rawSourceType)
           ? (rawSourceType as SourceType)
           : null;
+      const hasValidSourceUrl = URL.canParse(rawSourceUrl);
+
+      if (confidence === 'VERIFIED' && (!hasValidSourceUrl || !sourceType)) {
+        errors.push(`${rowLabel}: VERIFIED requires a valid source URL and source type.`);
+        continue;
+      }
 
       parsedRows.push({
         kind: 'write',
