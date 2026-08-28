@@ -98,7 +98,7 @@ test.beforeEach(() => {
 });
 
 test.after(() => {
-  for (const module of mocks) module.restore();
+  for (const mockModule of mocks) mockModule.restore();
 });
 
 async function renderPage(draft?: string) {
