@@ -1,7 +1,7 @@
 # Group B-1 / Task 4 verification evidence
 
 Date: 2026-08-29
-Base: `ad7eab8`
+Base: `ad7eab8`; correction verification commit: pending
 Worktree: `C:\laragon\www\deskholt\.worktrees\group-b1-brand-category-relations`
 
 ## Disposable PostgreSQL 18 flow
@@ -19,6 +19,12 @@ Used the exact binaries under `C:\Program Files\PostgreSQL\18\bin`: `initdb.exe`
 
 The cluster was stopped with `pg_ctl stop -m immediate` after the timed verification command and its owned data directory `.tmp-pg-group-b1` was removed. Port `55491` used by the timed attempt was also stopped/removed; no owned listener or temp directory remained. The successful flow used port `55487`.
 
+## Specification-save acceptance (real production-equivalent verifier)
+
+Command: `SPEC_001_ACCEPTANCE_ALLOW=true SPEC_001_ACCEPTANCE_DATABASE_URL=postgresql://YUNI-SS980@127.0.0.1:56087/deskholt_verify_r2 SPEC_001_ACCEPTANCE_OUTPUT=artifacts/group-b1-brand-category/spec-001-acceptance-r2.json npx tsx scripts/verify-spec-001-acceptance.ts`.
+
+Observed result: `acceptance: PASS` against disposable PostgreSQL 18 trust-auth loopback target `127.0.0.1:56087/deskholt_verify_r2`. Real `loadSpecificationData`, `validateProductAttributeInput`, `createSaveSpecificationsAction`, and Prisma transaction paths executed. The three Standing Desk Products were related by real backfill (`matched: 5`, including all 3 target products; `updated: 5`; `unmatched: 15` for intentionally unseeded non-standing categories). Target: `autonomous-smartdesk-dual-motor-white`. Initial completeness for all three: `0/9`. Save proof: `requiredRowsWritten: 9`, `verifiedRows: 9`, `fullCompletenessAfterSave: 9/9`. Clear-to-delete proof: row `cmtddwdy80001uultxjd8ml96__p` deleted and completeness became `8/9`. Redirects: `/admin/products/cmtddwd7k0004trthl2zg5c01/specifications?saved=1` twice (save and clear). Protected snapshots were unchanged: Product/AffiliateLink/Click/Conversion counts `20/20/0/0`, before and after SHA-256 `52a8b0428109953c114583d64304471e6cd72f7ed25757325cfe9bc7d8ff7856`. This proves server-side production-equivalent behavior only; no browser, auth, or React transport claim is made.
+
 ## Migration SQL review
 
 Reviewed `prisma/migrations/20260828120000_add_product_brand_category_relations/migration.sql`. It contains only two nullable `ADD COLUMN` statements, two indexes, and two nullable FK constraints with `ON DELETE SET NULL`; no drops, NOT NULL changes, data rewrite, or forced backfill.
@@ -26,6 +32,11 @@ Reviewed `prisma/migrations/20260828120000_add_product_brand_category_relations/
 ## Read-site / query-count proof
 
 The production validator and `loadSpecificationData` tests both exercise an existing Standing Desk Product through the relation path and assert identical successful outputs. With `category_id` non-null, each initial Product read includes `category_ref`; the tests assert no `prisma.category.findUnique` slug round-trip (zero separate Category slug lookups). The legacy null fallback tests assert exactly one Category slug lookup and preserve success/error semantics. The missing non-null relation test returns null without a slug lookup. This is the before/after proof: legacy behavior was one Product query plus one Category slug query; relation path is one Product query including Category plus zero separate slug queries; null fallback remains one slug query.
+
+Exact query-proof tests and observed spy counts:
+- `tests/productAttributeValidator.test.ts` — `validator uses the product category relation without a slug lookup`: `categoryLookups = 0`; `validator preserves relation integrity when a non-null category relation is missing`: `categoryLookups = 0`; `validator preserves legacy success semantics with exactly one slug lookup`: `categoryLookups = 1`; `validator preserves legacy error semantics with exactly one slug lookup`: `categoryLookups = 1`.
+- `tests/productSpecificationsAction.test.ts` — `specification loader uses category relation and avoids slug lookup`: `categoryLookups = 0`; `specification loader falls back to one slug lookup for legacy products`: `categoryLookups = 1`; `specification loader returns null without slug lookup for missing non-null relation`: `categoryLookups = 0`.
+- Focused command result: all named tests passed; full suite result remains `260/260`.
 
 ## Commands/results
 
