@@ -713,7 +713,9 @@ Editorial Verdict
 
 # 17. UNIT NORMALIZATION
 
-Admin hiện tại đã có unit conversion.
+Canonical unit cho V1-alpha Standing Desk schema là **imperial** (in, lb, in/s), không phải metric — khớp với thực tế manufacturer spec sheet thị trường Mỹ vốn công bố bằng inch/lb. Đây là lựa chọn có chủ đích, không phải sai lệch so với nguyên tắc bên dưới.
+
+Admin hiện có unit conversion **hẹp**: chỉ cho cặp đơn vị đã có bằng chứng thật cần (in↔cm cho length, thêm khi phát hiện thêm — xem §70 Ontology Issue Log, Product #1 ErGear EGESD5B). Không build một unit-conversion engine tổng quát cho mọi cặp đơn vị có thể có — chỉ build cặp đã xác nhận cần qua dữ liệu thật.
 
 Principle:
 
@@ -2721,3 +2723,24 @@ The decision is the product.
 Affiliate is the monetization layer.
 
 Production safety is the gate that must pass before expanding the product system.
+
+---
+
+# 70. P2 ONTOLOGY ISSUE LOG (LIVE)
+
+Per §58 process (step 11: "Log ontology issue"). Entries appended as real products are attempted — not edited retroactively to look "resolved" before the schema actually changes (§15).
+
+## Product #1 attempt — ErGear EGESD5B (ASIN B0B41YH9B6), 2026-08-29
+
+Source: Amazon "Product information" / "Technical Details" table (real listing, not seed placeholder).
+
+**BLOCKER — fixed:**
+
+- **Mixed units on one source page.** `Minimum Height` given as `28.35 inches`, `Maximum Height` given as `118 centimeters` — same product, same source table, two different unit systems for the same physical quantity class (length). This is the first real occurrence of the case anticipated in the 2026-08-29 Unit Normalization deferral decision (`docs/superpowers/plans/2026-08-29-unit-normalization-deferral.md`) as the trigger to stop deferring. **Decision: build a narrow in↔cm conversion utility** (not a general unit-conversion engine) — scoped to exactly the unit pair with real evidence. See §17.
+- **`desktop_material` ENUM gap.** Real listing states `Top Material Type: Engineered Wood`, which does not match any of the schema's allowed values (`MDF | BAMBOO | SOLID_WOOD | LAMINATE`, §15). Guessing a specific member (e.g. MDF) would fabricate precision the source doesn't provide. **Decision: add `ENGINEERED_WOOD` to the allowed values** for this attribute (additive data change, no destructive migration).
+
+**NON-BLOCKER — logged, not fixed (no schema change forced):**
+
+- **`motor_count` (required) absent from Amazon's standard spec table.** Per §18, `isRequired` does not block save — it's a completeness concern only. Real listings commonly omit this in the structured spec table; it may require a secondary source (product images, bullet description) before a product record can be marked complete. Revisit whether this is a realistic default source expectation after a few more products (§59: "required attributes are realistic").
+- **`warranty_months` (required) given only as qualitative "Limited Warranty" on Amazon, no duration number.** Same non-blocking completeness gap as above. Manufacturer's own site may carry the specific term length; Amazon's listing alone does not. Revisit `isRequired: true` for this field after a few more products if this pattern recurs.
+- **Marketing size vs. measured size discrepancy.** Listing headline says `Size: 48 X 24 Inches`; the actual `Item Dimensions D x W x H` measurement is `23.6"D x 47.2"W`. Rule: use the measured technical dimension as the source of truth for `desktop_width_in`/`desktop_depth_in`, not the rounded marketing figure.
