@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import { createProducts3to7StandingDesks } from '../scripts/create-products-3to7-standing-desks';
+import { convertLengthToCanonicalInches } from '../src/lib/products/unitConversion';
 
 const bin = process.env.ERGEAR_TEST_POSTGRES_BIN;
 function exe(name: string) { return join(bin!, process.platform === 'win32' ? `${name}.exe` : name); }
@@ -31,10 +32,12 @@ const expected = [
 integration('creates exact five draft standing desk identities and reuses Veken idempotently', async () => {
   const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
     await createProducts3to7StandingDesks(prisma);
-    const products = await prisma.product.findMany({ where: { slug: { in: expected.map(([slug]) => slug) } }, include: { brand: true, category_ref: true }, orderBy: { slug: 'asc' } });
+    const specs = { 'veken-47-2in-standing-desk-black': ['veken-47-2in-standing-desk-black-default', '47.2x23.6', 'Cyber Black'], 'claiks-standing-desk-rustic-brown': ['claiks-standing-desk-rustic-brown-default', '48x24', 'Rustic Brown'], 'fezibo-standing-desk-maple': ['fezibo-standing-desk-maple-default', '48x24', null], 'veken-55in-standing-desk-black': ['veken-55in-standing-desk-black-default', '55x23.6', 'Cyber Black'], 'offigo-63in-lshape-standing-desk-black': ['offigo-63in-lshape-standing-desk-black-default', '63x47.2', 'Black'] } as const;
+const products = await prisma.product.findMany({ where: { slug: { in: expected.map(([slug]) => slug) } }, include: { brand: true, category_ref: true }, orderBy: { slug: 'asc' } });
     assert.equal(products.length, 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
     for (const [slug, name, upc, brand, sustainable] of expected) { const row = products.find((product) => product.slug === slug)!; assert.deepEqual({ name: row.name, upc: row.upc_code, brand: row.brand?.slug, category: row.category_ref?.slug, status: row.status, indexed: row.is_indexed, sustainable: row.is_sustainable }, { name, upc, brand, category: 'standing-desks', status: 'DRAFT', indexed: false, sustainable }); }
-    await createProducts3to7StandingDesks(prisma); assert.equal(await prisma.product.count({ where: { slug: { in: expected.map(([slug]) => slug) } } }), 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
+    for (const [slug, spec] of Object.entries(specs)) { const product = products.find((row) => row.slug === slug)!; const variants = await prisma.productVariant.findMany({ where: { product_id: product.id } }); assert.equal(variants.length, 1); assert.deepEqual([variants[0].sku, variants[0].size, variants[0].color], spec); const attrs = await prisma.productAttribute.findMany({ where: { product_id: product.id }, include: { attribute_definition: true } }); assert.ok(attrs.length > 0); assert.ok(attrs.every((a) => a.source_type === 'RETAILER' && a.confidence === 'VERIFIED')); if (slug === 'claiks-standing-desk-rustic-brown') { const a = attrs.find((x) => x.attribute_definition.key === 'max_height_in')!; assert.equal(Number(a.value_number), Number(convertLengthToCanonicalInches(119, 'cm'))); } if (slug === 'offigo-63in-lshape-standing-desk-black') { const a = attrs.find((x) => x.attribute_definition.key === 'desktop_shape')!; assert.equal(a.value_string, 'L_SHAPED'); } }
+     await createProducts3to7StandingDesks(prisma); assert.equal(await prisma.product.count({ where: { slug: { in: expected.map(([slug]) => slug) } } }), 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
 integration('fails before writes when standing-desks category is missing', async () => {
