@@ -595,7 +595,7 @@ test('validation failure draft capture includes source unit only for applicable 
 
   const draftRows = testHarness.savedDrafts[0]?.rows as Record<string, Record<string, unknown>>;
   assert.equal(draftRows[inchRow.rowKey]?.sourceUnit, 'cm');
-  assert.equal('sourceUnit' in (draftRows[poundRow.rowKey] as object), false);
+  assert.equal(draftRows[poundRow.rowKey]?.sourceUnit, 'lb');
   assert.equal('sourceUnit' in (draftRows[blankRow.rowKey] as object), false);
 });
 
@@ -614,7 +614,7 @@ test('omitted and explicit inch source units preserve inch values', async () => 
 });
 
 test('non-inch rows ignore submitted source units', async () => {
-  const value = row({ unit: 'lb' });
+  const value = row({ unit: 'cm' });
   const testHarness = harness([value]);
 
   await redirecting(testHarness.action, form({
@@ -634,6 +634,46 @@ test('invalid inch source unit aggregates an error without transaction writes', 
   await redirecting(testHarness.action, form({
     [`value__${value.rowKey}`]: '2.54',
     [`sourceUnit__${value.rowKey}`]: 'mm',
+  }));
+
+  assert.equal(testHarness.getTransactions(), 0);
+  assert.deepEqual(testHarness.writes, []);
+  assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('kg source unit converts pound rows before validation and persistence', async () => {
+  const value = row({ unit: 'lb', key: 'max_load_lb', label: 'Maximum Load' });
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '1',
+    [`sourceUnit__${value.rowKey}`]: 'kg',
+  }));
+
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
+  assert.ok(create);
+  assert.equal((create.args as { data: { value_number: number } }).data.value_number, 2.20462262185);
+  assert.deepEqual(testHarness.validatedInputs, [{ attributeDefinitionId: value.attributeDefinitionId, valueNumber: 2.20462262185 }]);
+});
+
+test('omitted pound source unit preserves raw value', async () => {
+  const value = row({ unit: 'lb', key: 'max_load_lb', label: 'Maximum Load' });
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({ [`value__${value.rowKey}`]: '10' }));
+
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
+  assert.ok(create);
+  assert.equal((create.args as { data: { value_number: number } }).data.value_number, 10);
+});
+
+test('invalid pound source unit aggregates an error without transaction writes', async () => {
+  const value = row({ unit: 'lb', key: 'max_load_lb', label: 'Maximum Load' });
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '10',
+    [`sourceUnit__${value.rowKey}`]: 'oz',
   }));
 
   assert.equal(testHarness.getTransactions(), 0);

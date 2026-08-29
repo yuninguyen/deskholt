@@ -5,7 +5,7 @@ import {
   type SpecificationDraftRows,
 } from './specificationDraftStore';
 import type { SpecificationData, SpecRow } from './specificationRows';
-import { convertLengthToCanonicalInches } from './unitConversion';
+import { convertLengthToCanonicalInches, convertMassToCanonicalPounds } from './unitConversion';
 import type {
   ProductAttributeInput,
   ValidationResult,
@@ -53,7 +53,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           sourceUrl: String(formData.get(`sourceUrl__${row.rowKey}`) ?? ''),
           sourceType: String(formData.get(`sourceType__${row.rowKey}`) ?? ''),
           confidence: String(formData.get(`confidence__${row.rowKey}`) ?? ''),
-          ...(row.unit === 'in' && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && String(formData.get(`value__${row.rowKey}`) ?? '').trim() !== '' && String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim()
+          ...((row.unit === 'in' || row.unit === 'lb') && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && String(formData.get(`value__${row.rowKey}`) ?? '').trim() !== '' && String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim()
             ? { sourceUnit: String(formData.get(`sourceUnit__${row.rowKey}`)).trim() }
             : {}),
         },
@@ -87,13 +87,16 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           errors.push(`${rowLabel}: giá trị "${rawValue}" không phải số hợp lệ.`);
           continue;
         }
-        if (row.unit === 'in') {
-          const sourceUnit = rawSourceUnit || 'in';
-          if (sourceUnit !== 'in' && sourceUnit !== 'cm') {
+        if (row.unit === 'in' || row.unit === 'lb') {
+          const sourceUnit = rawSourceUnit || row.unit;
+          const validSourceUnits = row.unit === 'in' ? ['in', 'cm'] : ['lb', 'kg'];
+          if (!validSourceUnits.includes(sourceUnit)) {
             errors.push(`${rowLabel}: đơn vị nguồn không hợp lệ.`);
             continue;
           }
-          valueNumber = convertLengthToCanonicalInches(numericValue, sourceUnit);
+          valueNumber = row.unit === 'in'
+            ? convertLengthToCanonicalInches(numericValue, sourceUnit as 'in' | 'cm')
+            : convertMassToCanonicalPounds(numericValue, sourceUnit as 'lb' | 'kg');
         } else {
           valueNumber = numericValue;
         }

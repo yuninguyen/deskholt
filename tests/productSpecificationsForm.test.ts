@@ -215,6 +215,38 @@ test('Specifications form renders source-unit selectors only for inch rows', () 
   assert.doesNotMatch(html, /name="sourceUnit__boolean-inch-row"/);
 });
 
+test('Specifications form renders pound selectors defaulting to lb', () => {
+  const html = render(
+    makeData({
+      rows: [{
+        rowKey: 'pound-row', attributeDefinitionId: 'pound-definition', variantId: null, variantLabel: null,
+        scope: 'PRODUCT', dataType: 'DECIMAL', key: 'max_load_lb', label: 'Maximum Load', unit: 'lb',
+        allowedValues: null, isRequired: true, existing: null,
+      }],
+    })
+  );
+
+  assert.match(html, /name="sourceUnit__pound-row"[\s\S]*?<option value="lb" selected="">lb<\/option>[\s\S]*?<option value="kg">kg<\/option>/);
+});
+
+test('Specifications form preserves valid pound draft units and defaults invalid values to lb', () => {
+  const html = render(
+    makeData({
+      rows: [
+        { rowKey: 'valid-pound-row', attributeDefinitionId: 'valid-pound-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'DECIMAL', key: 'max_load_lb', label: 'Load', unit: 'lb', allowedValues: null, isRequired: false, existing: null },
+        { rowKey: 'invalid-pound-row', attributeDefinitionId: 'invalid-pound-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'DECIMAL', key: 'product_weight_lb', label: 'Weight', unit: 'lb', allowedValues: null, isRequired: false, existing: null },
+      ],
+    }),
+    {
+      'valid-pound-row': { value: '10', sourceUrl: '', sourceType: '', confidence: 'UNVERIFIED', sourceUnit: 'kg' },
+      'invalid-pound-row': { value: '5', sourceUrl: '', sourceType: '', confidence: 'UNVERIFIED', sourceUnit: 'oz' },
+    }
+  );
+
+  assert.match(html, /name="sourceUnit__valid-pound-row"[\s\S]*?<option value="kg" selected="">kg<\/option>/);
+  assert.match(html, /name="sourceUnit__invalid-pound-row"[\s\S]*?<option value="lb" selected="">lb<\/option>/);
+});
+
 test('Specifications form preserves a valid draft source unit and defaults invalid values to inches', () => {
   const html = render(
     makeData({
