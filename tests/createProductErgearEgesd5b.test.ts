@@ -22,6 +22,10 @@ function executable(bin: string, name: string) {
   return join(bin, process.platform === 'win32' ? `${name}.exe` : name);
 }
 
+function runLocalNodeCli(cli: string, args: string[], env: NodeJS.ProcessEnv) {
+  execFileSync(process.execPath, [cli, ...args], { cwd: process.cwd(), env, stdio: 'inherit' });
+}
+
 async function freePort(): Promise<number> {
   for (let port = 56000 + Math.floor(Math.random() * 1000); port < 57000; port += 1) {
     if (port >= 56050 && port <= 56249) continue;
@@ -77,8 +81,8 @@ integration('runs all ErGear behavior only inside one owned disposable cluster',
   const cluster = await launchOwnedPostgres(target.bin);
   const env = { ...process.env, DATABASE_URL: cluster.url };
   try {
-    execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['prisma', 'migrate', 'deploy'], { cwd: process.cwd(), env, stdio: 'inherit', shell: process.platform === 'win32' });
-    execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['tsx', 'prisma/seed-standing-desk-attributes.ts'], { cwd: process.cwd(), env, stdio: 'inherit', shell: process.platform === 'win32' });
+    runLocalNodeCli(require.resolve('prisma/build/index.js'), ['migrate', 'deploy'], env);
+    runLocalNodeCli(require.resolve('tsx/cli'), ['prisma/seed-standing-desk-attributes.ts'], env);
     const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } });
     try {
       await t.test('creates exact identity and links', async () => {
