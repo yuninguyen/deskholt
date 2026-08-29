@@ -32,9 +32,9 @@ integration('creates exact five draft standing desk identities and reuses Veken 
   const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
     await createProducts3to7StandingDesks(prisma);
     const products = await prisma.product.findMany({ where: { slug: { in: expected.map(([slug]) => slug) } }, include: { brand: true, category_ref: true }, orderBy: { slug: 'asc' } });
-    assert.equal(products.length, 5); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
+    assert.equal(products.length, 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
     for (const [slug, name, upc, brand, sustainable] of expected) { const row = products.find((product) => product.slug === slug)!; assert.deepEqual({ name: row.name, upc: row.upc_code, brand: row.brand?.slug, category: row.category_ref?.slug, status: row.status, indexed: row.is_indexed, sustainable: row.is_sustainable }, { name, upc, brand, category: 'standing-desks', status: 'DRAFT', indexed: false, sustainable }); }
-    await createProducts3to7StandingDesks(prisma); assert.equal(await prisma.product.count({ where: { slug: { in: expected.map(([slug]) => slug) } } }), 5); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
+    await createProducts3to7StandingDesks(prisma); assert.equal(await prisma.product.count({ where: { slug: { in: expected.map(([slug]) => slug) } } }), 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
 integration('fails before writes when standing-desks category is missing', async () => {
