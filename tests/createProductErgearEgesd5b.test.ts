@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import { createProductErgearEgesd5b } from '../scripts/create-product-ergear-egesd5b';
+import { convertLengthToCanonicalInches } from '../src/lib/products/unitConversion';
 
 const postgresBin = process.env.ERGEAR_TEST_POSTGRES_BIN;
 const externalUrl = process.env.ERGEAR_TEST_DATABASE_URL;
@@ -117,10 +118,29 @@ integration('runs all ErGear behavior only inside one owned disposable cluster',
         assert.deepEqual({ slug: brand.slug, name: brand.name }, { slug: 'ergear', name: 'ErGear' });
         assert.deepEqual({ name: product.name, slug: product.slug, category: product.category, status: product.status, is_indexed: product.is_indexed, is_sustainable: product.is_sustainable, upc_code: product.upc_code, brand_id: product.brand_id, category_id: product.category_id, description: product.description, image_url: product.image_url }, { name: 'ErGear 48 x 24 Inch Height Adjustable Electric Standing Desk (Black)', slug: 'ergear-egesd5b-standing-desk-black', category: 'standing-desks', status: 'DRAFT', is_indexed: false, is_sustainable: false, upc_code: 'B0B41YH9B6', brand_id: brand.id, category_id: (await prisma.category.findUniqueOrThrow({ where: { slug: 'standing-desks' } })).id, description: 'Electric height-adjustable standing desk with a 48 x 24 inch engineered-wood top, steel frame, and 176 lb weight capacity.', image_url: 'https://images.unsplash.com/photo-1595515106969-1ce29566ff1c?w=800&auto=format&fit=crop&q=80' });
       });
-      await t.test('is idempotent on rerun', async () => {
+      await t.test('persists exact variant and all sourced attributes', async () => {
+        const product = await prisma.product.findUniqueOrThrow({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
+        const variant = await prisma.productVariant.findFirstOrThrow({ where: { product_id: product.id, sku: 'ergear-egesd5b-48x24-black' } });
+        assert.deepEqual({ sku: variant.sku, size: variant.size, color: variant.color, is_active: variant.is_active }, { sku: 'ergear-egesd5b-48x24-black', size: '48x24', color: 'Black', is_active: true });
+        const rows = await prisma.productAttribute.findMany({ where: { product_id: product.id }, include: { attribute_definition: true } });
+        const values = new Map(rows.map((row) => [row.attribute_definition.key, row]));
+        const number = (key: string) => values.get(key)?.value_number?.toString();
+        assert.equal(number('min_height_in'), '28.35');
+        assert.equal(Number(number('max_height_in')), Number(convertLengthToCanonicalInches(118, 'cm').toFixed(6)));
+        assert.equal(number('max_load_lb'), '176'); assert.equal(number('product_weight_lb'), '43.8'); assert.equal(number('desktop_thickness_in'), '0.67');
+        assert.equal(values.get('adjustment_type')?.value_string, 'ELECTRIC'); assert.equal(number('memory_presets'), '4'); assert.equal(values.get('frame_material')?.value_string, 'STEEL');
+        assert.equal(values.get('desktop_shape')?.value_string, 'RECTANGULAR'); assert.equal(values.get('desktop_included')?.value_boolean, true);
+        assert.equal(number('desktop_width_in'), '47.2'); assert.equal(number('desktop_depth_in'), '23.6'); assert.equal(values.get('desktop_material')?.value_string, 'ENGINEERED_WOOD');
+        assert.equal(values.get('desktop_finish')?.value_string, 'Laminated'); assert.equal(values.get('frame_color')?.value_string, 'Black');
+        for (const key of ['adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included', 'min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'memory_presets']) assert.equal(values.get(key)?.variant_id, null, key);
+        for (const key of ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color']) { assert.equal(values.get(key)?.variant_id, variant.id, key); assert.equal(values.get(key)?.source_url, 'https://www.amazon.com/dp/B0B41YH9B6'); assert.equal(values.get(key)?.source_type, 'RETAILER'); assert.equal(values.get(key)?.confidence, 'VERIFIED'); }
+        for (const key of ['motor_count', 'warranty_months', 'leg_count', 'leg_design', 'lifting_speed_in_s', 'noise_db', 'anti_collision', 'crossbar', 'casters_compatible', 'certification_greenguard', 'certification_bifma', 'assembly_time_minutes']) assert.equal(values.has(key), false, key);
+      });
+      await t.test('is idempotent on rerun without duplicate variants or attributes', async () => {
         await createProductErgearEgesd5b(prisma);
-        assert.equal(await prisma.brand.count({ where: { slug: 'ergear' } }), 1);
-        assert.equal(await prisma.product.count({ where: { slug: 'ergear-egesd5b-standing-desk-black' } }), 1);
+        const product = await prisma.product.findUniqueOrThrow({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
+        assert.equal(await prisma.brand.count({ where: { slug: 'ergear' } }), 1); assert.equal(await prisma.product.count({ where: { slug: product.slug } }), 1);
+        assert.equal(await prisma.productVariant.count({ where: { product_id: product.id } }), 1); assert.equal(await prisma.productAttribute.count({ where: { product_id: product.id } }), 15);
       });
       await t.test('fails when prerequisite category is absent without creating rows', async () => {
         await prisma.product.deleteMany({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
