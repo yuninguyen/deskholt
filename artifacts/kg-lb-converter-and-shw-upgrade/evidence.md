@@ -21,13 +21,15 @@ After upgrade:
 - All intentionally absent keys have no rows: `motor_count`, `warranty_months`, `memory_presets`, `product_weight_lb`, `leg_count`, `leg_design`, `lifting_speed_in_s`, `noise_db`, `anti_collision`, `crossbar`, `casters_compatible`, `certification_greenguard`, `certification_bifma`, `assembly_time_minutes`.
 - Existing Amazon link is updated only from `$299.99` to `$159.87`; its raw and pending-tag tracking URLs remain unchanged.
 - Re-run produces no duplicate rows.
-- A real temporary `adjustment_type` allowed-values change forces validator failure and proves transaction rollback: no SHW Brand/attributes remain and stale product, variants, and link state are restored.
+- A real temporary `adjustment_type` allowed-values change forces validator failure and proves transaction rollback: the fixture is first re-established to its actual pre-upgrade legacy state, including the existing AffiliateLink price `$299.99`; no SHW Brand/attributes remain and that legacy product, variants, and `$299.99` link state are restored.
 
 ## Commands and outcomes
 
 - Owned SHW integration with `ERGEAR_TEST_POSTGRES_BIN=C:\Program Files\PostgreSQL\18\bin`: 2 pass, 0 fail.
 - `npx tsc --noEmit`: pass.
+- `npm run lint`: pass (ESLint, zero warnings).
 - `npm test`: 289 pass, 2 owned-cluster opt-in skips, 0 fail. The skips are expected without the opt-in environment; the enabled SHW integration above passed.
+- `npm run build`: attempted after `prisma generate`; failed during prerendering because `DATABASE_URL` was not set. No build pass is claimed.
 - `git diff --check`: pass.
 
 ## Conclusion
