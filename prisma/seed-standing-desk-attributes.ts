@@ -29,7 +29,7 @@ type AttributeSeed = {
   allowedValues?: string[];
 };
 
-const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
+export const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
   // --- Dimensions (Product-level) ---
   { key: 'min_height_in', label: 'Minimum Height', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: true, isComparable: true, isRequired: true },
   { key: 'max_height_in', label: 'Maximum Height', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in', isFilterable: true, isComparable: true, isRequired: true },
@@ -105,7 +105,7 @@ const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
     isFilterable: true,
     isComparable: true,
     isRequired: false,
-    allowedValues: ['MDF', 'BAMBOO', 'SOLID_WOOD', 'LAMINATE'],
+    allowedValues: ['MDF', 'BAMBOO', 'SOLID_WOOD', 'LAMINATE', 'ENGINEERED_WOOD'],
   },
   { key: 'desktop_finish', label: 'Desktop Finish', scope: 'VARIANT', dataType: 'STRING', isFilterable: false, isComparable: false, isRequired: false },
   { key: 'frame_color', label: 'Frame Color', scope: 'VARIANT', dataType: 'STRING', isFilterable: true, isComparable: false, isRequired: false },
@@ -219,11 +219,13 @@ async function main() {
   console.log('Done. Standing Desk Attribute Engine v1-alpha seeded.');
 }
 
-main()
-  .catch((err) => {
-    console.error('Seed failed:', err);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (process.argv[1]?.endsWith('seed-standing-desk-attributes.ts')) {
+  main()
+    .catch((err) => {
+      console.error('Seed failed:', err);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

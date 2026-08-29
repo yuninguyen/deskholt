@@ -7,6 +7,7 @@ export type SpecificationDraftRows = Record<
     sourceUrl: string;
     sourceType: string;
     confidence: string;
+    sourceUnit?: string;
   }
 >;
 

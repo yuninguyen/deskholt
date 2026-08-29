@@ -34,37 +34,37 @@
 
 **Files:** `prisma/seed-standing-desk-attributes.ts`, wherever `desktop_material` enum validation is covered (`tests/productAttributeValidator.test.ts` or similar — find via grep for `desktop_material` or `MDF`)
 
-- [ ] **Step 1:** Add a failing test confirming `ENGINEERED_WOOD` is accepted as a valid `desktop_material` value by the shared validator (using the seed's allowed-values list, not a hardcoded duplicate list).
-- [ ] **Step 2:** Add `'ENGINEERED_WOOD'` to the `allowedValues` array for `desktop_material` in `prisma/seed-standing-desk-attributes.ts`.
-- [ ] **Step 3:** Run the test. Expected: PASS. Run the full suite: no regressions.
+- [x] **Step 1:** Add a failing test confirming `ENGINEERED_WOOD` is accepted as a valid `desktop_material` value by the shared validator (using the seed's allowed-values list, not a hardcoded duplicate list).
+- [x] **Step 2:** Add `'ENGINEERED_WOOD'` to the `allowedValues` array for `desktop_material` in `prisma/seed-standing-desk-attributes.ts`.
+- [x] **Step 3:** Run the test. Expected: PASS. Run the full suite: no regressions.
 
 ### Task 2: Fix B — conversion module (tests first)
 
 **Files:** `src/lib/products/unitConversion.ts` (new), `tests/unitConversion.test.ts` (new)
 
-- [ ] **Step 1:** Write failing tests for `convertLengthToCanonicalInches`: `('in')` returns the value unchanged (including edge values like `0`, negative — decide and test whatever the existing numeric validation already allows/rejects downstream, don't invent new range rules here); `('cm')` divides by 2.54 (e.g. `118 cm` → `~46.4567 in`, assert with a reasonable floating-point tolerance); an unsupported `sourceUnit` value throws or is rejected in a way the caller can turn into the existing error-collection path (match whatever `specificationSaveAction.ts` already does for other malformed input — look at how it handles invalid `sourceType`/`confidence` today for the pattern to follow).
-- [ ] **Step 2:** Implement the function to pass. Run tests: PASS.
+- [x] **Step 1:** Write failing tests for `convertLengthToCanonicalInches`: `('in')` returns the value unchanged (including edge values like `0`, negative — decide and test whatever the existing numeric validation already allows/rejects downstream, don't invent new range rules here); `('cm')` divides by 2.54 (e.g. `118 cm` → `~46.4567 in`, assert with a reasonable floating-point tolerance); an unsupported `sourceUnit` value throws or is rejected in a way the caller can turn into the existing error-collection path (match whatever `specificationSaveAction.ts` already does for other malformed input — look at how it handles invalid `sourceType`/`confidence` today for the pattern to follow).
+- [x] **Step 2:** Implement the function to pass. Run tests: PASS.
 
 ### Task 3: Fix B — wire into save action and draft store (tests first)
 
 **Files:** `tests/productSpecificationsAction.test.ts`, `src/lib/products/specificationSaveAction.ts`, `src/lib/products/specificationDraftStore.ts`
 
-- [ ] **Step 1:** Add failing tests: (a) submitting a `unit === 'in'` row with `sourceUnit__<rowKey> = 'cm'` and a raw value converts correctly before validation/storage (assert the persisted `value_number` is the converted inches value, not the raw cm figure); (b) submitting the same row with `sourceUnit__<rowKey>` omitted behaves exactly as today (raw value stored as-is, still treated as inches) — regression guard; (c) submitting `sourceUnit__<rowKey> = 'in'` explicitly behaves identically to omitting it; (d) a row whose `unit` is not `'in'` (e.g. a `lb` row) ignores any `sourceUnit__<rowKey>` field entirely if present — regression guard against accidental scope creep; (e) on validation failure, the draft preserves the submitted `sourceUnit__<rowKey>` value so it round-trips back to the form.
-- [ ] **Step 2:** Wire `specificationSaveAction.ts` to call the Task 2 conversion function per Fix B's Step 3 description above. Update `specificationDraftStore.ts`'s `SpecificationDraftRows` shape to include the source unit field per Fix B's Step 4.
-- [ ] **Step 3:** Run the new tests. Expected: PASS. Run the full suite: no regressions.
+- [x] **Step 1:** Add failing tests: (a) submitting a `unit === 'in'` row with `sourceUnit__<rowKey> = 'cm'` and a raw value converts correctly before validation/storage (assert the persisted `value_number` is the converted inches value, not the raw cm figure); (b) submitting the same row with `sourceUnit__<rowKey>` omitted behaves exactly as today (raw value stored as-is, still treated as inches) — regression guard; (c) submitting `sourceUnit__<rowKey> = 'in'` explicitly behaves identically to omitting it; (d) a row whose `unit` is not `'in'` (e.g. a `lb` row) ignores any `sourceUnit__<rowKey>` field entirely if present — regression guard against accidental scope creep; (e) on validation failure, the draft preserves the submitted `sourceUnit__<rowKey>` value so it round-trips back to the form.
+- [x] **Step 2:** Wire `specificationSaveAction.ts` to call the Task 2 conversion function per Fix B's Step 3 description above. Update `specificationDraftStore.ts`'s `SpecificationDraftRows` shape to include the source unit field per Fix B's Step 4.
+- [x] **Step 3:** Run the new tests. Expected: PASS. Run the full suite: no regressions.
 
 ### Task 4: Fix B — form UI (tests first)
 
 **Files:** `tests/productSpecificationsForm.test.ts` (or wherever `ProductSpecificationsForm`/`SpecRowFields` is covered), `src/components/admin/products/ProductSpecificationsForm.tsx`
 
-- [ ] **Step 1:** Add failing tests: a row with `unit === 'in'` renders a source-unit selector defaulting to `in`; a row with any other unit (or no unit) does not render the selector; when a draft (Task 3's preserved value) specifies `sourceUnit: 'cm'`, the selector's default reflects that instead of `in`.
-- [ ] **Step 2:** Implement the selector per Fix B's Step 2 description above.
-- [ ] **Step 3:** Run the new tests. Expected: PASS. Run the full suite, lint, typecheck, build. Expected: all green.
+- [x] **Step 1:** Add failing tests: a row with `unit === 'in'` renders a source-unit selector defaulting to `in`; a row with any other unit (or no unit) does not render the selector; when a draft (Task 3's preserved value) specifies `sourceUnit: 'cm'`, the selector's default reflects that instead of `in`.
+- [x] **Step 2:** Implement the selector per Fix B's Step 2 description above.
+- [x] **Step 3:** Run the new tests. Expected: PASS. Run the full suite, lint, typecheck, build. Expected: all green.
 
 ### Task 5: Verification and evidence
 
-- [ ] **Step 1:** Manually exercise in dev: create/use a `min_height_in` or `max_height_in` row, enter `118` with source unit `cm`, save, and confirm the stored/displayed value is `~46.46` (inches) — matching the real ErGear ontology finding that motivated this plan. Then confirm a plain `in`-unit entry with no unit change still behaves exactly as before.
-- [ ] **Step 2:** Record evidence in `artifacts/unit-conversion-material-enum/evidence.md`: test output, manual verification transcript (the 118cm→~46.46in conversion specifically), and confirmation that both blueprint §70 BLOCKER items are closed.
-- [ ] **Step 3:** Push the branch, open a PR against `main` (same flow as prior PRs: isolated worktree, own branch, CI green, `mergeable_state: clean`). Do not merge locally.
+- [x] **Step 1:** Manually exercise in dev: create/use a `min_height_in` or `max_height_in` row, enter `118` with source unit `cm`, save, and confirm the stored/displayed value is `~46.46` (inches) — matching the real ErGear ontology finding that motivated this plan. Then confirm a plain `in`-unit entry with no unit change still behaves exactly as before.
+- [x] **Step 2:** Record evidence in `artifacts/unit-conversion-material-enum/evidence.md`: test output, manual verification transcript (the 118cm→~46.46in conversion specifically), and confirmation that both blueprint §70 BLOCKER items are closed.
+- [x] **Step 3:** Push the branch, open a PR against `main` (same flow as prior PRs: isolated worktree, own branch, CI green, `mergeable_state: clean`). Do not merge locally.
 
 **After this lands:** Both real BLOCKER ontology issues from the ErGear P2 dry run are closed. The NON-BLOCKER items (motor_count and warranty_months often missing from Amazon's standard spec table) remain logged in blueprint §70 for now — no code change was requested for those; they are editorial/data-sourcing gaps, not schema or validation gaps.
