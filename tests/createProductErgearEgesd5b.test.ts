@@ -4,7 +4,6 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import net from 'node:net';
 import { PrismaClient } from '@prisma/client';
 import { createProductErgearEgesd5b } from '../scripts/create-product-ergear-egesd5b';
 
@@ -26,44 +25,42 @@ function runLocalNodeCli(cli: string, args: string[], env: NodeJS.ProcessEnv) {
   execFileSync(process.execPath, [cli, ...args], { cwd: process.cwd(), env, stdio: 'inherit' });
 }
 
-async function freePort(): Promise<number> {
-  for (let port = 56000 + Math.floor(Math.random() * 1000); port < 57000; port += 1) {
-    if (port >= 56050 && port <= 56249) continue;
-    const available = await new Promise<boolean>((resolve) => {
-      const server = net.createServer();
-      server.once('error', () => resolve(false));
-      server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
-    });
-    if (available) return port;
-  }
-  throw new Error('Could not allocate a permitted PostgreSQL port');
-}
+type ProcessRunner = (bin: string, command: string, args: string[]) => void;
 
 function run(bin: string, command: string, args: string[], env?: NodeJS.ProcessEnv) {
   execFileSync(executable(bin, command), args, { cwd: process.cwd(), env, stdio: 'inherit' });
 }
 
-async function launchOwnedPostgres(bin: string) {
+async function launchOwnedPostgres(bin: string, runner: ProcessRunner = run, candidates?: number[]) {
   const root = mkdtempSync(join(tmpdir(), 'ergear-postgres-'));
-  const port = await freePort();
+  const ports = candidates ?? Array.from({ length: 1000 }, (_, index) => 56000 + index).filter((port) => port < 56050 || port > 56249).sort(() => Math.random() - 0.5);
   const database = 'ergear_test';
-  const url = `postgresql://postgres@127.0.0.1:${port}/${database}`;
   let started = false;
   try {
-    run(bin, 'initdb', ['-D', root, '-A', 'trust', '-U', 'postgres']);
-    run(bin, 'pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start']);
-    started = true;
-    run(bin, 'createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', database]);
-    return {
-      root,
-      url,
-      stop() {
-        if (started) run(bin, 'pg_ctl', ['-D', root, '-w', 'stop']);
-        rmSync(root, { recursive: true, force: true });
-      },
-    };
+    runner(bin, 'initdb', ['-D', root, '-A', 'trust', '-U', 'postgres']);
+    for (const port of ports) {
+      try {
+        runner(bin, 'pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start']);
+        started = true;
+        const url = `postgresql://postgres@127.0.0.1:${port}/${database}`;
+        runner(bin, 'createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', database]);
+        return {
+          root,
+          url,
+          stop() {
+            if (started) runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']);
+            rmSync(root, { recursive: true, force: true });
+          },
+        };
+      } catch (error) {
+        if (started) { try { runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']); } catch {} }
+        started = false;
+        if (port === ports[ports.length - 1]) throw error;
+      }
+    }
+    throw new Error('Could not start owned PostgreSQL cluster');
   } catch (error) {
-    if (started) { try { run(bin, 'pg_ctl', ['-D', root, '-w', 'stop']); } catch {} }
+    if (started) { try { runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']); } catch {} }
     rmSync(root, { recursive: true, force: true });
     throw error;
   }
@@ -72,6 +69,23 @@ async function launchOwnedPostgres(bin: string) {
 // RED proof: an external URL cannot be accepted as a test target.
 test('rejects caller-provided database URLs before any connection', () => {
   assert.throws(() => ownedTargetConfig(undefined, 'postgresql://shared.example/db'), /forbidden/);
+});
+
+test('retries pg_ctl bind failure before returning a target or connecting', async () => {
+  const calls: string[][] = [];
+  let pgCtlStarts = 0;
+  const runner: ProcessRunner = (_bin, command, args) => {
+    calls.push([command, ...args]);
+    if (command === 'pg_ctl' && args.at(-1) === 'start' && ++pgCtlStarts === 1) throw new Error('address already in use');
+  };
+  const cluster = await launchOwnedPostgres('fake-bin', runner, [56000, 56001]);
+  try {
+    assert.match(cluster.url, /:56001\//);
+    assert.deepEqual(calls.filter(([command]) => command === 'createdb').map((call) => call[4]), ['56001']);
+    assert.equal(calls.filter(([command, ...args]) => command === 'pg_ctl' && args.at(-1) === 'start').length, 2);
+  } finally {
+    cluster.stop();
+  }
 });
 
 const integration = postgresBin ? test : test.skip;
