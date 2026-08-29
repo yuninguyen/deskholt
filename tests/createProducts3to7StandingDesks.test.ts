@@ -103,15 +103,20 @@ integration('rerun removes stale and wrong-scope attributes without touching ano
     const other = await prisma.product.create({ data: { name: 'Unrelated product', slug: 'unrelated-product', category: 'standing-desks', category_id: target.category_id!, image_url: 'https://example.com/unrelated.jpg', status: 'DRAFT' } });
     const forbidden = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'desktop_material' } });
     const allowed = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'desktop_finish' } });
+    const currentVariant = await prisma.productVariant.findFirstOrThrow({ where: { product_id: target.id } });
+    const obsoleteVariant = await prisma.productVariant.create({ data: { product_id: target.id, sku: 'veken-47-2in-standing-desk-black-obsolete', size: 'obsolete', is_active: false } });
     await prisma.productAttribute.createMany({ data: [
       { product_id: target.id, variant_id: null, attribute_definition_id: forbidden.id, value_string: 'ENGINEERED_WOOD' },
       { product_id: target.id, variant_id: null, attribute_definition_id: allowed.id, value_string: 'stale' },
+      { product_id: target.id, variant_id: obsoleteVariant.id, attribute_definition_id: allowed.id, value_string: 'obsolete-variant' },
     ] });
     await prisma.productAttribute.create({ data: { product_id: other.id, attribute_definition_id: forbidden.id, value_string: 'ENGINEERED_WOOD' } });
     await createProducts3to7StandingDesks(prisma);
     const targetKeys = (await prisma.productAttribute.findMany({ where: { product_id: target.id }, include: { attribute_definition: true } })).map((a) => a.attribute_definition.key);
     assert.equal(targetKeys.includes('desktop_material'), false);
-    assert.equal(targetKeys.includes('desktop_finish'), false);
+    assert.equal(targetKeys.includes('desktop_finish'), true);
+    const survivingFinish = await prisma.productAttribute.findMany({ where: { product_id: target.id, attribute_definition_id: allowed.id } });
+    assert.deepEqual(survivingFinish.map((row) => [row.variant_id, row.value_string]), [[currentVariant.id, 'Laminated']]);
     assert.equal(await prisma.productAttribute.count({ where: { product_id: other.id } }), 1);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
