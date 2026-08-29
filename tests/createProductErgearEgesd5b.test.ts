@@ -35,32 +35,36 @@ async function launchOwnedPostgres(bin: string, runner: ProcessRunner = run, can
   const root = mkdtempSync(join(tmpdir(), 'ergear-postgres-'));
   const ports = candidates ?? Array.from({ length: 1000 }, (_, index) => 56000 + index).filter((port) => port < 56050 || port > 56249).sort(() => Math.random() - 0.5);
   const database = 'ergear_test';
-  let started = false;
+  let cleanupRequired = false;
+  const stopBestEffort = () => {
+    if (!cleanupRequired) return;
+    try { runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']); } catch {}
+    cleanupRequired = false;
+  };
   try {
     runner(bin, 'initdb', ['-D', root, '-A', 'trust', '-U', 'postgres']);
     for (const port of ports) {
       try {
+        cleanupRequired = true;
         runner(bin, 'pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start']);
-        started = true;
         const url = `postgresql://postgres@127.0.0.1:${port}/${database}`;
         runner(bin, 'createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', database]);
         return {
           root,
           url,
           stop() {
-            if (started) runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']);
+            stopBestEffort();
             rmSync(root, { recursive: true, force: true });
           },
         };
       } catch (error) {
-        if (started) { try { runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']); } catch {} }
-        started = false;
+        stopBestEffort();
         if (port === ports[ports.length - 1]) throw error;
       }
     }
     throw new Error('Could not start owned PostgreSQL cluster');
   } catch (error) {
-    if (started) { try { runner(bin, 'pg_ctl', ['-D', root, '-w', 'stop']); } catch {} }
+    stopBestEffort();
     rmSync(root, { recursive: true, force: true });
     throw error;
   }
@@ -83,6 +87,13 @@ test('retries pg_ctl bind failure before returning a target or connecting', asyn
     assert.match(cluster.url, /:56001\//);
     assert.deepEqual(calls.filter(([command]) => command === 'createdb').map((call) => call[4]), ['56001']);
     assert.equal(calls.filter(([command, ...args]) => command === 'pg_ctl' && args.at(-1) === 'start').length, 2);
+    assert.deepEqual(calls.map(([command, ...args]) => [command, args.at(-1)]), [
+      ['initdb', 'postgres'],
+      ['pg_ctl', 'start'],
+      ['pg_ctl', 'stop'],
+      ['pg_ctl', 'start'],
+      ['createdb', 'ergear_test'],
+    ]);
   } finally {
     cluster.stop();
   }
