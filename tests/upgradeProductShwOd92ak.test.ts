@@ -22,7 +22,7 @@ async function owned() {
 }
 const integration = bin ? test : test.skip;
 const EXPECTED = ['min_height_in', 'max_height_in', 'max_load_lb', 'desktop_thickness_in', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included', 'desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color'];
-const FORBIDDEN = ['motor_count', 'warranty_months', 'leg_count', 'leg_design', 'lifting_speed_in_s', 'noise_db', 'anti_collision', 'crossbar', 'casters_compatible', 'certification_greenguard', 'certification_bifma', 'assembly_time_minutes'];
+const FORBIDDEN = ['motor_count', 'warranty_months', 'memory_presets', 'product_weight_lb', 'leg_count', 'leg_design', 'lifting_speed_in_s', 'noise_db', 'anti_collision', 'crossbar', 'casters_compatible', 'certification_greenguard', 'certification_bifma', 'assembly_time_minutes'];
 
 integration('upgrades exact existing SHW fixture, selects SKU, is idempotent, and rolls back transactionally', async () => {
   const c = await owned(); const env = { ...process.env, DATABASE_URL: c.url };
@@ -49,13 +49,13 @@ integration('upgrades exact existing SHW fixture, selects SKU, is idempotent, an
       for (const key of FORBIDDEN) assert.equal(values.has(key), false, key);
       const link = await p.affiliateLink.findUniqueOrThrow({ where: { id: originalLink.id } }); assert.equal(link.price, 159.87); assert.equal(link.raw_url, originalLink.raw_url); assert.equal(link.tracking_url, originalLink.tracking_url);
       await upgradeProductShwOd92ak(p); assert.equal(await p.productVariant.count({ where: { product_id: product.id } }), 2); assert.equal(await p.productAttribute.count({ where: { product_id: product.id } }), 13); assert.equal(await p.affiliateLink.count({ where: { product_id: product.id } }), 1);
-      await p.productAttribute.deleteMany({ where: { product_id: product.id } }); await p.product.update({ where: { id: product.id }, data: { brand_id: null, upc_code: null } }); await p.productVariant.update({ where: { id: target.id }, data: { size: null, color: null } }); await p.brand.delete({ where: { slug: 'shw' } });
+      await p.productAttribute.deleteMany({ where: { product_id: product.id } }); await p.product.update({ where: { id: product.id }, data: { brand_id: null, upc_code: null } }); await p.productVariant.update({ where: { id: target.id }, data: { size: null, color: null } }); await p.affiliateLink.update({ where: { id: originalLink.id }, data: { price: 299.99 } }); await p.brand.delete({ where: { slug: 'shw' } });
       const definition = await p.attributeDefinition.findUniqueOrThrow({ where: { key: 'adjustment_type' } }); const originalAllowed = definition.allowed_values;
       await p.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: ['MANUAL_CRANK'] } });
       await assert.rejects(() => upgradeProductShwOd92ak(p), /adjustment_type.*allowed/i);
       assert.equal(await p.brand.count({ where: { slug: 'shw' } }), 0); const rolled = await p.product.findUniqueOrThrow({ where: { id: product.id } }); assert.equal(rolled.brand_id, null); assert.equal(rolled.upc_code, null); assert.equal(rolled.description, 'legacy');
       assert.deepEqual(await p.productVariant.findMany({ where: { product_id: product.id }, orderBy: { sku: 'asc' }, select: { sku: true, size: true, color: true } }), [{ sku: 'competing-variant', size: null, color: null }, { sku: 'shw-48in-standing-desk-drawer-black-default', size: null, color: null }]);
-      assert.equal(await p.productAttribute.count({ where: { product_id: product.id } }), 0); const stale = await p.affiliateLink.findUniqueOrThrow({ where: { id: originalLink.id } }); assert.equal(stale.price, 159.87); assert.equal(stale.tracking_url, originalLink.tracking_url);
+      assert.equal(await p.productAttribute.count({ where: { product_id: product.id } }), 0); const stale = await p.affiliateLink.findUniqueOrThrow({ where: { id: originalLink.id } }); assert.equal(stale.price, 299.99); assert.equal(stale.tracking_url, originalLink.tracking_url);
       await p.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: originalAllowed === null ? Prisma.JsonNull : originalAllowed } });
     } finally { await p.$disconnect(); }
   } finally { c.stop(); }
