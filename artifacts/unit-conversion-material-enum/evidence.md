@@ -56,6 +56,21 @@ All pre-existing values remain present and `ENGINEERED_WOOD` is accepted and per
 
 The §70 non-blockers concerning often-missing `motor_count` and `warranty_months` remain editorial/data-sourcing gaps and were not changed.
 
+## Actual Next dev render (round 4)
+
+A fresh owned PostgreSQL 18 cluster was initialized on `127.0.0.1:56432`, and a real Next dev server was started on `http://127.0.0.1:56321`. The readiness probe correctly used `/admin/login` (not nonexistent `/login`) and returned HTTP 200. A real `authenticateAdmin` call generated the session cookie; the complete form-shaped action submission then redirected to `/admin/products/cmte1nfi40004o2irdkrcofzh/specifications?saved=1`. This action submission is distinct from the subsequent authenticated server-rendered HTTP GET.
+
+Authenticated GET: `http://127.0.0.1:56321/admin/products/cmte1nfi40004o2irdkrcofzh/specifications` → HTTP 200.
+
+Rendered markup assertions (actual existing input/select names):
+
+```text
+value__cmte1ng9900041310xk5dy8p7__p value="46.456693"; sourceUnit__cmte1ng9900041310xk5dy8p7__p selected in
+value__cmte1ng9500011310bh2fwuu8__p value="28.35"; sourceUnit__cmte1ng9500011310bh2fwuu8__p selected in
+ENGINEERED_WOOD present
+ASSERTIONS {"max":true,"min":true,"maxSelector":true,"minSelector":true,"mat":true}
+```
+
 ## Cleanup and limitations
 
-The disposable cluster was stopped after verification with PostgreSQL 18 `pg_ctl stop -D .tmp-pgdata -m fast`, and the owned temporary data directory was removed. The ignored harness and report remain only under the plan SDD workspace. Verification proves the production-equivalent server/action/form path; it does not claim browser rendering, authentication, or HTTP transport.
+The disposable cluster was stopped after verification with PostgreSQL 18 `pg_ctl stop -D .tmp-pgdata-r4 -m fast`, and the owned temporary data directory, dev server, and temporary render harness were removed. Generated `next-env.d.ts` drift was restored. The evidence now covers the real action submission plus the actual authenticated server-rendered HTTP GET; it does not claim browser automation or browser POST transport.
