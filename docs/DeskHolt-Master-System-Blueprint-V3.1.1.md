@@ -2748,3 +2748,19 @@ Source: Amazon "Product information" / "Technical Details" table (real listing, 
 - **Conditional/exclusive pricing on the source listing.** The buy box shows `$99.99` "exclusively for Amazon Prime members" alongside a `$139.99` "Regular Price" available to everyone. Showing the Prime-exclusive price as the canonical public price would overclaim for non-Prime buyers, which §25 prohibits ("không claim ... nếu ... chưa biết" / offer data must reflect what's actually reliably available). **Decision: use the universally available price ($139.99 Regular Price) as `AffiliateLink.price`**, not the Prime-exclusive price. Revisit if/when the Offer model gains a way to represent membership-conditional pricing as its own field (not now — no evidence this is needed beyond this one case yet).
 
 **Product #1 entered end-to-end, 2026-08-29/30.** All §58 steps completed for this product: Identity, Options/variant (single materialized variant), Structured attributes (15 sourced `VERIFIED` attributes via `scripts/create-product-ergear-egesd5b.ts`), Sources (`source_url`/`source_type`/`confidence` on every attribute), Merchant listing + Current Offer (`AffiliateLink`, $139.99), Basic editorial (description), Index state (left `is_indexed: false` deliberately — Active/public does not imply indexed, these are separate P0-A controls). The two logged NON-BLOCKER gaps were closed by the admin manually entering `motor_count: 1` and `warranty_months: 36` through the Admin specifications form — both recorded honestly as `confidence: UNVERIFIED` with no `source_url`, since neither came from the Amazon listing itself. Product then moved `DRAFT` → `ACTIVE`. This closes the §58 P2 entry-condition dry run for Product #1/10 — 9 more needed before the P2 ontology audit (§59 exit criteria) can be evaluated.
+
+## Product #2 attempt — SHW OD-92A-K (ASIN B07MBR8N89), 2026-08-30
+
+This ASIN turned out to already exist in the database — one of the original 20 `prisma/seed.ts` products (slug `shw-48in-standing-desk-drawer-black`, `status: ACTIVE`, only legacy `specs` JSON, no structured attributes yet). Decision: **upgrade the existing row in place** rather than create a duplicate.
+
+**BLOCKER — new, real evidence:**
+
+- **kg↔lb mass mismatch.** The listing's "Maximum Weight Recommendation" is given as `50 kg` — the schema's canonical unit for `max_load_lb` is `lb` (§17). Same class of problem as Product #1's cm↔in mismatch, now for mass instead of length. **Decision: build a narrow `convertMassToCanonicalPounds` function**, mirroring the in↔cm mechanism exactly, and generalize the existing save-action/form wiring to cover both unit pairs rather than duplicate it.
+- Height again mixed units on one listing (`Minimum Height: 28 inches`, `Maximum Height: 114 centimeters`) — same in↔cm case as Product #1, already handled by the existing converter.
+
+**NON-BLOCKER — pattern now confirmed twice:**
+
+- `warranty_months` and `motor_count` are again absent/qualitative-only on Amazon's standard spec table (2/2 products so far). Still not changing `isRequired` yet — revisit after a few more products, per the plan already stated for Product #1.
+- `memory_presets`: unlike Product #1's explicit "4 Memory Presets" bullet, this listing only names "Memory Preset" as a qualitative feature with no count — left unset rather than guessed.
+- This product has a **real UPC** (`811244032715`), unlike Product #1 which had no true UPC and used its ASIN as a stand-in — first real use of the `upc_code` field for its actual intended purpose.
+- The seeded placeholder price (`$299.99`, dated 2026-08-11) is stale — the real current price is `$159.87`. Confirms `prisma/seed.ts`'s own header warning ("Prices below are indicative snapshots ... will drift over time").
