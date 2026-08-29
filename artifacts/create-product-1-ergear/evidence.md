@@ -81,7 +81,7 @@ Brand=1; Product=1; ProductVariant=1; ProductAttribute=15; AffiliateLink=1
 
 ## P2 dry-run conclusion
 
-Product #1 of the §58 P2 dry run is now enter-able end-to-end using real confirmed values. The only deliberately unset listed NON-BLOCKER gaps are `motor_count` and `warranty_months`; their absence does not publish the Product, which remains `DRAFT`.
+Product #1 of the §58 P2 dry run is now enter-able end-to-end using real confirmed values. All 12 plan-listed missing/non-blocker keys are deliberately absent: `motor_count`, `warranty_months`, `leg_count`, `leg_design`, `lifting_speed_in_s`, `noise_db`, `anti_collision`, `crossbar`, `casters_compatible`, `certification_greenguard`, `certification_bifma`, and `assembly_time_minutes`. The §70 dry-run discussion specifically highlights `motor_count` and `warranty_months`; none of these absences publishes the Product, which remains `DRAFT`.
 
 ## Cleanup
 
