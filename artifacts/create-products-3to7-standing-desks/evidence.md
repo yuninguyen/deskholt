@@ -52,4 +52,8 @@ The owned test first persists all five rows, deletes only product #3 (`fezibo-st
 - `npx tsc --noEmit`: pass.
 - `git diff --check`: pass.
 
-The pending final branch gate will run full `npm test`, lint, and build before PR integration.
+## Known non-blocking follow-up
+
+Per explicit product-owner decision, three final-review findings are non-blocking for this PR and are deferred follow-up work: improve port-collision diagnostic handling in the disposable PostgreSQL harness, guarantee cleanup after a `createdb` failure, and add standalone full Attribute/AffiliateLink row tables to this artifact. These concern CI/developer test-harness quality and evidence granularity, not the batch product logic or data. The creation script has never been run against a real or shared database.
+
+Final branch gates are run immediately before PR integration and recorded in the PR description.
