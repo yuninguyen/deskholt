@@ -41,6 +41,61 @@ const products = await prisma.product.findMany({ where: { slug: { in: expected.m
      await createProducts3to7StandingDesks(prisma); assert.equal(await prisma.product.count({ where: { slug: { in: expected.map(([slug]) => slug) } } }), 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
+// Task2 integration acceptance: this intentionally exercises the real seed/migrate harness and
+// keeps the product-scope omissions explicit so accidental attribute expansion is visible.
+integration('Task2 persists exact scoped attributes, metadata, and no affiliate links', async () => {
+  const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
+    await createProducts3to7StandingDesks(prisma);
+    const expectedScope = {
+      'veken-47-2in-standing-desk-black': {
+        product: ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
+        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_finish', 'frame_color'],
+      },
+      'claiks-standing-desk-rustic-brown': {
+        product: ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
+        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'frame_color'],
+      },
+      'fezibo-standing-desk-maple': {
+        product: ['min_height_in', 'max_height_in', 'max_load_lb', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
+        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_finish'],
+      },
+      'veken-55in-standing-desk-black': {
+        product: ['min_height_in', 'max_height_in', 'product_weight_lb', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
+        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color'],
+      },
+      'offigo-63in-lshape-standing-desk-black': {
+        product: ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
+        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color'],
+      },
+    } as const;
+    const products = await prisma.product.findMany({ where: { slug: { in: Object.keys(expectedScope) } } });
+    assert.equal(products.length, 5);
+    for (const product of products) {
+      const expected = expectedScope[product.slug as keyof typeof expectedScope];
+      const attrs = await prisma.productAttribute.findMany({ where: { product_id: product.id }, include: { attribute_definition: true } });
+      const productKeys = attrs.filter((a) => a.variant_id === null).map((a) => a.attribute_definition.key).sort();
+      const variantKeys = attrs.filter((a) => a.variant_id !== null).map((a) => a.attribute_definition.key).sort();
+      assert.deepEqual(productKeys, [...expected.product].sort(), `${product.slug} product scope`);
+      assert.deepEqual(variantKeys, [...expected.variant].sort(), `${product.slug} variant scope`);
+      assert.equal(new Set(attrs.map((a) => a.attribute_definition.key)).size, attrs.length);
+      for (const attr of attrs) {
+        assert.equal(attr.source_type, 'RETAILER');
+        assert.equal(attr.confidence, 'VERIFIED');
+        assert.equal(attr.attribute_definition.scope, attr.variant_id === null ? 'PRODUCT' : 'VARIANT');
+        assert.ok(attr.attribute_definition.label.length > 0);
+        assert.ok(attr.attribute_definition.data_type);
+      }
+      if (product.slug === 'claiks-standing-desk-rustic-brown') {
+        const value = attrs.find((a) => a.attribute_definition.key === 'max_height_in')?.value_number;
+        assert.ok(value !== null && value !== undefined);
+        assert.ok(Math.abs(Number(value) - Number(convertLengthToCanonicalInches(119, 'cm'))) < 0.0001);
+      }
+      if (product.slug === 'offigo-63in-lshape-standing-desk-black') assert.equal(attrs.find((a) => a.attribute_definition.key === 'desktop_shape')?.value_string, 'L_SHAPED');
+    }
+    assert.equal(await prisma.affiliateLink.count(), 0);
+  } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
+});
+
 integration('fails before writes when standing-desks category is missing', async () => {
   const cluster = owned(); try { migrate(cluster.url, false); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try { await assert.rejects(() => createProducts3to7StandingDesks(prisma), /standing-desks/i); assert.equal(await prisma.product.count(), 0); assert.equal(await prisma.brand.count(), 0); } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
