@@ -111,7 +111,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
         }
         const unitConfig = row.unit ? CANONICAL_UNIT_CONFIG[row.unit] : undefined;
         if (unitConfig) {
-          const sourceUnit = rawSourceUnit || row.unit;
+          const sourceUnit = rawSourceUnit || row.unit || '';
           if (!unitConfig.sourceUnits.includes(sourceUnit)) {
             errors.push(`${rowLabel}: đơn vị nguồn không hợp lệ.`);
             continue;
