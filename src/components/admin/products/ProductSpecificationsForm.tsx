@@ -87,14 +87,15 @@ function SpecRowFields({ row, draft }: { row: SpecRow; draft?: SpecificationDraf
             className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
           />
         )}
-        {row.unit === 'in' && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && (
+        {(row.unit === 'in' || row.unit === 'lb') && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && (
           <select
             name={`sourceUnit__${row.rowKey}`}
-            defaultValue={draft?.sourceUnit === 'cm' ? 'cm' : 'in'}
+            defaultValue={row.unit === 'in'
+              ? (draft?.sourceUnit === 'cm' ? 'cm' : 'in')
+              : (draft?.sourceUnit === 'kg' ? 'kg' : 'lb')}
             className="mt-2 w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
           >
-            <option value="in">in</option>
-            <option value="cm">cm</option>
+            {row.unit === 'in' ? <><option value="in">in</option><option value="cm">cm</option></> : <><option value="lb">lb</option><option value="kg">kg</option></>}
           </select>
         )}
       </div>
