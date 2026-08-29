@@ -113,10 +113,12 @@ integration('rerun removes stale and wrong-scope attributes without touching ano
     await prisma.productAttribute.create({ data: { product_id: other.id, attribute_definition_id: forbidden.id, value_string: 'ENGINEERED_WOOD' } });
     await createProducts3to7StandingDesks(prisma);
     const targetKeys = (await prisma.productAttribute.findMany({ where: { product_id: target.id }, include: { attribute_definition: true } })).map((a) => a.attribute_definition.key);
-    assert.equal(targetKeys.includes('desktop_material'), false);
+    assert.equal(targetKeys.includes('desktop_material'), true);
     assert.equal(targetKeys.includes('desktop_finish'), true);
     const survivingFinish = await prisma.productAttribute.findMany({ where: { product_id: target.id, attribute_definition_id: allowed.id } });
     assert.deepEqual(survivingFinish.map((row) => [row.variant_id, row.value_string]), [[currentVariant.id, 'Laminated']]);
+    const survivingMaterial = await prisma.productAttribute.findMany({ where: { product_id: target.id, attribute_definition: { key: 'desktop_material' } } });
+    assert.deepEqual(survivingMaterial.map((row) => row.variant_id), [currentVariant.id]);
     assert.equal(await prisma.productAttribute.count({ where: { product_id: other.id } }), 1);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
