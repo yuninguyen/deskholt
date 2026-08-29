@@ -157,6 +157,48 @@ test('Specifications form renders source-unit selectors only for inch rows', () 
           isRequired: false,
           existing: null,
         },
+        {
+          rowKey: 'string-inch-row',
+          attributeDefinitionId: 'string-inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'STRING',
+          key: 'material_note',
+          label: 'Material Note',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'enum-inch-row',
+          attributeDefinitionId: 'enum-inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'ENUM',
+          key: 'finish_type',
+          label: 'Finish Type',
+          unit: 'in',
+          allowedValues: ['MDF', 'BAMBOO'],
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'boolean-inch-row',
+          attributeDefinitionId: 'boolean-inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'BOOLEAN',
+          key: 'has_motor',
+          label: 'Has Motor',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
       ],
     })
   );
@@ -168,6 +210,9 @@ test('Specifications form renders source-unit selectors only for inch rows', () 
   );
   assert.doesNotMatch(html, /name="sourceUnit__cm-row"/);
   assert.doesNotMatch(html, /name="sourceUnit__unitless-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__string-inch-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__enum-inch-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__boolean-inch-row"/);
 });
 
 test('Specifications form preserves a valid draft source unit and defaults invalid values to inches', () => {
