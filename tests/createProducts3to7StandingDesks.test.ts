@@ -16,8 +16,11 @@ function owned() {
   assert.ok(bin); assert.equal(process.env.ERGEAR_TEST_DATABASE_URL, undefined);
   const root = mkdtempSync(join(tmpdir(), 'products-3to7-postgres-')); let port = 56500;
   run('initdb', ['-D', root, '-A', 'trust', '-U', 'postgres'], process.env);
-  while (true) { try { run('pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start'], process.env); break; } catch { port++; } }
-  run('createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', 'products_3to7'], process.env);
+  let started = false;
+  try {
+    for (let attempt = 0; attempt < 20; attempt++) { try { run('pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start'], process.env); started = true; break; } catch (error) { if (!/address already in use|could not bind/i.test(String(error)) || attempt === 19) throw error; port++; } }
+    if (!started) throw new Error('could not start owned PostgreSQL');
+  } catch (error) { rmSync(root, { recursive: true, force: true }); throw error; }  run('createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', 'products_3to7'], process.env);
   const url = `postgresql://postgres@127.0.0.1:${port}/products_3to7`;
   return { url, stop: () => { try { run('pg_ctl', ['-D', root, '-w', 'stop'], process.env); } catch {} rmSync(root, { recursive: true, force: true }); } };
 }
@@ -122,13 +125,21 @@ integration('rerun removes stale and wrong-scope attributes without touching ano
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
 
-integration('rolls back a product transaction when an allowed value definition rejects its seed value', async () => {
+integration('aggregates product #3 validation failure while persisting products #4-7', async () => {
   const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
+    await createProducts3to7StandingDesks(prisma);
+    const failed = await prisma.product.findUniqueOrThrow({ where: { slug: 'fezibo-standing-desk-maple' } });
+    await prisma.product.delete({ where: { id: failed.id } });
     const definition = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'adjustment_type' } });
     await prisma.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: ['MANUAL'] } });
-    await assert.rejects(() => createProducts3to7StandingDesks(prisma), /validation failed/i);
-    assert.equal(await prisma.product.count(), 0);
-    assert.equal(await prisma.productAttribute.count(), 0);
+    await assert.rejects(() => createProducts3to7StandingDesks(prisma), (error: unknown) => {
+      assert.match(String(error), /validation failed/i);
+      assert.match(String(error), /fezibo-standing-desk-maple/);
+      return true;
+    });
+    assert.equal(await prisma.product.findUnique({ where: { slug: 'fezibo-standing-desk-maple' } }), null);
+    assert.deepEqual((await prisma.product.findMany({ where: { slug: { in: ['veken-55in-standing-desk-black', 'offigo-63in-lshape-standing-desk-black'] } }, orderBy: { slug: 'asc' } })).map((p) => p.slug), ['offigo-63in-lshape-standing-desk-black', 'veken-55in-standing-desk-black']);
+    assert.equal(await prisma.product.count(), 4);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
 
