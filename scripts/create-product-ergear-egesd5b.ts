@@ -39,6 +39,10 @@ export async function createProductErgearEgesd5b(prisma: PrismaClient) {
       const existing = await tx.productAttribute.findFirst({ where });
       if (existing) await tx.productAttribute.update({ where: { id: existing.id }, data }); else await tx.productAttribute.create({ data });
     }
+    const affiliateLinkData = { product_id: product.id, network: 'amazon', price: 139.99, raw_url: SOURCE_URL, tracking_url: `${SOURCE_URL}?tag=deskholt-pending`, is_in_stock: true, priority_order: 1 };
+    const affiliateLink = await tx.affiliateLink.findFirst({ where: { product_id: product.id, network: 'amazon' } });
+    if (affiliateLink) await tx.affiliateLink.update({ where: { id: affiliateLink.id }, data: affiliateLinkData });
+    else await tx.affiliateLink.create({ data: affiliateLinkData });
     return product;
   });
 }
