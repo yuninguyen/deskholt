@@ -1,7 +1,7 @@
 # Task 5 verification evidence
 
 Date: 2026-08-29
-Base: `dc8d8b5`
+Implementation verification base: `dc8d8b5`; actual Next dev render evidence: `11cb3f5`; final selector scope correction: `a5f0f4f`
 
 ## Disposable PostgreSQL verification
 
@@ -74,3 +74,5 @@ ASSERTIONS {"max":true,"min":true,"maxSelector":true,"minSelector":true,"mat":tr
 ## Cleanup and limitations
 
 The disposable cluster was stopped after verification with PostgreSQL 18 `pg_ctl stop -D .tmp-pgdata-r4 -m fast`, and the owned temporary data directory, dev server, and temporary render harness were removed. Generated `next-env.d.ts` drift was restored. The evidence now covers the real action submission plus the actual authenticated server-rendered HTTP GET; it does not claim browser automation or browser POST transport.
+
+PR #8 (`https://github.com/yuninguyen/deskholt/pull/8`) targets `main`; it was opened after final review and fresh verification. This documentation-only completion commit is followed by a final remote-head/CI check.

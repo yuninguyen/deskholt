@@ -65,6 +65,6 @@
 
 - [x] **Step 1:** Manually exercise in dev: create/use a `min_height_in` or `max_height_in` row, enter `118` with source unit `cm`, save, and confirm the stored/displayed value is `~46.46` (inches) — matching the real ErGear ontology finding that motivated this plan. Then confirm a plain `in`-unit entry with no unit change still behaves exactly as before.
 - [x] **Step 2:** Record evidence in `artifacts/unit-conversion-material-enum/evidence.md`: test output, manual verification transcript (the 118cm→~46.46in conversion specifically), and confirmation that both blueprint §70 BLOCKER items are closed.
-- [ ] **Step 3:** Push the branch, open a PR against `main` (same flow as prior PRs: isolated worktree, own branch, CI green, `mergeable_state: clean`). Do not merge locally.
+- [x] **Step 3:** Push the branch, open a PR against `main` (same flow as prior PRs: isolated worktree, own branch, CI green, `mergeable_state: clean`). Do not merge locally.
 
 **After this lands:** Both real BLOCKER ontology issues from the ErGear P2 dry run are closed. The NON-BLOCKER items (motor_count and warranty_months often missing from Amazon's standard spec table) remain logged in blueprint §70 for now — no code change was requested for those; they are editorial/data-sourcing gaps, not schema or validation gaps.
