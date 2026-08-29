@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { PrismaClient } from '@prisma/client';
 import { createProducts3to7StandingDesks } from '../scripts/create-products-3to7-standing-desks';
 import { convertLengthToCanonicalInches } from '../src/lib/products/unitConversion';
@@ -42,5 +43,13 @@ const products = await prisma.product.findMany({ where: { slug: { in: expected.m
 });
 integration('fails before writes when standing-desks category is missing', async () => {
   const cluster = owned(); try { migrate(cluster.url, false); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try { await assert.rejects(() => createProducts3to7StandingDesks(prisma), /standing-desks/i); assert.equal(await prisma.product.count(), 0); assert.equal(await prisma.brand.count(), 0); } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
+});
+test('Task2 script has exact scope mapping, invokes validator, and omits AffiliateLink code', () => {
+  const script = readFileSync(join(__dirname, '../scripts/create-products-3to7-standing-desks.ts'), 'utf8');
+  assert.match(script, /PRODUCT_SCOPE_KEYS\s*=\s*new Set\(\[/);
+  for (const key of ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included']) assert.match(script, new RegExp(`['"]${key}['"]`));
+  assert.match(script, /variantId:\s*PRODUCT_SCOPE_KEYS\.has\(item\.key\)\s*\?\s*null\s*:\s*variantId/);
+  assert.match(script, /validateProductAttributeInput\(tx,input\)/);
+  assert.doesNotMatch(script, /AffiliateLink|affiliateLink|affiliate_links/);
 });
 test('owned harness rejects ambient database URL', () => { if (bin) assert.equal(process.env.ERGEAR_TEST_DATABASE_URL, undefined); });
