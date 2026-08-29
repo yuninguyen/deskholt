@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PrismaClient, ProductStatus } from '@prisma/client';
+import { Prisma, PrismaClient, ProductStatus } from '@prisma/client';
 import { upgradeProductShwOd92ak } from '../scripts/upgrade-product-shw-od92ak';
 import { convertLengthToCanonicalInches, convertMassToCanonicalPounds } from '../src/lib/products/unitConversion';
 
@@ -56,7 +56,7 @@ integration('upgrades exact existing SHW fixture, selects SKU, is idempotent, an
       assert.equal(await p.brand.count({ where: { slug: 'shw' } }), 0); const rolled = await p.product.findUniqueOrThrow({ where: { id: product.id } }); assert.equal(rolled.brand_id, null); assert.equal(rolled.upc_code, null); assert.equal(rolled.description, 'legacy');
       assert.deepEqual(await p.productVariant.findMany({ where: { product_id: product.id }, orderBy: { sku: 'asc' }, select: { sku: true, size: true, color: true } }), [{ sku: 'competing-variant', size: null, color: null }, { sku: 'shw-48in-standing-desk-drawer-black-default', size: null, color: null }]);
       assert.equal(await p.productAttribute.count({ where: { product_id: product.id } }), 0); const stale = await p.affiliateLink.findUniqueOrThrow({ where: { id: originalLink.id } }); assert.equal(stale.price, 159.87); assert.equal(stale.tracking_url, originalLink.tracking_url);
-      await p.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: originalAllowed } });
+      await p.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: originalAllowed === null ? Prisma.JsonNull : originalAllowed } });
     } finally { await p.$disconnect(); }
   } finally { c.stop(); }
 });
