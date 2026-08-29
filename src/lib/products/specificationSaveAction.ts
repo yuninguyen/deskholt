@@ -71,7 +71,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           confidence: String(formData.get(`confidence__${row.rowKey}`) ?? ''),
           ...(() => {
             const sourceUnit = String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim();
-            const unitConfig = CANONICAL_UNIT_CONFIG[row.unit];
+            const unitConfig = row.unit ? CANONICAL_UNIT_CONFIG[row.unit] : undefined;
             return unitConfig && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER')
               && String(formData.get(`value__${row.rowKey}`) ?? '').trim() !== ''
               && unitConfig.sourceUnits.includes(sourceUnit)
@@ -109,7 +109,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           errors.push(`${rowLabel}: giá trị "${rawValue}" không phải số hợp lệ.`);
           continue;
         }
-        const unitConfig = CANONICAL_UNIT_CONFIG[row.unit];
+        const unitConfig = row.unit ? CANONICAL_UNIT_CONFIG[row.unit] : undefined;
         if (unitConfig) {
           const sourceUnit = rawSourceUnit || row.unit;
           if (!unitConfig.sourceUnits.includes(sourceUnit)) {
