@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { createProductErgearEgesd5b } from '../scripts/create-product-ergear-egesd5b';
 import { convertLengthToCanonicalInches } from '../src/lib/products/unitConversion';
 
@@ -160,7 +160,7 @@ integration('runs all ErGear behavior only inside one owned disposable cluster',
           assert.equal(await prisma.productVariant.count(), 0);
           assert.equal(await prisma.productAttribute.count(), 0);
         } finally {
-          await prisma.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: originalAllowedValues as any } });
+          await prisma.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: originalAllowedValues === null ? Prisma.JsonNull : originalAllowedValues } });
         }
       });
       await t.test('fails when prerequisite category is absent without creating rows', async () => {
