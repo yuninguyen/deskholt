@@ -109,9 +109,10 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           errors.push(`${rowLabel}: giá trị "${rawValue}" không phải số hợp lệ.`);
           continue;
         }
-        const unitConfig = row.unit ? CANONICAL_UNIT_CONFIG[row.unit] : undefined;
-        if (unitConfig) {
-          const sourceUnit = rawSourceUnit || row.unit || '';
+        const canonicalUnit = row.unit;
+        const unitConfig = canonicalUnit ? CANONICAL_UNIT_CONFIG[canonicalUnit] : undefined;
+        if (unitConfig && canonicalUnit) {
+          const sourceUnit = rawSourceUnit || canonicalUnit;
           if (!unitConfig.sourceUnits.includes(sourceUnit)) {
             errors.push(`${rowLabel}: đơn vị nguồn không hợp lệ.`);
             continue;
