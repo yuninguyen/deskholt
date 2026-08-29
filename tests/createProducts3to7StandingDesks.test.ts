@@ -142,6 +142,32 @@ test('Task2 script has exact scope mapping, invokes validator, and omits Affilia
   for (const key of ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included']) assert.match(script, new RegExp(`['"]${key}['"]`));
   assert.match(script, /variantId:\s*PRODUCT_SCOPE_KEYS\.has\(item\.key\)\s*\?\s*null\s*:\s*variantId/);
   assert.match(script, /validateProductAttributeInput\(tx,input\)/);
-  assert.doesNotMatch(script, /AffiliateLink|affiliateLink|affiliate_links/);
+  // Task3 adds affiliate links after Task2's original no-link baseline.
 });
 test('owned harness rejects ambient database URL', () => { if (bin) assert.equal(process.env.ERGEAR_TEST_DATABASE_URL, undefined); });
+
+test('Task3 script contains exact Amazon link construction and idempotent upsert path', () => {
+  const script = readFileSync(join(__dirname, '../scripts/create-products-3to7-standing-desks.ts'), 'utf8');
+  assert.match(script, /https:\/\/www\.amazon\.com\/dp\/\$\{asin\}/);
+  assert.match(script, /amazonLink|affiliateLink/);
+  assert.match(script, /affiliateLink\.findFirst\(\{where:\{product_id:product\.id,network:'amazon'/);
+});
+
+integration('persists exact Amazon links and remains idempotent on rerun', async () => {
+  const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
+    await createProducts3to7StandingDesks(prisma);
+    const first = await prisma.affiliateLink.findMany({ include: { product: true }, orderBy: { raw_url: 'asc' } });
+    assert.equal(first.length, 5);
+    assert.deepEqual(first.map(({ product, network, price, raw_url, tracking_url, is_in_stock, priority_order }) => ({ slug: product.slug, network, price, raw_url, tracking_url, is_in_stock, priority_order })), [
+      { slug: 'claiks-standing-desk-rustic-brown', network: 'amazon', price: 109.99, raw_url: 'https://www.amazon.com/dp/B0BZ7GXM4M', tracking_url: 'https://www.amazon.com/dp/B0BZ7GXM4M?tag=deskholt-pending', is_in_stock: true, priority_order: 1 },
+      { slug: 'fezibo-standing-desk-maple', network: 'amazon', price: 112.99, raw_url: 'https://www.amazon.com/dp/B0F8MHPVPH', tracking_url: 'https://www.amazon.com/dp/B0F8MHPVPH?tag=deskholt-pending', is_in_stock: true, priority_order: 1 },
+      { slug: 'offigo-63in-lshape-standing-desk-black', network: 'amazon', price: 219.99, raw_url: 'https://www.amazon.com/dp/B0FPFSYXNF', tracking_url: 'https://www.amazon.com/dp/B0FPFSYXNF?tag=deskholt-pending', is_in_stock: true, priority_order: 1 },
+      { slug: 'veken-47-2in-standing-desk-black', network: 'amazon', price: 89.99, raw_url: 'https://www.amazon.com/dp/B0FPX18P4J', tracking_url: 'https://www.amazon.com/dp/B0FPX18P4J?tag=deskholt-pending', is_in_stock: true, priority_order: 1 },
+      { slug: 'veken-55in-standing-desk-black', network: 'amazon', price: 149.98, raw_url: 'https://www.amazon.com/dp/B0DWMJCQBX', tracking_url: 'https://www.amazon.com/dp/B0DWMJCQBX?tag=deskholt-pending', is_in_stock: true, priority_order: 1 },
+    ]);
+    const ids = first.map((link) => link.id);
+    await createProducts3to7StandingDesks(prisma);
+    const second = await prisma.affiliateLink.findMany({ orderBy: { raw_url: 'asc' } });
+    assert.equal(second.length, 5); assert.deepEqual(second.map((link) => link.id).sort(), ids.sort());
+  } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
+});
