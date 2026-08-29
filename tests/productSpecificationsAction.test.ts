@@ -530,3 +530,76 @@ test('successful save creates no draft and clears every prior draft for the Prod
   assert.deepEqual(testHarness.clearedDraftProducts, [productId]);
   assert.deepEqual(testHarness.redirects, [`/admin/products/${productId}/specifications?saved=1`]);
 });
+
+test('cm source unit converts inch rows before validation and persistence', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '2.54',
+    [`sourceUnit__${value.rowKey}`]: 'cm',
+  }));
+
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
+  assert.ok(create);
+  assert.equal((create.args as { data: { value_number: number } }).data.value_number, 1);
+});
+
+test('omitted and explicit inch source units preserve inch values', async () => {
+  for (const sourceUnit of [undefined, 'in']) {
+    const value = row();
+    const testHarness = harness([value]);
+    const entries: Record<string, string> = { [`value__${value.rowKey}`]: '2.54' };
+    if (sourceUnit) entries[`sourceUnit__${value.rowKey}`] = sourceUnit;
+
+    await redirecting(testHarness.action, form(entries));
+    const create = testHarness.writes.find((entry) => entry.operation === 'create');
+    assert.ok(create);
+    assert.equal((create.args as { data: { value_number: number } }).data.value_number, 2.54);
+  }
+});
+
+test('non-inch rows ignore submitted source units', async () => {
+  const value = row({ unit: 'lb' });
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '10',
+    [`sourceUnit__${value.rowKey}`]: 'invalid',
+  }));
+
+  const create = testHarness.writes.find((entry) => entry.operation === 'create');
+  assert.ok(create);
+  assert.equal((create.args as { data: { value_number: number } }).data.value_number, 10);
+});
+
+test('invalid inch source unit aggregates an error without transaction writes', async () => {
+  const value = row();
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '2.54',
+    [`sourceUnit__${value.rowKey}`]: 'mm',
+  }));
+
+  assert.equal(testHarness.getTransactions(), 0);
+  assert.deepEqual(testHarness.writes, []);
+  assert.match(testHarness.redirects[0] ?? '', /error=1/);
+});
+
+test('failed inch validation drafts raw value and submitted cm unit', async () => {
+  const value = row();
+  const testHarness = harness([value], { [value.attributeDefinitionId]: ['invalid'] });
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '2.54',
+    [`sourceUnit__${value.rowKey}`]: 'cm',
+  }));
+
+  const draftRow = testHarness.savedDrafts[0]?.rows[value.rowKey] as {
+    value: string;
+    sourceUnit?: string;
+  } | undefined;
+  assert.equal(draftRow?.value, '2.54');
+  assert.equal(draftRow?.sourceUnit, 'cm');
+});

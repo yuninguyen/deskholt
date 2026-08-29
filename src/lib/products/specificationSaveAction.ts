@@ -5,6 +5,7 @@ import {
   type SpecificationDraftRows,
 } from './specificationDraftStore';
 import type { SpecificationData, SpecRow } from './specificationRows';
+import { convertLengthToCanonicalInches } from './unitConversion';
 import type {
   ProductAttributeInput,
   ValidationResult,
@@ -52,6 +53,9 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           sourceUrl: String(formData.get(`sourceUrl__${row.rowKey}`) ?? ''),
           sourceType: String(formData.get(`sourceType__${row.rowKey}`) ?? ''),
           confidence: String(formData.get(`confidence__${row.rowKey}`) ?? ''),
+          ...(String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim()
+            ? { sourceUnit: String(formData.get(`sourceUnit__${row.rowKey}`)).trim() }
+            : {}),
         },
       ])
     );
@@ -61,6 +65,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
       const rawSourceUrl = String(formData.get(`sourceUrl__${row.rowKey}`) ?? '').trim();
       const rawSourceType = String(formData.get(`sourceType__${row.rowKey}`) ?? '').trim();
       const rawConfidence = String(formData.get(`confidence__${row.rowKey}`) ?? 'UNVERIFIED').trim();
+      const rawSourceUnit = String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim();
       const rowLabel = row.variantLabel ? `${row.label} (${row.variantLabel})` : row.label;
 
       if (rawValue === '') {
@@ -82,7 +87,16 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           errors.push(`${rowLabel}: giá trị "${rawValue}" không phải số hợp lệ.`);
           continue;
         }
-        valueNumber = numericValue;
+        if (row.unit === 'in') {
+          const sourceUnit = rawSourceUnit || 'in';
+          if (sourceUnit !== 'in' && sourceUnit !== 'cm') {
+            errors.push(`${rowLabel}: đơn vị nguồn không hợp lệ.`);
+            continue;
+          }
+          valueNumber = convertLengthToCanonicalInches(numericValue, sourceUnit);
+        } else {
+          valueNumber = numericValue;
+        }
       } else if (row.dataType === 'BOOLEAN') {
         if (rawValue !== 'true' && rawValue !== 'false') {
           errors.push(`${rowLabel}: giá trị boolean không hợp lệ.`);
