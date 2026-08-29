@@ -69,9 +69,15 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           sourceUrl: String(formData.get(`sourceUrl__${row.rowKey}`) ?? ''),
           sourceType: String(formData.get(`sourceType__${row.rowKey}`) ?? ''),
           confidence: String(formData.get(`confidence__${row.rowKey}`) ?? ''),
-          ...((row.unit === 'in' || row.unit === 'lb') && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && String(formData.get(`value__${row.rowKey}`) ?? '').trim() !== '' && String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim()
-            ? { sourceUnit: String(formData.get(`sourceUnit__${row.rowKey}`)).trim() }
-            : {}),
+          ...(() => {
+            const sourceUnit = String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim();
+            const unitConfig = CANONICAL_UNIT_CONFIG[row.unit];
+            return unitConfig && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER')
+              && String(formData.get(`value__${row.rowKey}`) ?? '').trim() !== ''
+              && unitConfig.sourceUnits.includes(sourceUnit)
+              ? { sourceUnit }
+              : {};
+          })(),
         },
       ])
     );

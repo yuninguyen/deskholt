@@ -667,6 +667,19 @@ test('omitted pound source unit preserves raw value', async () => {
   assert.equal((create.args as { data: { value_number: number } }).data.value_number, 10);
 });
 
+test('invalid pound source units are omitted from saved drafts', async () => {
+  const value = row({ unit: 'lb', key: 'max_load_lb', label: 'Maximum Load' });
+  const testHarness = harness([value]);
+
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '10',
+    [`sourceUnit__${value.rowKey}`]: 'oz',
+  }));
+
+  const draftRow = testHarness.savedDrafts[0]?.rows[value.rowKey] as { sourceUnit?: string } | undefined;
+  assert.equal('sourceUnit' in (draftRow ?? {}), false);
+});
+
 test('invalid pound source unit aggregates an error without transaction writes', async () => {
   const value = row({ unit: 'lb', key: 'max_load_lb', label: 'Maximum Load' });
   const testHarness = harness([value]);
