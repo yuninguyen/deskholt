@@ -53,7 +53,7 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           sourceUrl: String(formData.get(`sourceUrl__${row.rowKey}`) ?? ''),
           sourceType: String(formData.get(`sourceType__${row.rowKey}`) ?? ''),
           confidence: String(formData.get(`confidence__${row.rowKey}`) ?? ''),
-          ...(String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim()
+          ...(row.unit === 'in' && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && String(formData.get(`value__${row.rowKey}`) ?? '').trim() !== '' && String(formData.get(`sourceUnit__${row.rowKey}`) ?? '').trim()
             ? { sourceUnit: String(formData.get(`sourceUnit__${row.rowKey}`)).trim() }
             : {}),
         },
