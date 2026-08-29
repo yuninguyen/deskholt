@@ -133,7 +133,8 @@ integration('runs all ErGear behavior only inside one owned disposable cluster',
         assert.equal(number('desktop_width_in'), '47.2'); assert.equal(number('desktop_depth_in'), '23.6'); assert.equal(values.get('desktop_material')?.value_string, 'ENGINEERED_WOOD');
         assert.equal(values.get('desktop_finish')?.value_string, 'Laminated'); assert.equal(values.get('frame_color')?.value_string, 'Black');
         for (const key of ['adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included', 'min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'memory_presets']) assert.equal(values.get(key)?.variant_id, null, key);
-        for (const key of ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color']) { assert.equal(values.get(key)?.variant_id, variant.id, key); assert.equal(values.get(key)?.source_url, 'https://www.amazon.com/dp/B0B41YH9B6'); assert.equal(values.get(key)?.source_type, 'RETAILER'); assert.equal(values.get(key)?.confidence, 'VERIFIED'); }
+        for (const key of ['adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included', 'min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'memory_presets', 'desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color']) { assert.equal(values.get(key)?.source_url, 'https://www.amazon.com/dp/B0B41YH9B6', key); assert.equal(values.get(key)?.source_type, 'RETAILER', key); assert.equal(values.get(key)?.confidence, 'VERIFIED', key); assert.ok(values.get(key)?.verified_at, key); }
+         for (const key of ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color']) { assert.equal(values.get(key)?.variant_id, variant.id, key); }
         for (const key of ['motor_count', 'warranty_months', 'leg_count', 'leg_design', 'lifting_speed_in_s', 'noise_db', 'anti_collision', 'crossbar', 'casters_compatible', 'certification_greenguard', 'certification_bifma', 'assembly_time_minutes']) assert.equal(values.has(key), false, key);
       });
       await t.test('is idempotent on rerun without duplicate variants or attributes', async () => {
@@ -141,6 +142,24 @@ integration('runs all ErGear behavior only inside one owned disposable cluster',
         const product = await prisma.product.findUniqueOrThrow({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
         assert.equal(await prisma.brand.count({ where: { slug: 'ergear' } }), 1); assert.equal(await prisma.product.count({ where: { slug: product.slug } }), 1);
         assert.equal(await prisma.productVariant.count({ where: { product_id: product.id } }), 1); assert.equal(await prisma.productAttribute.count({ where: { product_id: product.id } }), 15);
+      });
+      await t.test('rolls back all rows when an allowed value is invalid', async () => {
+        await prisma.productAttribute.deleteMany({ where: { product: { slug: 'ergear-egesd5b-standing-desk-black' } } });
+        await prisma.productVariant.deleteMany({ where: { product: { slug: 'ergear-egesd5b-standing-desk-black' } } });
+        await prisma.product.deleteMany({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
+        await prisma.brand.deleteMany({ where: { slug: 'ergear' } });
+        const definition = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'adjustment_type' } });
+        const originalAllowedValues = definition.allowed_values;
+        try {
+          await prisma.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: ['MANUAL_CRANK'] } });
+          await assert.rejects(() => createProductErgearEgesd5b(prisma), /adjustment_type.*allowed/i);
+          assert.equal(await prisma.brand.count({ where: { slug: 'ergear' } }), 0);
+          assert.equal(await prisma.product.count({ where: { slug: 'ergear-egesd5b-standing-desk-black' } }), 0);
+          assert.equal(await prisma.productVariant.count(), 0);
+          assert.equal(await prisma.productAttribute.count(), 0);
+        } finally {
+          await prisma.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: originalAllowedValues as any } });
+        }
       });
       await t.test('fails when prerequisite category is absent without creating rows', async () => {
         await prisma.product.deleteMany({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
