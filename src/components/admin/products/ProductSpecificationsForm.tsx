@@ -87,6 +87,16 @@ function SpecRowFields({ row, draft }: { row: SpecRow; draft?: SpecificationDraf
             className="w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
           />
         )}
+        {row.unit === 'in' && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && (
+          <select
+            name={`sourceUnit__${row.rowKey}`}
+            defaultValue={draft?.sourceUnit === 'cm' ? 'cm' : 'in'}
+            className="mt-2 w-full rounded-md border border-gray-700 bg-gray-800 px-2 py-1.5 text-sm text-white"
+          >
+            <option value="in">in</option>
+            <option value="cm">cm</option>
+          </select>
+        )}
       </div>
 
       <div className="sm:col-span-4">

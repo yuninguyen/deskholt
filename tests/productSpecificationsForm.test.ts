@@ -7,7 +7,10 @@ import type { SpecificationData } from '../src/lib/products/specificationRows';
 
 function render(
   data: SpecificationData,
-  draft?: Record<string, { value: string; sourceUrl: string; sourceType: string; confidence: string }>
+  draft?: Record<
+    string,
+    { value: string; sourceUrl: string; sourceType: string; confidence: string; sourceUnit?: string }
+  >
 ): string {
   return renderToStaticMarkup(
     React.createElement(ProductSpecificationsForm, {
@@ -106,6 +109,154 @@ test('Specifications form preserves and flags a stored ENUM value removed from a
   assert.match(html, /<option value="PNEUMATIC" selected="">PNEUMATIC \(stored value — no longer allowed\)<\/option>/);
   assert.match(html, /Giá trị ENUM đã lưu không còn nằm trong danh sách cho phép/i);
   assert.match(html, /role="alert"/);
+});
+
+test('Specifications form renders source-unit selectors only for inch rows', () => {
+  const html = render(
+    makeData({
+      rows: [
+        {
+          rowKey: 'inch-row',
+          attributeDefinitionId: 'inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'DECIMAL',
+          key: 'max_height_in',
+          label: 'Maximum Height',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: true,
+          existing: null,
+        },
+        {
+          rowKey: 'cm-row',
+          attributeDefinitionId: 'cm-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'DECIMAL',
+          key: 'max_height_cm',
+          label: 'Maximum Height Metric',
+          unit: 'cm',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'unitless-row',
+          attributeDefinitionId: 'unitless-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'STRING',
+          key: 'finish',
+          label: 'Finish',
+          unit: null,
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'string-inch-row',
+          attributeDefinitionId: 'string-inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'STRING',
+          key: 'material_note',
+          label: 'Material Note',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'enum-inch-row',
+          attributeDefinitionId: 'enum-inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'ENUM',
+          key: 'finish_type',
+          label: 'Finish Type',
+          unit: 'in',
+          allowedValues: ['MDF', 'BAMBOO'],
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'boolean-inch-row',
+          attributeDefinitionId: 'boolean-inch-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'BOOLEAN',
+          key: 'has_motor',
+          label: 'Has Motor',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+      ],
+    })
+  );
+
+  assert.match(html, /name="sourceUnit__inch-row"/);
+  assert.match(
+    html,
+    /name="sourceUnit__inch-row"[\s\S]*?<option value="in" selected="">in<\/option>[\s\S]*?<option value="cm">cm<\/option>/
+  );
+  assert.doesNotMatch(html, /name="sourceUnit__cm-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__unitless-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__string-inch-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__enum-inch-row"/);
+  assert.doesNotMatch(html, /name="sourceUnit__boolean-inch-row"/);
+});
+
+test('Specifications form preserves a valid draft source unit and defaults invalid values to inches', () => {
+  const html = render(
+    makeData({
+      rows: [
+        {
+          rowKey: 'metric-draft-row',
+          attributeDefinitionId: 'metric-draft-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'DECIMAL',
+          key: 'width_in',
+          label: 'Width',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+        {
+          rowKey: 'invalid-draft-row',
+          attributeDefinitionId: 'invalid-draft-definition',
+          variantId: null,
+          variantLabel: null,
+          scope: 'PRODUCT',
+          dataType: 'DECIMAL',
+          key: 'depth_in',
+          label: 'Depth',
+          unit: 'in',
+          allowedValues: null,
+          isRequired: false,
+          existing: null,
+        },
+      ],
+    }),
+    {
+      'metric-draft-row': { value: '10', sourceUrl: '', sourceType: '', confidence: 'UNVERIFIED', sourceUnit: 'cm' },
+      'invalid-draft-row': { value: '5', sourceUrl: '', sourceType: '', confidence: 'UNVERIFIED', sourceUnit: 'mm' },
+    }
+  );
+
+  assert.match(html, /name="sourceUnit__metric-draft-row"[\s\S]*?<option value="cm" selected="">cm<\/option>/);
+  assert.match(html, /name="sourceUnit__invalid-draft-row"[\s\S]*?<option value="in" selected="">in<\/option>/);
 });
 
 test('Specifications form merges exact draft strings over existing and blank rows across Product and Variant sections', () => {
