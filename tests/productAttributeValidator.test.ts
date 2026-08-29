@@ -5,6 +5,7 @@ import {
   validateProductAttributeInput,
   type ProductAttributeInput,
 } from '../src/lib/products/productAttributeValidator';
+import { STANDING_DESK_ATTRIBUTES } from '../prisma/seed-standing-desk-attributes';
 
 type Fixture = {
   definition: null | {
@@ -284,6 +285,27 @@ test('validator enforces BOOLEAN and STRING value columns', async () => {
   const blankString = await validate(stringFixture, { valueNumber: null, valueString: '   ' });
   assert.equal(blankString.valid, false);
   assert.match(blankString.errors.join(' '), /dataType=STRING.*valueString trống/i);
+});
+
+test('validator accepts ENGINEERED_WOOD from the standing desk seed enum', async () => {
+  const desktopMaterial = STANDING_DESK_ATTRIBUTES.find(({ key }) => key === 'desktop_material');
+  assert.ok(desktopMaterial?.allowedValues);
+  const fixture = makeFixture({
+    definition: {
+      id: definitionId,
+      key: 'desktop_material',
+      scope: 'VARIANT',
+      data_type: 'ENUM',
+      allowed_values: desktopMaterial.allowedValues,
+    },
+  });
+
+  const result = await validate(fixture, {
+    variantId,
+    valueNumber: null,
+    valueString: 'ENGINEERED_WOOD',
+  });
+  assert.deepEqual(result, { valid: true, errors: [] });
 });
 
 test('validator accepts only configured ENUM values', async () => {
