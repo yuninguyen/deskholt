@@ -11,6 +11,22 @@ import type {
   ValidationResult,
 } from './productAttributeValidator';
 
+type UnitConfig = {
+  sourceUnits: readonly string[];
+  convert(value: number, sourceUnit: string): number;
+};
+
+const CANONICAL_UNIT_CONFIG: Record<string, UnitConfig> = {
+  in: {
+    sourceUnits: ['in', 'cm'],
+    convert: (value, sourceUnit) => convertLengthToCanonicalInches(value, sourceUnit as 'in' | 'cm'),
+  },
+  lb: {
+    sourceUnits: ['lb', 'kg'],
+    convert: (value, sourceUnit) => convertMassToCanonicalPounds(value, sourceUnit as 'lb' | 'kg'),
+  },
+};
+
 type ParsedRow =
   | { kind: 'skip'; row: SpecRow }
   | { kind: 'delete'; row: SpecRow }
@@ -87,16 +103,14 @@ export function createSaveSpecificationsAction(dependencies: SaveSpecificationsD
           errors.push(`${rowLabel}: giá trị "${rawValue}" không phải số hợp lệ.`);
           continue;
         }
-        if (row.unit === 'in' || row.unit === 'lb') {
+        const unitConfig = CANONICAL_UNIT_CONFIG[row.unit];
+        if (unitConfig) {
           const sourceUnit = rawSourceUnit || row.unit;
-          const validSourceUnits = row.unit === 'in' ? ['in', 'cm'] : ['lb', 'kg'];
-          if (!validSourceUnits.includes(sourceUnit)) {
+          if (!unitConfig.sourceUnits.includes(sourceUnit)) {
             errors.push(`${rowLabel}: đơn vị nguồn không hợp lệ.`);
             continue;
           }
-          valueNumber = row.unit === 'in'
-            ? convertLengthToCanonicalInches(numericValue, sourceUnit as 'in' | 'cm')
-            : convertMassToCanonicalPounds(numericValue, sourceUnit as 'lb' | 'kg');
+          valueNumber = unitConfig.convert(numericValue, sourceUnit);
         } else {
           valueNumber = numericValue;
         }
