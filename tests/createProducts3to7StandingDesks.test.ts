@@ -37,7 +37,7 @@ integration('creates exact five draft standing desk identities and reuses Veken 
 const products = await prisma.product.findMany({ where: { slug: { in: expected.map(([slug]) => slug) } }, include: { brand: true, category_ref: true }, orderBy: { slug: 'asc' } });
     assert.equal(products.length, 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
     for (const [slug, name, upc, brand, sustainable] of expected) { const row = products.find((product) => product.slug === slug)!; assert.deepEqual({ name: row.name, upc: row.upc_code, brand: row.brand?.slug, category: row.category_ref?.slug, status: row.status, indexed: row.is_indexed, sustainable: row.is_sustainable }, { name, upc, brand, category: 'standing-desks', status: 'DRAFT', indexed: false, sustainable }); }
-    for (const [slug, spec] of Object.entries(specs)) { const product = products.find((row) => row.slug === slug)!; const variants = await prisma.productVariant.findMany({ where: { product_id: product.id } }); assert.equal(variants.length, 1); assert.deepEqual([variants[0].sku, variants[0].size, variants[0].color], spec); const attrs = await prisma.productAttribute.findMany({ where: { product_id: product.id }, include: { attribute_definition: true } }); assert.ok(attrs.length > 0); assert.ok(attrs.every((a) => a.source_type === 'RETAILER' && a.confidence === 'VERIFIED')); if (slug === 'claiks-standing-desk-rustic-brown') { const a = attrs.find((x) => x.attribute_definition.key === 'max_height_in')!; assert.equal(Number(a.value_number), Number(convertLengthToCanonicalInches(119, 'cm'))); } if (slug === 'offigo-63in-lshape-standing-desk-black') { const a = attrs.find((x) => x.attribute_definition.key === 'desktop_shape')!; assert.equal(a.value_string, 'L_SHAPED'); } }
+    for (const [slug, spec] of Object.entries(specs)) { const product = products.find((row) => row.slug === slug)!; const variants = await prisma.productVariant.findMany({ where: { product_id: product.id } }); assert.equal(variants.length, 1); assert.deepEqual([variants[0].sku, variants[0].size, variants[0].color], spec); const attrs = await prisma.productAttribute.findMany({ where: { product_id: product.id }, include: { attribute_definition: true } }); assert.ok(attrs.length > 0); assert.ok(attrs.every((a) => a.source_type === 'RETAILER' && a.confidence === 'VERIFIED')); if (slug === 'claiks-standing-desk-rustic-brown') { const a = attrs.find((x) => x.attribute_definition.key === 'max_height_in')!; assert.ok(Math.abs(Number(a.value_number) - convertLengthToCanonicalInches(119, 'cm')) < 1e-5); } if (slug === 'offigo-63in-lshape-standing-desk-black') { const a = attrs.find((x) => x.attribute_definition.key === 'desktop_shape')!; assert.equal(a.value_string, 'L_SHAPED'); } }
      await createProducts3to7StandingDesks(prisma); assert.equal(await prisma.product.count({ where: { slug: { in: expected.map(([slug]) => slug) } } }), 5); assert.equal(await prisma.product.count(), 5); assert.equal(await prisma.brand.count(), 4); assert.equal(await prisma.brand.count({ where: { slug: { in: ['veken', 'claiks', 'fezibo', 'offigo'] } } }), 4);
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
@@ -49,7 +49,7 @@ integration('Task2 persists exact scoped attributes, metadata, and no affiliate 
     const expectedScope = {
       'veken-47-2in-standing-desk-black': {
         product: ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
-        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_finish', 'frame_color'],
+        variant: ['desktop_width_in', 'desktop_depth_in', 'desktop_material', 'desktop_finish', 'frame_color'],
       },
       'claiks-standing-desk-rustic-brown': {
         product: ['min_height_in', 'max_height_in', 'max_load_lb', 'product_weight_lb', 'desktop_thickness_in', 'adjustment_type', 'frame_material', 'desktop_shape', 'desktop_included'],
@@ -101,7 +101,7 @@ integration('rerun removes stale and wrong-scope attributes without touching ano
     await createProducts3to7StandingDesks(prisma);
     const target = await prisma.product.findUniqueOrThrow({ where: { slug: 'veken-47-2in-standing-desk-black' } });
     const other = await prisma.product.create({ data: { name: 'Unrelated product', slug: 'unrelated-product', category: 'standing-desks', category_id: target.category_id!, image_url: 'https://example.com/unrelated.jpg', status: 'DRAFT' } });
-    const forbidden = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'desktop_material' } });
+    const forbidden = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'motor_count' } });
     const allowed = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'desktop_finish' } });
     const currentVariant = await prisma.productVariant.findFirstOrThrow({ where: { product_id: target.id } });
     const obsoleteVariant = await prisma.productVariant.create({ data: { product_id: target.id, sku: 'veken-47-2in-standing-desk-black-obsolete', size: 'obsolete', is_active: false } });
@@ -113,7 +113,7 @@ integration('rerun removes stale and wrong-scope attributes without touching ano
     await prisma.productAttribute.create({ data: { product_id: other.id, attribute_definition_id: forbidden.id, value_string: 'ENGINEERED_WOOD' } });
     await createProducts3to7StandingDesks(prisma);
     const targetKeys = (await prisma.productAttribute.findMany({ where: { product_id: target.id }, include: { attribute_definition: true } })).map((a) => a.attribute_definition.key);
-    assert.equal(targetKeys.includes('desktop_material'), true);
+    assert.equal(targetKeys.includes('motor_count'), false);
     assert.equal(targetKeys.includes('desktop_finish'), true);
     const survivingFinish = await prisma.productAttribute.findMany({ where: { product_id: target.id, attribute_definition_id: allowed.id } });
     assert.deepEqual(survivingFinish.map((row) => [row.variant_id, row.value_string]), [[currentVariant.id, 'Laminated']]);
