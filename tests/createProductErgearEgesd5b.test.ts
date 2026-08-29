@@ -143,7 +143,7 @@ integration('runs all ErGear behavior only inside one owned disposable cluster',
         await createProductErgearEgesd5b(prisma);
         const product = await prisma.product.findUniqueOrThrow({ where: { slug: 'ergear-egesd5b-standing-desk-black' } });
         assert.equal(await prisma.brand.count({ where: { slug: 'ergear' } }), 1); assert.equal(await prisma.product.count({ where: { slug: product.slug } }), 1);
-        assert.equal(await prisma.productVariant.count({ where: { product_id: product.id } }), 1); assert.equal(await prisma.productAttribute.count({ where: { product_id: product.id } }), 15);
+        assert.equal(await prisma.productVariant.count({ where: { product_id: product.id } }), 1); assert.equal(await prisma.productAttribute.count({ where: { product_id: product.id } }), 15); assert.equal(await prisma.affiliateLink.count({ where: { product_id: product.id, network: 'amazon' } }), 1);
       });
       await t.test('rolls back all rows when an allowed value is invalid', async () => {
         await prisma.productAttribute.deleteMany({ where: { product: { slug: 'ergear-egesd5b-standing-desk-black' } } });
