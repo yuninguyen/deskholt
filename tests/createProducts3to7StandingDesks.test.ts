@@ -11,16 +11,25 @@ import { convertLengthToCanonicalInches } from '../src/lib/products/unitConversi
 
 const bin = process.env.ERGEAR_TEST_POSTGRES_BIN;
 function exe(name: string) { return join(bin!, process.platform === 'win32' ? `${name}.exe` : name); }
-function run(name: string, args: string[], env: NodeJS.ProcessEnv) { execFileSync(exe(name), args, { stdio: 'inherit', env }); }
+function run(name: string, args: string[], env: NodeJS.ProcessEnv) {
+  try {
+    return execFileSync(exe(name), args, { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (error) {
+    const failure = error as NodeJS.ErrnoException & { stdout?: string | Buffer; stderr?: string | Buffer };
+    const output = [failure.stdout, failure.stderr].filter(Boolean).map(String).join('\\n');
+    throw new Error(`${name} ${args.join(' ')} failed${output ? `: ${output}` : ''}`, { cause: error });
+  }
+}
 function owned() {
   assert.ok(bin); assert.equal(process.env.ERGEAR_TEST_DATABASE_URL, undefined);
   const root = mkdtempSync(join(tmpdir(), 'products-3to7-postgres-')); let port = 56500;
   run('initdb', ['-D', root, '-A', 'trust', '-U', 'postgres'], process.env);
   let started = false;
   try {
-    for (let attempt = 0; attempt < 20; attempt++) { try { run('pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start'], process.env); started = true; break; } catch (error) { if (!/address already in use|could not bind/i.test(String(error)) || attempt === 19) throw error; port++; } }
+    for (let attempt = 0; attempt < 20; attempt++) { try { run('pg_ctl', ['-D', root, '-o', `-p ${port} -h 127.0.0.1`, '-w', 'start'], process.env); started = true; break; } catch (error) { if (!/address already in use|could not bind|could not create any TCP\/IP sockets/i.test(String(error)) || attempt === 19) throw error; port++; } }
     if (!started) throw new Error('could not start owned PostgreSQL');
-  } catch (error) { rmSync(root, { recursive: true, force: true }); throw error; }  run('createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', 'products_3to7'], process.env);
+  } catch (error) { try { if (started) run('pg_ctl', ['-D', root, '-w', 'stop'], process.env); } catch {} rmSync(root, { recursive: true, force: true }); throw error; }
+  try { run('createdb', ['-h', '127.0.0.1', '-p', String(port), '-U', 'postgres', 'products_3to7'], process.env); } catch (error) { try { if (started) run('pg_ctl', ['-D', root, '-w', 'stop'], process.env); } catch {} rmSync(root, { recursive: true, force: true }); throw error; }
   const url = `postgresql://postgres@127.0.0.1:${port}/products_3to7`;
   return { url, stop: () => { try { run('pg_ctl', ['-D', root, '-w', 'stop'], process.env); } catch {} rmSync(root, { recursive: true, force: true }); } };
 }
