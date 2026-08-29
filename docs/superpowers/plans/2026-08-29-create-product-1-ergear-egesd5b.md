@@ -81,34 +81,34 @@
 
 **Files:** `scripts/create-product-ergear-egesd5b.ts` (new), `tests/createProductErgearEgesd5b.test.ts` (new)
 
-- [ ] **Step 1:** Write failing tests (against a real disposable Postgres, following this repo's existing pattern for DB-backed tests — check how `tests/backfillProductCategory.test.ts` or similar sets up its test database) asserting: running the script creates exactly one `Brand` row (`slug: 'ergear'`), exactly one `Product` row with the exact identity fields listed above (`status: 'DRAFT'`, `is_indexed: false`), and the Product's `category_id`/`brand_id` are correctly linked (not null, matching the real `Category`/`Brand` rows).
-- [ ] **Step 2:** Write a failing test asserting the script throws a clear error (does not silently create a duplicate `standing-desks` Category) if that Category doesn't already exist in the target database — this script must depend on `prisma/seed-standing-desk-attributes.ts` having already run, not re-create its own copy of Category/AttributeDefinition setup.
-- [ ] **Step 3:** Write a failing test asserting the script is idempotent for Brand/Product: running it twice results in exactly one Brand row and one Product row, no duplicate-slug errors.
-- [ ] **Step 4:** Implement the script's Brand + Product creation (upsert by slug) to pass. Run tests: PASS.
+- [x] **Step 1:** Write failing tests (against a real disposable Postgres, following this repo's existing pattern for DB-backed tests — check how `tests/backfillProductCategory.test.ts` or similar sets up its test database) asserting: running the script creates exactly one `Brand` row (`slug: 'ergear'`), exactly one `Product` row with the exact identity fields listed above (`status: 'DRAFT'`, `is_indexed: false`), and the Product's `category_id`/`brand_id` are correctly linked (not null, matching the real `Category`/`Brand` rows).
+- [x] **Step 2:** Write a failing test asserting the script throws a clear error (does not silently create a duplicate `standing-desks` Category) if that Category doesn't already exist in the target database — this script must depend on `prisma/seed-standing-desk-attributes.ts` having already run, not re-create its own copy of Category/AttributeDefinition setup.
+- [x] **Step 3:** Write a failing test asserting the script is idempotent for Brand/Product: running it twice results in exactly one Brand row and one Product row, no duplicate-slug errors.
+- [x] **Step 4:** Implement the script's Brand + Product creation (upsert by slug) to pass. Run tests: PASS.
 
 ### Task 2: ProductVariant + ProductAttribute rows (tests first)
 
 **Files:** same script, `tests/createProductErgearEgesd5b.test.ts`
 
-- [ ] **Step 1:** Write failing tests: the script creates exactly one `ProductVariant` (`sku: 'ergear-egesd5b-48x24-black'`) for the Product; every PRODUCT-scope attribute listed in this plan is persisted with the exact value given (assert `max_height_in`'s persisted value equals the real `convertLengthToCanonicalInches(118, 'cm')` output, not a hardcoded literal); every VARIANT-scope attribute is persisted and correctly linked to the one variant (not left `variant_id: null`); every attribute listed as "do NOT set" has no `ProductAttribute` row at all (assert absence, not a null/empty value); `desktop_width_in`/`desktop_depth_in` use the measured `47.2`/`23.6`, not the marketing `48`/`24`.
-- [ ] **Step 2:** Write a failing test asserting every write goes through `validateProductAttributeInput` and the script throws (does not silently continue) if a value fails validation — simulate this by temporarily asserting the real function is called (spy/count, or structurally verify by checking the script imports and invokes it) rather than duplicating the validator's own logic in the script.
-- [ ] **Step 3:** Write a failing test asserting re-running the script for this step is idempotent (no duplicate `ProductAttribute` rows, no duplicate `ProductVariant`).
-- [ ] **Step 4:** Implement to pass. Run tests: PASS.
+- [x] **Step 1:** Write failing tests: the script creates exactly one `ProductVariant` (`sku: 'ergear-egesd5b-48x24-black'`) for the Product; every PRODUCT-scope attribute listed in this plan is persisted with the exact value given (assert `max_height_in`'s persisted value equals the real `convertLengthToCanonicalInches(118, 'cm')` output, not a hardcoded literal); every VARIANT-scope attribute is persisted and correctly linked to the one variant (not left `variant_id: null`); every attribute listed as "do NOT set" has no `ProductAttribute` row at all (assert absence, not a null/empty value); `desktop_width_in`/`desktop_depth_in` use the measured `47.2`/`23.6`, not the marketing `48`/`24`.
+- [x] **Step 2:** Write a failing test asserting every write goes through `validateProductAttributeInput` and the script throws (does not silently continue) if a value fails validation — simulate this by temporarily asserting the real function is called (spy/count, or structurally verify by checking the script imports and invokes it) rather than duplicating the validator's own logic in the script.
+- [x] **Step 3:** Write a failing test asserting re-running the script for this step is idempotent (no duplicate `ProductAttribute` rows, no duplicate `ProductVariant`).
+- [x] **Step 4:** Implement to pass. Run tests: PASS.
 
 ### Task 3: AffiliateLink (tests first)
 
 **Files:** same script, `tests/createProductErgearEgesd5b.test.ts`
 
-- [ ] **Step 1:** Write failing tests: the script creates exactly one `AffiliateLink` for the Product with `network: 'amazon'`, `price: 139.99` (not `99.99`), `raw_url`/`tracking_url` matching this plan exactly, `is_in_stock: true`.
-- [ ] **Step 2:** Write a failing test asserting idempotency (re-running doesn't create a second `AffiliateLink` for the same product/network).
-- [ ] **Step 3:** Implement to pass. Run the full new test file plus the full existing suite: PASS, no regressions.
+- [x] **Step 1:** Write failing tests: the script creates exactly one `AffiliateLink` for the Product with `network: 'amazon'`, `price: 139.99` (not `99.99`), `raw_url`/`tracking_url` matching this plan exactly, `is_in_stock: true`.
+- [x] **Step 2:** Write a failing test asserting idempotency (re-running doesn't create a second `AffiliateLink` for the same product/network).
+- [x] **Step 3:** Implement to pass. Run the full new test file plus the full existing suite: PASS, no regressions.
 
 ### Task 4: Verification and evidence
 
-- [ ] **Step 1:** Run the script against a fresh disposable Postgres (owned, loopback, high port — same discipline as every prior plan this session) that has already run `prisma migrate deploy` and `npx tsx prisma/seed-standing-desk-attributes.ts` first (this script depends on the Category/AttributeDefinition rows that seed creates). Confirm the full real data set from this plan is persisted exactly as specified.
-- [ ] **Step 2:** Query the disposable DB directly (or via a short verification script) and print: the Product row, its Brand/Category relations, all its ProductAttribute rows (PRODUCT + VARIANT scope) with values, and its AffiliateLink — confirm every value matches this plan's table exactly, including the computed `max_height_in` value.
-- [ ] **Step 3:** Confirm `npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` are all green.
-- [ ] **Step 4:** Record evidence in `artifacts/create-product-1-ergear/evidence.md`: full persisted row dump from Step 2, test output, and an explicit statement that Product #1 of the §58 P2 dry run is now enter-able end-to-end except for the two logged NON-BLOCKER gaps (`motor_count`, `warranty_months`), which remain intentionally unset.
+- [x] **Step 1:** Run the script against a fresh disposable Postgres (owned, loopback, high port — same discipline as every prior plan this session) that has already run `prisma migrate deploy` and `npx tsx prisma/seed-standing-desk-attributes.ts` first (this script depends on the Category/AttributeDefinition rows that seed creates). Confirm the full real data set from this plan is persisted exactly as specified.
+- [x] **Step 2:** Query the disposable DB directly (or via a short verification script) and print: the Product row, its Brand/Category relations, all its ProductAttribute rows (PRODUCT + VARIANT scope) with values, and its AffiliateLink — confirm every value matches this plan's table exactly, including the computed `max_height_in` value.
+- [x] **Step 3:** Confirm `npm run lint`, `npx tsc --noEmit`, `npm test`, `npm run build` are all green.
+- [x] **Step 4:** Record evidence in `artifacts/create-product-1-ergear/evidence.md`: full persisted row dump from Step 2, test output, and an explicit statement that Product #1 of the §58 P2 dry run is now enter-able end-to-end except for the two logged NON-BLOCKER gaps (`motor_count`, `warranty_months`), which remain intentionally unset.
 - [ ] **Step 5:** Push the branch, open a PR against `main` (same flow as prior PRs). Do not merge locally. **Do not run this script against any real/shared database as part of this PR** — that is a separate, explicit step the user must approve after this PR is reviewed and merged, since it's a permanent real-data addition rather than a reversible code change.
 
 **After this lands:** The script exists, is tested, and is proven correct against a disposable database. Running it for real (against the actual DeskHolt database) is a separate follow-up action requiring the user's explicit go-ahead — not part of this PR.
