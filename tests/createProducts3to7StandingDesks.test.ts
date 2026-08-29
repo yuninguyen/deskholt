@@ -96,6 +96,36 @@ integration('Task2 persists exact scoped attributes, metadata, and no affiliate 
   } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
 
+integration('rerun removes stale and wrong-scope attributes without touching another product', async () => {
+  const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
+    await createProducts3to7StandingDesks(prisma);
+    const target = await prisma.product.findUniqueOrThrow({ where: { slug: 'veken-47-2in-standing-desk-black' } });
+    const other = await prisma.product.create({ data: { name: 'Unrelated product', slug: 'unrelated-product', category: 'standing-desks', category_id: target.category_id!, image_url: 'https://example.com/unrelated.jpg', status: 'DRAFT' } });
+    const forbidden = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'desktop_material' } });
+    const allowed = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'desktop_finish' } });
+    await prisma.productAttribute.createMany({ data: [
+      { product_id: target.id, variant_id: null, attribute_definition_id: forbidden.id, value_string: 'ENGINEERED_WOOD' },
+      { product_id: target.id, variant_id: null, attribute_definition_id: allowed.id, value_string: 'stale' },
+    ] });
+    await prisma.productAttribute.create({ data: { product_id: other.id, attribute_definition_id: forbidden.id, value_string: 'ENGINEERED_WOOD' } });
+    await createProducts3to7StandingDesks(prisma);
+    const targetKeys = (await prisma.productAttribute.findMany({ where: { product_id: target.id }, include: { attribute_definition: true } })).map((a) => a.attribute_definition.key);
+    assert.equal(targetKeys.includes('desktop_material'), false);
+    assert.equal(targetKeys.includes('desktop_finish'), false);
+    assert.equal(await prisma.productAttribute.count({ where: { product_id: other.id } }), 1);
+  } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
+});
+
+integration('rolls back a product transaction when an allowed value definition rejects its seed value', async () => {
+  const cluster = owned(); try { migrate(cluster.url, true); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try {
+    const definition = await prisma.attributeDefinition.findUniqueOrThrow({ where: { key: 'adjustment_type' } });
+    await prisma.attributeDefinition.update({ where: { id: definition.id }, data: { allowed_values: ['MANUAL'] } });
+    await assert.rejects(() => createProducts3to7StandingDesks(prisma), /validation failed/i);
+    assert.equal(await prisma.product.count(), 0);
+    assert.equal(await prisma.productAttribute.count(), 0);
+  } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
+});
+
 integration('fails before writes when standing-desks category is missing', async () => {
   const cluster = owned(); try { migrate(cluster.url, false); const prisma = new PrismaClient({ datasources: { db: { url: cluster.url } } }); try { await assert.rejects(() => createProducts3to7StandingDesks(prisma), /standing-desks/i); assert.equal(await prisma.product.count(), 0); assert.equal(await prisma.brand.count(), 0); } finally { await prisma.$disconnect(); } } finally { cluster.stop(); }
 });
