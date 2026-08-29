@@ -34,7 +34,7 @@ export async function upgradeProductShwOd92ak(prisma: PrismaClient) {
     if (!category) throw new Error('Required Category "standing-desks" was not found; run the standing-desk attribute seed first.');
     const brand = await tx.brand.upsert({ where: { slug: 'shw' }, update: { name: 'SHW' }, create: { slug: 'shw', name: 'SHW' } });
     await tx.product.update({ where: { id: product.id }, data: { category_id: category.id, brand_id: brand.id, upc_code: '811244032715' } });
-    const variant = await tx.productVariant.findFirst({ where: { product_id: product.id } });
+    const variant = await tx.productVariant.findFirst({ where: { product_id: product.id, sku: VARIANT_SKU } });
     if (!variant) throw new Error(`Required existing ProductVariant for Product "${PRODUCT_SLUG}" was not found.`);
     await tx.productVariant.update({ where: { id: variant.id }, data: { size: '48-Inch', color: 'Black' } });
     const prepared: { entry: Entry; definition: { id: string } }[] = [];
