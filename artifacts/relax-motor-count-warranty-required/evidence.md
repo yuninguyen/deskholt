@@ -53,18 +53,8 @@ These gates were run without running the seed script again and without using a r
 - `npm run lint` — **PASS**, exit code `0` (`eslint . --max-warnings=0`).
 - `npx tsc --noEmit` — **PASS**, exit code `0`.
 - `npm test` — **PASS**, exit code `0`: **301 tests**, **293 passed**, **0 failed**, **8 skipped**, **0 cancelled**, **0 todo**. The 8 skips are opt-in owned-cluster integration tests.
-- `npm run build` — **FAIL**, exit code `1`, exactly:
-
-```text
-> deskholt@0.1.0 build
-> prisma generate && next build
-
-Prisma schema loaded from prisma\schema.prisma
-Error: 
-EPERM: operation not permitted, rename 'C:\laragon\www\deskholt\node_modules\.prisma\client\query_engine-windows.dll.node.tmp44240' -> 'C:\laragon\www\deskholt\node_modules\.prisma\client\query_engine-windows.dll.node'
-```
-
-The build failure occurred during Prisma Client generation while renaming the Windows query-engine file; it was not caused by a production-code change.
+- Initial `npm run build` — blocked during Prisma Client generation by a shared Windows query-engine `EPERM` rename; no production code had started compiling.
+- Final `npm run build` — **PASS**, exit code `0`, after restoring the worktree's local dependencies and using a fresh owned disposable PostgreSQL 18 database at `127.0.0.1:55489`. Prisma applied all three migrations, the build compiled, generated all 13 static pages, stopped the database, and removed the temporary root. No real/shared database or seed execution was used for this build.
 
 ## Blueprint §70 rationale
 
