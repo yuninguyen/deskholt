@@ -51,17 +51,21 @@ export default function ProductCard({
             ))}
           </div>
         )}
-        <div>
-          <span className="block font-body text-[11px] text-ink-faint">Best price from</span>
-          <span className="font-mono text-xl font-semibold text-ink">
-            {lowestPrice ? `$${lowestPrice.toFixed(2)}` : 'N/A'}
-          </span>
-        </div>
+        {linkCount === 0 ? (
+          <div className="font-mono text-xl font-semibold text-ink">Price coming soon</div>
+        ) : (
+          <div>
+            <span className="block font-body text-[11px] text-ink-faint">Best price from</span>
+            <span className="font-mono text-xl font-semibold text-ink">
+              {lowestPrice ? `$${lowestPrice.toFixed(2)}` : 'N/A'}
+            </span>
+          </div>
+        )}
         <Link
           href={`/products/${slug}`}
           className="mt-auto flex items-center justify-center gap-2 rounded-sm bg-blueprint px-4 py-2.5 font-display text-sm font-semibold text-white transition-colors hover:bg-blueprint-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blueprint"
         >
-          Compare {linkCount} stores →
+          {linkCount === 0 ? 'View product →' : `Compare ${linkCount} stores →`}
         </Link>
       </div>
     </div>
