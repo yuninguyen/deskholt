@@ -52,7 +52,7 @@ export const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
     isRequired: true,
     allowedValues: ['ELECTRIC', 'MANUAL_CRANK', 'PNEUMATIC', 'FIXED'],
   },
-  { key: 'motor_count', label: 'Motor Count', scope: 'PRODUCT', dataType: 'INTEGER', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'motor_count', label: 'Motor Count', scope: 'PRODUCT', dataType: 'INTEGER', isFilterable: true, isComparable: true, isRequired: false },
   { key: 'lifting_speed_in_s', label: 'Lifting Speed', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'in/s', isFilterable: false, isComparable: true, isRequired: false },
   { key: 'noise_db', label: 'Noise Level', scope: 'PRODUCT', dataType: 'DECIMAL', unit: 'dB', isFilterable: false, isComparable: true, isRequired: false },
   { key: 'anti_collision', label: 'Anti-Collision', scope: 'PRODUCT', dataType: 'BOOLEAN', isFilterable: true, isComparable: false, isRequired: false },
@@ -111,7 +111,7 @@ export const STANDING_DESK_ATTRIBUTES: AttributeSeed[] = [
   { key: 'frame_color', label: 'Frame Color', scope: 'VARIANT', dataType: 'STRING', isFilterable: true, isComparable: false, isRequired: false },
 
   // --- Warranty & Certifications (Product-level) ---
-  { key: 'warranty_months', label: 'Warranty', scope: 'PRODUCT', dataType: 'INTEGER', unit: 'months', isFilterable: true, isComparable: true, isRequired: true },
+  { key: 'warranty_months', label: 'Warranty', scope: 'PRODUCT', dataType: 'INTEGER', unit: 'months', isFilterable: true, isComparable: true, isRequired: false },
   { key: 'certification_greenguard', label: 'GREENGUARD Certified', scope: 'PRODUCT', dataType: 'BOOLEAN', isFilterable: true, isComparable: false, isRequired: false },
   { key: 'certification_bifma', label: 'BIFMA Certified', scope: 'PRODUCT', dataType: 'BOOLEAN', isFilterable: true, isComparable: false, isRequired: false },
   { key: 'assembly_time_minutes', label: 'Assembly Time', scope: 'PRODUCT', dataType: 'INTEGER', unit: 'minutes', isFilterable: false, isComparable: true, isRequired: false },
