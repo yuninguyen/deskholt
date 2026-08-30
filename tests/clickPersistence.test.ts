@@ -350,21 +350,25 @@ test('fractional backoffMs is floored and remains within the timeout budget', as
   assert.equal(attempts, 2);
 });
 
-test('backoff consuming the timeout does not start a second create', async () => {
+test('backoff consuming the timeout does not start a second create', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+
   let attempts = 0;
   const create: Create = async () => {
     attempts += 1;
     throw errorWithCode('P1001');
   };
 
-  const result = await persistClickWithRetry(
+  const result = persistClickWithRetry(
     retryOptions(create, { backoffMs: 1_000, timeoutMs: 10 })
   );
+  await Promise.resolve();
 
-  assert.deepEqual(result, { outcome: 'exhausted', classification: 'timeout', attempts: 1 });
+  t.mock.timers.tick(10);
+  assert.deepEqual(await result, { outcome: 'exhausted', classification: 'timeout', attempts: 1 });
   assert.equal(attempts, 1);
 
-  await new Promise((resolve) => setTimeout(resolve, 20));
+  t.mock.timers.tick(20);
   assert.equal(attempts, 1);
 });
 
