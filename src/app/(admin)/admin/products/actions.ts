@@ -9,6 +9,12 @@ import {
   parsePublishingCommand,
   type ProductPublishingStore,
 } from '@/lib/products/productPublishingCommands';
+import {
+  createPrismaProductCreationStore,
+  executeCreateProduct,
+  parseCreateProductInput,
+  type ProductCreationStore,
+} from '@/lib/products/productCreationCommand';
 
 export type ProductPublishingActionDependencies = {
   requireAdmin(): Promise<void>;
@@ -58,11 +64,51 @@ export function createProductPublishingAction(
   };
 }
 
+export type ProductCreationActionDependencies = {
+  requireAdmin(): Promise<void>;
+  creationStore: ProductCreationStore;
+  revalidatePath(path: string): void;
+  redirect(path: string): never;
+};
+
+export function createCreateProductAction(
+  dependencies: ProductCreationActionDependencies
+): (formData: FormData) => Promise<void> {
+  return async (formData) => {
+    await dependencies.requireAdmin();
+
+    let input: ReturnType<typeof parseCreateProductInput>;
+    try {
+      input = parseCreateProductInput(formData);
+    } catch {
+      dependencies.redirect('/admin/products/new?error=invalid-input');
+    }
+
+    const result = await executeCreateProduct(dependencies.creationStore, input);
+    if (!result.ok) {
+      dependencies.redirect(`/admin/products/new?error=${encodeURIComponent(result.reason)}`);
+    }
+
+    dependencies.revalidatePath('/admin/products');
+    dependencies.redirect(`/admin/products/${result.productId}/specifications?created=1`);
+  };
+}
+
 export async function productPublishingAction(formData: FormData): Promise<void> {
   'use server';
   return createProductPublishingAction({
     requireAdmin: requireAdminSession,
     publishingStore: createPrismaPublishingStore(prisma),
+    revalidatePath,
+    redirect,
+  })(formData);
+}
+
+export async function createProductAction(formData: FormData): Promise<void> {
+  'use server';
+  return createCreateProductAction({
+    requireAdmin: requireAdminSession,
+    creationStore: createPrismaProductCreationStore(prisma),
     revalidatePath,
     redirect,
   })(formData);

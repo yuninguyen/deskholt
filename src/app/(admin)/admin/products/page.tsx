@@ -49,11 +49,16 @@ export default async function AdminProductsPage({
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Standing Desks — Admin</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Manage product publication and search-index visibility.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Standing Desks — Admin</h1>
+          <p className="mt-1 text-sm text-gray-400">
+            Manage product publication and search-index visibility.
+          </p>
+        </div>
+        <Link href="/admin/products/new" className="rounded bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-500">
+          + New Product
+        </Link>
       </div>
 
       <div aria-live="polite" aria-atomic="true">
