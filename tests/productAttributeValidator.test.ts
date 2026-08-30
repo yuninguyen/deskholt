@@ -308,6 +308,14 @@ test('validator accepts ENGINEERED_WOOD from the standing desk seed enum', async
   assert.deepEqual(result, { valid: true, errors: [] });
 });
 
+test('standing desk motor count and warranty months are optional', () => {
+  const motorCount = STANDING_DESK_ATTRIBUTES.find(({ key }) => key === 'motor_count');
+  const warrantyMonths = STANDING_DESK_ATTRIBUTES.find(({ key }) => key === 'warranty_months');
+
+  assert.equal(motorCount?.isRequired, false);
+  assert.equal(warrantyMonths?.isRequired, false);
+});
+
 test('validator accepts only configured ENUM values', async () => {
   const fixture = makeFixture({
     definition: {
