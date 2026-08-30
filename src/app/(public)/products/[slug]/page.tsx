@@ -176,7 +176,7 @@ export default async function ProductDetailPage({
 
           {product.is_sustainable && <Badge variant="eco" label="Sustainable Eco-Friendly Choice" />}
 
-          <p className="text-sm leading-relaxed text-ink-soft">{product.description}</p>
+          <p className="text-sm leading-relaxed text-ink-soft whitespace-pre-line">{product.description}</p>
 
           {/* Multi-Store Price Comparison Table */}
           <div className="space-y-4">
