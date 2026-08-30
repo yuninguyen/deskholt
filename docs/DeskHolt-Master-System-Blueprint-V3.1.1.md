@@ -2784,3 +2784,11 @@ User supplied a 14-item Amazon batch. **Category scope check first:** only `stan
 - **Veken 55" has no `Maximum Weight Recommendation` at all** — first time a *required* attribute (`max_load_lb`) is completely absent from a listing (previously only `motor_count`/`warranty_months`, also required, were the recurring gaps). Per §18, `isRequired` never blocks save — left unset, logged.
 - Veken 47.2" and FEZIBO give height already in inches (no cm conversion needed) — only Claiks needs the existing cm→in converter (`119 cm` → canonical inches) this round.
 - `motor_count`/`warranty_months` (Veken ×2, Claiks, FEZIBO) and `warranty_months` (OffiGo, per the Lifetime decision above) remain unset across all 5 — the pattern is now 5/5 for `motor_count`, matching the recurring signal already logged for Products #1–2. Strong evidence `isRequired: true` on `motor_count` is unrealistic for Amazon-sourced data; still not changing the schema yet, but this is now consistent across every product attempted so far.
+
+## `isRequired` reconsidered for motor_count/warranty_months, 2026-08-30
+
+Across all 7 real standing desks entered so far, `motor_count` was absent from the Amazon source table 7/7 times and `warranty_months` had no usable numeric duration 6/7 times (only SHW had a real value, and that came from a pre-existing unrelated row, not this sourcing path). Per §59's own exit criterion ("required attributes are realistic"), this is real evidence that `isRequired: true` on these two `CategoryAttribute` rows does not match what Amazon-sourced data can actually provide.
+
+Verified impact of `is_required` in the current codebase (`src/lib/products/specificationRows.ts`, `ProductSpecificationsForm.tsx`): it only drives (1) a red `*` marker next to the field label in the Admin form, and (2) the "Completeness: met/total" counter on the specifications page. It does not block save (§18) and touches no other logic.
+
+**Decision: set `isRequired: false` for `motor_count` and `warranty_months`** in `prisma/seed-standing-desk-attributes.ts`. This is a pure data change (re-run the idempotent seed), not a schema change — no migration needed.
