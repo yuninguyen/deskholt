@@ -2792,3 +2792,16 @@ Across all 7 real standing desks entered so far, `motor_count` was absent from t
 Verified impact of `is_required` in the current codebase (`src/lib/products/specificationRows.ts`, `ProductSpecificationsForm.tsx`): it only drives (1) a red `*` marker next to the field label in the Admin form, and (2) the "Completeness: met/total" counter on the specifications page. It does not block save (§18) and touches no other logic.
 
 **Decision: set `isRequired: false` for `motor_count` and `warranty_months`** in `prisma/seed-standing-desk-attributes.ts`. This is a pure data change (re-run the idempotent seed), not a schema change — no migration needed.
+
+## P2 dry run stopped at 7/10, 2026-08-30
+
+User decision: stop entering new products at 7/10 (ErGear, SHW, Veken 47.2", Claiks, FEZIBO, Veken 55", OffiGo) rather than continuing to "~10". Checking against §59's qualitative exit criteria with the evidence gathered so far:
+
+- **recurring ontology problems understood:** yes — cm↔in and kg↔lb mismatches recurred and were fixed narrowly (PR #8, #10); `motor_count`/`warranty_months` absence recurred 7/7 and 6/7 times and was resolved by relaxing `isRequired` (PR #12); one real enum gap (`ENGINEERED_WOOD`) was found and fixed; contradictory source fields were encountered twice and resolved by picking the more specific field.
+- **product/options/variant boundary is workable:** yes — the single-materialized-variant rule (§12) was applied consistently against real Merchant Option Explosion evidence (96 combinations on one ASIN) with no need to revisit it.
+- **required attributes are realistic:** addressed for `motor_count`/`warranty_months`; no other required attribute has shown a similar recurring gap across the 7 products.
+- **unit workflow works:** yes — narrow in↔cm and lb↔kg converters both built from real evidence, both still holding.
+- **source workflow works:** yes — `source_url`/`source_type`/`confidence` populated consistently for every real attribute across all 7 products.
+- **editor can enter data without developer intervention for normal cases:** partially — Amazon-sourced structured attributes flow through scripts using the same validator/conversion functions the Admin form uses, but no product has been entered purely through the Admin UI end-to-end without a script; this remains untested for "normal case" ergonomics.
+
+**Not claiming §59's exit bar is fully met** — this stop is the user's judgment call, not a formal LOCK decision. `desktop_shape` has only 2/3 enum members evidenced (`RECTANGULAR`, `L_SHAPED`; never `CURVED`), and Products #8–10 were never attempted. Locking Standing Desk Schema V1.0 remains a separate, explicit decision to make later if/when revisited — not implied by stopping the dry run here.
