@@ -92,70 +92,32 @@ test('Admin theme root tolerates intentional pre-hydration theme initialization'
   );
 });
 
-test('Admin Products uses one scrollable panel for narrow table viewports', () => {
-  assert.match(
-    adminProductsPageSource,
-    /<div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800">/
-  );
-  assert.doesNotMatch(
-    adminProductsPageSource,
-    /<div className="overflow-x-auto">\s*<div className="overflow-hidden/
-  );
+test('Admin Products uses typed server translations for all operator copy', () => {
+  assert.match(adminProductsPageSource, /import \{ getAdminTranslations \} from '@\/lib\/admin\/i18n\/server';/);
+  assert.match(adminProductsPageSource, /const translations = await getAdminTranslations\(\);/);
+  assert.match(adminProductsPageSource, /translations\.products\.(title|description|newProduct|saved|publishingRejected|table|lifecycle|access|index|actions|empty|errors)/);
+  assert.doesNotMatch(adminProductsPageSource, /Manage product publication and search-index visibility\./);
+  assert.doesNotMatch(adminProductsPageSource, /Chưa có Standing Desk product nào\./);
 });
 
-test('Admin Products heading gives plain operational guidance', () => {
-  assert.match(adminProductsPageSource, /Manage product publication and search-index visibility\./);
-  assert.doesNotMatch(adminProductsPageSource, /V1-alpha/);
-  assert.doesNotMatch(adminProductsPageSource, /fail-closed controls/);
+test('Admin Products uses shadcn Table and semantic named Badges in one direct horizontal scroll panel', () => {
+  assert.match(adminProductsPageSource, /import \{ Table, TableBody, TableCell, TableHead, TableHeader, TableRow \} from '@\/components\/ui\/table';/);
+  assert.match(adminProductsPageSource, /import \{ Badge \} from '@\/components\/ui\/Badge';/);
+  assert.match(adminProductsPageSource, /<Table\s+containerClassName="overflow-x-auto[^\"]*"\s+className="min-w-\[900px\]/);
+  assert.match(adminProductsPageSource, /<TableHeader(?:\s|>)/);
+  assert.match(adminProductsPageSource, /<TableBody>/);
+  assert.match(adminProductsPageSource, /<Badge variant=\{.*\}>/);
+  assert.doesNotMatch(adminProductsPageSource, /overflow-hidden/);
 });
 
-test('Admin Products maps stable publishing error reasons to operator-facing feedback', () => {
-  assert.match(adminProductsPageSource, /invalid-input[\s\S]*Invalid publishing request/);
-  assert.match(adminProductsPageSource, /missing[\s\S]*Product could not be found/);
-  assert.match(adminProductsPageSource, /active-only[\s\S]*Set the lifecycle to Active before enabling indexing/);
-  assert.doesNotMatch(adminProductsPageSource, /Set the lifecycle to ACTIVE before enabling indexing/);
-  assert.match(adminProductsPageSource, /concurrency-conflict[\s\S]*changed while the command was running/);
-  assert.match(adminProductsPageSource, /aria-live="polite"/);
-});
-
-test('Admin Products presents stored and effective Product state as operator-facing badge copy', () => {
-  assert.match(adminProductsPageSource, /DRAFT: 'Draft'/);
-  assert.match(adminProductsPageSource, /ACTIVE: 'Active'/);
-  assert.match(adminProductsPageSource, /BLOCKED: 'Blocked'/);
-  assert.match(adminProductsPageSource, /ARCHIVED: 'Archived'/);
-  assert.match(adminProductsPageSource, /\{product\.is_indexed \? 'Enabled' : 'Disabled'\}/);
-  assert.match(adminProductsPageSource, /eligible: 'Eligible for public listings and indexing'/);
-  assert.match(adminProductsPageSource, /'explicit-noindex': 'Public, excluded from indexing'/);
-  assert.match(adminProductsPageSource, /draft: 'Draft—not public'/);
-  assert.match(adminProductsPageSource, /blocked: 'Blocked—not public'/);
-  assert.match(adminProductsPageSource, /archived: 'Archived—not public'/);
-  assert.doesNotMatch(adminProductsPageSource, />stored: \{product\.status\}</);
-  assert.doesNotMatch(adminProductsPageSource, />stored index: \{String\(product\.is_indexed\)\}</);
-  assert.doesNotMatch(adminProductsPageSource, />effective: \{decision\.reason\}</);
-});
-
-test('Admin Products identifies and focuses the Product targeted by redirect feedback', () => {
-  assert.match(adminProductsPageSource, /const isFeedbackTarget = query\.productId === product\.id/);
+test('Admin Products preserves publishing submission and feedback contracts', () => {
+  assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value="set-lifecycle" \/>[\s\S]*?<select[\s\S]*?name="status"[\s\S]*?defaultValue=\{product\.status\}[\s\S]*?autoFocus=\{isFeedbackTarget\}/);
+  assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\} \/>[\s\S]*?disabled=\{isEnableDisabled\}[\s\S]*?aria-describedby=\{isEnableDisabled \? enableIndexHelpId : undefined\}/);
   assert.match(adminProductsPageSource, /id={`product-\$\{product\.id\}`}/);
   assert.match(adminProductsPageSource, /tabIndex=\{isFeedbackTarget \? 0 : undefined\}/);
-  const targetedRowOpeningTag = adminProductsPageSource.match(/<tr\s+key=\{product\.id\}[\s\S]*?>/)?.[0];
-  assert.ok(targetedRowOpeningTag);
-  assert.doesNotMatch(targetedRowOpeningTag, /autoFocus=/);
-  assert.match(
-    adminProductsPageSource,
-    /<select[\s\S]*?autoFocus=\{isFeedbackTarget\}[\s\S]*?>/
-  );
-  assert.match(adminProductsPageSource, /isFeedbackTarget \? 'bg-amber-50 dark:bg-amber-950\/20' : ''/);
-});
-
-test('Admin Products explains inactive disabled Enable index controls accessibly', () => {
-  assert.match(
-    adminProductsPageSource,
-    /aria-describedby=\{isEnableDisabled \? enableIndexHelpId : undefined\}/
-  );
+  assert.match(adminProductsPageSource, /href=\{`\/admin\/products\/\$\{product\.id\}\/specifications`\}/);
+  assert.match(adminProductsPageSource, /aria-live="polite"/);
   assert.match(adminProductsPageSource, /id=\{enableIndexHelpId\}/);
-  assert.match(adminProductsPageSource, /Set lifecycle to Active to enable indexing\./);
-  assert.doesNotMatch(adminProductsPageSource, /Set lifecycle to ACTIVE to enable indexing\./);
 });
 
 test('successful lifecycle save mutates before invalidating homepage and redirecting', async () => {
