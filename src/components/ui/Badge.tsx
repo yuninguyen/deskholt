@@ -1,3 +1,8 @@
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Slot } from 'radix-ui';
+import { cn } from '@/lib/utils';
+
 const VARIANT_CLASSES = {
   eco: 'bg-sage-soft text-sage',
   instock: 'bg-blueprint-soft text-blueprint-deep',
@@ -13,7 +18,7 @@ export interface BadgeProps {
   label: string;
 }
 
-export default function Badge({ variant, label }: BadgeProps) {
+export default function PublicBadge({ variant, label }: BadgeProps) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-medium ${VARIANT_CLASSES[variant]}`}
@@ -23,3 +28,32 @@ export default function Badge({ variant, label }: BadgeProps) {
     </span>
   );
 }
+
+const badgeVariants = cva(
+  'inline-flex items-center rounded-full border border-transparent px-2 py-0.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring',
+  {
+    variants: {
+      variant: {
+        default: 'bg-admin-primary text-admin-primary-foreground',
+        secondary: 'bg-admin-secondary text-admin-secondary-foreground',
+        destructive: 'bg-admin-destructive text-admin-primary-foreground',
+        outline: 'border-admin-border text-admin-foreground',
+      },
+    },
+    defaultVariants: { variant: 'default' },
+  }
+);
+
+function Badge({
+  className,
+  variant,
+  asChild = false,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement> &
+  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot.Root : 'span';
+
+  return <Comp className={cn(badgeVariants({ variant }), className)} {...props} />;
+}
+
+export { Badge, badgeVariants };
