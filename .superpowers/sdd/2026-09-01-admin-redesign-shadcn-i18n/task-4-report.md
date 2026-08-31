@@ -27,3 +27,11 @@ Reviewed `page.tsx` line-by-line: both `productPublishingAction` forms; hidden `
 ## Self-review
 
 No actions, data queries, public routes, root layout, or unrelated components were modified. Pre-existing untracked `PRODUCT.md` was left untouched.
+
+## Focused review fix round
+
+- Root cause: the empty-state `<caption>` followed `</TableBody>`, producing invalid table child ordering.
+- RED: the extended source-contract test failed as expected because no empty `TableRow`/`TableCell colSpan={5}` existed inside `TableBody`.
+- GREEN: the translated empty message now renders in that five-column row inside `TableBody`; the raw caption-after-body pattern is rejected by the contract test.
+- Removed the two `dark:shadow-lg dark:shadow-black/30` button class pairs for the restrained QA presentation.
+- Verification: focused publishing suite passed 12/12; `npm run typecheck`, `npm run lint`, and `git diff --check` passed.

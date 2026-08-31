@@ -110,6 +110,17 @@ test('Admin Products uses shadcn Table and semantic named Badges in one direct h
   assert.doesNotMatch(adminProductsPageSource, /overflow-hidden/);
 });
 
+test('Admin Products renders its translated empty state as a table row inside TableBody', () => {
+  assert.match(
+    adminProductsPageSource,
+    /<TableBody>[\s\S]*?products\.length === 0[\s\S]*?<TableRow>[\s\S]*?<TableCell colSpan=\{5\}(?:\s|>)[\s\S]*?translations\.products\.empty[\s\S]*?<\/TableCell>[\s\S]*?<\/TableRow>[\s\S]*?<\/TableBody>/
+  );
+  assert.doesNotMatch(
+    adminProductsPageSource,
+    /<\/TableBody>\s*\{products\.length === 0 && \(\s*<caption/
+  );
+});
+
 test('Admin Products preserves publishing submission and feedback contracts', () => {
   assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value="set-lifecycle" \/>[\s\S]*?<select[\s\S]*?name="status"[\s\S]*?defaultValue=\{product\.status\}[\s\S]*?autoFocus=\{isFeedbackTarget\}/);
   assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\} \/>[\s\S]*?disabled=\{isEnableDisabled\}[\s\S]*?aria-describedby=\{isEnableDisabled \? enableIndexHelpId : undefined\}/);

@@ -54,7 +54,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30"
+          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500"
         >
           {translations.products.newProduct}
         </Link>
@@ -150,7 +150,7 @@ export default async function AdminProductsPage({
                       </select>
                       <button
                         type="submit"
-                        className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30"
+                        className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500"
                       >
                         {translations.products.actions.save}
                       </button>
@@ -185,12 +185,14 @@ export default async function AdminProductsPage({
               </TableRow>
             );
           })}
+          {products.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="px-5 py-8 text-center text-sm text-admin-muted-foreground">
+                {translations.products.empty}
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
-        {products.length === 0 && (
-          <caption className="px-5 py-8 text-center text-sm text-admin-muted-foreground">
-            {translations.products.empty}
-          </caption>
-        )}
       </Table>
     </div>
   );
