@@ -16,6 +16,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div
       id="admin-theme-root"
+      suppressHydrationWarning
       data-theme="dark"
       className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100"
     >
