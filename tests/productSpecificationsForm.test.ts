@@ -68,6 +68,60 @@ test('Specifications form preserves row field names, draft defaults, stale ENUM 
   assert.doesNotMatch(html, /Hidden/);
 });
 
+test('Specifications form renders clearable Boolean, ENUM, and source type options without synthetic values', async () => {
+  const booleanKey = 'boolean-row';
+  const enumKey = 'enum-row';
+  const sourceTypeKey = 'source-type-row';
+  const html = await render(makeData({
+    rows: [
+      { rowKey: booleanKey, attributeDefinitionId: 'boolean-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'BOOLEAN', key: 'has_motor', label: 'Has motor', unit: null, allowedValues: null, isRequired: false, existing: { valueString: null, valueNumber: null, valueBoolean: true, sourceUrl: null, sourceType: 'MANUFACTURER', confidence: 'VERIFIED' } },
+      { rowKey: enumKey, attributeDefinitionId: 'enum-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'ENUM', key: 'finish', label: 'Finish', unit: null, allowedValues: ['BAMBOO'], isRequired: false, existing: { valueString: 'BAMBOO', valueNumber: null, valueBoolean: null, sourceUrl: null, sourceType: null, confidence: 'LIKELY' } },
+      { rowKey: sourceTypeKey, attributeDefinitionId: 'source-type-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'STRING', key: 'material', label: 'Material', unit: null, allowedValues: null, isRequired: false, existing: { valueString: null, valueNumber: null, valueBoolean: null, sourceUrl: null, sourceType: 'RETAILER', confidence: 'UNVERIFIED' } },
+    ],
+  }));
+
+  assert.match(html, new RegExp(`name="value__${booleanKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="true" selected="">True<\\/option>`));
+  assert.match(html, new RegExp(`name="value__${enumKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="BAMBOO" selected="">BAMBOO<\\/option>`));
+  assert.match(html, new RegExp(`name="sourceType__${sourceTypeKey}"[\\s\\S]*?<option value="">Source type<\\/option>[\\s\\S]*?<option value="RETAILER" selected="">Retailer<\\/option>`));
+  assert.doesNotMatch(html, /value="empty"/);
+});
+
+test('Specifications form preserves in/cm and lb/kg source-unit defaults and invalid draft fallbacks', async () => {
+  const source = await readFile(formSourcePath, 'utf8');
+
+  assert.match(source, /name=\{`sourceUnit__\$\{row\.rowKey\}`\}/);
+  assert.match(source, /draft\?\.sourceUnit === 'cm'\s*\? 'cm'\s*:\s*'in'/);
+  assert.match(source, /draft\?\.sourceUnit === 'kg'\s*\? 'kg'\s*:\s*'lb'/);
+  assert.match(source, /<SelectItem value="in">in<\/SelectItem>/);
+  assert.match(source, /<SelectItem value="cm">cm<\/SelectItem>/);
+  assert.match(source, /<SelectItem value="lb">lb<\/SelectItem>/);
+  assert.match(source, /<SelectItem value="kg">kg<\/SelectItem>/);
+});
+
+test('Specifications form restores native clearable selects and delegates confidence state to a client leaf', async () => {
+  const source = await readFile(formSourcePath, 'utf8');
+
+  assert.match(source, /<select[\s\S]*name=\{`value__\$\{row\.rowKey\}`\}/);
+  assert.match(source, /<option value="">\{translations\.emptyOption\}<\/option>/);
+  assert.match(source, /<select[\s\S]*name=\{`sourceType__\$\{row\.rowKey\}`\}/);
+  assert.doesNotMatch(source, /SelectItem value="empty"/);
+  assert.match(source, /aria-invalid=\{staleEnumValue \? true : undefined\}/);
+  assert.match(source, /from '\.\/SpecificationConfidenceSelect';/);
+  assert.match(source, /<SpecificationConfidenceSelect/);
+});
+
+test('Confidence client leaf updates its Badge from Select changes while preserving the field name', async () => {
+  const source = await readFile(
+    new URL('../src/components/admin/products/SpecificationConfidenceSelect.tsx', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /^'use client';/);
+  assert.match(source, /useState<Confidence>\(defaultValue\)/);
+  assert.match(source, /<Select name=\{name\} defaultValue=\{defaultValue\} onValueChange=\{\(value\) => setConfidence\(value as Confidence\)\}>/);
+  assert.match(source, /<Badge variant=\{confidenceVariants\[confidence\]\}/);
+});
+
 test('Specifications form resolves translations and retains the external inspection contract', async () => {
   const source = await readFile(formSourcePath, 'utf8');
 
@@ -77,6 +131,8 @@ test('Specifications form resolves translations and retains the external inspect
   assert.match(source, /import \{ Badge \} from '@\/components\/ui\/Badge';/);
   assert.match(source, /import \{\s*Select,/);
   assert.match(source, /border-b border-admin-border/);
+  assert.match(source, /row\.isRequired && row\.scope !== 'DERIVED'/);
+  assert.match(source, /row\.scope === 'DERIVED'/);
   assert.match(source, /tabular-nums/);
   assert.match(source, /<form action=\{action\}/);
   assert.match(source, /data: SpecificationData;/);

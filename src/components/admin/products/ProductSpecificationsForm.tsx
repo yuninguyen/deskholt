@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/Badge';
+import SpecificationConfidenceSelect from './SpecificationConfidenceSelect';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -13,7 +14,9 @@ import type { SpecificationDraftRows } from '@/lib/products/specificationDraftSt
 import type { SpecificationData, SpecRow } from '@/lib/products/specificationRows';
 
 const SOURCE_TYPES = ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'] as const;
-const CONFIDENCES = ['VERIFIED', 'LIKELY', 'UNVERIFIED'] as const;
+type Confidence = 'VERIFIED' | 'LIKELY' | 'UNVERIFIED';
+const NATIVE_SELECT_CLASS =
+  'h-8 w-full rounded-md border border-admin-input bg-transparent px-2.5 py-1 text-sm text-admin-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring';
 
 type SpecificationsTranslations = Dictionary['specifications'];
 type SpecificationsFormProps = {
@@ -27,19 +30,15 @@ function InspectionSelect({
   defaultValue,
   placeholder,
   children,
-  invalid = false,
-  describedBy,
 }: {
   name: string;
   defaultValue: string;
   placeholder: string;
   children: React.ReactNode;
-  invalid?: boolean;
-  describedBy?: string;
 }) {
   return (
     <Select name={name} defaultValue={defaultValue}>
-      <SelectTrigger aria-invalid={invalid} aria-describedby={describedBy}>
+      <SelectTrigger>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>{children}</SelectContent>
@@ -70,12 +69,7 @@ function SpecRowFields({
   const staleEnumValue =
     row.dataType === 'ENUM' && value !== '' && !allowedEnumValues.includes(value) ? value : null;
   const staleEnumHelpId = `${row.rowKey}-stale-enum`;
-  const confidence = String(draft?.confidence ?? existing?.confidence ?? 'UNVERIFIED') as (typeof CONFIDENCES)[number];
-  const confidenceVariant = {
-    VERIFIED: 'success',
-    LIKELY: 'warning',
-    UNVERIFIED: 'neutral',
-  } as const;
+  const confidence = String(draft?.confidence ?? existing?.confidence ?? 'UNVERIFIED') as Confidence;
 
   return (
     <div className="grid grid-cols-1 gap-3 border-b border-admin-border py-4 last:border-b-0 sm:grid-cols-12 sm:items-start">
@@ -92,30 +86,32 @@ function SpecRowFields({
 
       <div className="sm:col-span-2">
         {row.dataType === 'BOOLEAN' ? (
-          <InspectionSelect name={`value__${row.rowKey}`} defaultValue={value} placeholder={translations.emptyOption}>
-            <SelectItem value="true">{translations.true}</SelectItem>
-            <SelectItem value="false">{translations.false}</SelectItem>
-          </InspectionSelect>
+          <select name={`value__${row.rowKey}`} defaultValue={value} className={NATIVE_SELECT_CLASS}>
+            <option value="">{translations.emptyOption}</option>
+            <option value="true">{translations.true}</option>
+            <option value="false">{translations.false}</option>
+          </select>
         ) : row.dataType === 'ENUM' ? (
           <div className="space-y-1">
-            <InspectionSelect
+            <select
               name={`value__${row.rowKey}`}
               defaultValue={value}
-              placeholder={translations.emptyOption}
-              invalid={staleEnumValue !== null}
-              describedBy={staleEnumValue !== null ? staleEnumHelpId : undefined}
+              aria-invalid={staleEnumValue ? true : undefined}
+              aria-describedby={staleEnumValue ? staleEnumHelpId : undefined}
+              className={NATIVE_SELECT_CLASS}
             >
-                {staleEnumValue !== null && (
-                <SelectItem value={staleEnumValue}>
+              <option value="">{translations.emptyOption}</option>
+              {staleEnumValue !== null && (
+                <option value={staleEnumValue}>
                   {staleEnumValue} ({translations.staleEnumSuffix})
-                </SelectItem>
+                </option>
               )}
               {allowedEnumValues.map((allowedValue) => (
-                <SelectItem key={allowedValue} value={allowedValue}>
+                <option key={allowedValue} value={allowedValue}>
                   {allowedValue}
-                </SelectItem>
+                </option>
               ))}
-            </InspectionSelect>
+            </select>
             {staleEnumValue !== null && (
               <p id={staleEnumHelpId} role="alert" className="text-xs text-amber-700 dark:text-amber-300">
                 {translations.errors.staleEnum}
@@ -175,31 +171,26 @@ function SpecRowFields({
       </div>
 
       <div className="sm:col-span-2">
-        <InspectionSelect
+        <select
           name={`sourceType__${row.rowKey}`}
           defaultValue={String(draft?.sourceType ?? existing?.sourceType ?? '')}
-          placeholder={translations.sourceType}
+          className={NATIVE_SELECT_CLASS}
         >
-          <SelectItem value="empty">{translations.sourceType}</SelectItem>
+          <option value="">{translations.sourceType}</option>
           {SOURCE_TYPES.map((sourceType) => (
-            <SelectItem key={sourceType} value={sourceType}>
+            <option key={sourceType} value={sourceType}>
               {translations.sourceTypes[sourceType]}
-            </SelectItem>
+            </option>
           ))}
-        </InspectionSelect>
+        </select>
       </div>
 
       <div className="sm:col-span-1">
-        <InspectionSelect name={`confidence__${row.rowKey}`} defaultValue={confidence} placeholder={translations.confidences.UNVERIFIED}>
-          {CONFIDENCES.map((confidenceValue) => (
-            <SelectItem key={confidenceValue} value={confidenceValue}>
-              {translations.confidences[confidenceValue]}
-            </SelectItem>
-          ))}
-        </InspectionSelect>
-        <Badge variant={confidenceVariant[confidence]} className="mt-2 whitespace-nowrap">
-          {translations.confidences[confidence]}
-        </Badge>
+        <SpecificationConfidenceSelect
+          name={`confidence__${row.rowKey}`}
+          defaultValue={confidence}
+          labels={translations.confidences}
+        />
       </div>
     </div>
   );
