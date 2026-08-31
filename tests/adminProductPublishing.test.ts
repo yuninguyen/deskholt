@@ -101,7 +101,7 @@ test('Admin Products presents stored and effective Product state as operator-fac
   assert.match(adminProductsPageSource, /ACTIVE: 'Active'/);
   assert.match(adminProductsPageSource, /BLOCKED: 'Blocked'/);
   assert.match(adminProductsPageSource, /ARCHIVED: 'Archived'/);
-  assert.match(adminProductsPageSource, /Index saved: \{product\.is_indexed \? 'enabled' : 'disabled'\}/);
+  assert.match(adminProductsPageSource, /\{product\.is_indexed \? 'Enabled' : 'Disabled'\}/);
   assert.match(adminProductsPageSource, /eligible: 'Eligible for public listings and indexing'/);
   assert.match(adminProductsPageSource, /'explicit-noindex': 'Public, excluded from indexing'/);
   assert.match(adminProductsPageSource, /draft: 'Draft—not public'/);
@@ -116,14 +116,14 @@ test('Admin Products identifies and focuses the Product targeted by redirect fee
   assert.match(adminProductsPageSource, /const isFeedbackTarget = query\.productId === product\.id/);
   assert.match(adminProductsPageSource, /id={`product-\$\{product\.id\}`}/);
   assert.match(adminProductsPageSource, /tabIndex=\{isFeedbackTarget \? 0 : undefined\}/);
-  const targetedRowOpeningTag = adminProductsPageSource.match(/<div\s+key=\{product\.id\}[^>]*>/)?.[0];
+  const targetedRowOpeningTag = adminProductsPageSource.match(/<tr\s+key=\{product\.id\}[\s\S]*?>/)?.[0];
   assert.ok(targetedRowOpeningTag);
   assert.doesNotMatch(targetedRowOpeningTag, /autoFocus=/);
   assert.match(
     adminProductsPageSource,
     /<select[\s\S]*?autoFocus=\{isFeedbackTarget\}[\s\S]*?>/
   );
-  assert.match(adminProductsPageSource, /isFeedbackTarget[\s\S]*ring-/);
+  assert.match(adminProductsPageSource, /isFeedbackTarget \? 'bg-amber-50 dark:bg-amber-950\/20' : ''/);
 });
 
 test('Admin Products explains inactive disabled Enable index controls accessibly', () => {
