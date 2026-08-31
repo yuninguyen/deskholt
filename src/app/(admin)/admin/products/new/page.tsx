@@ -1,4 +1,12 @@
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { getAdminTranslations } from '@/lib/admin/i18n/server';
 import { prisma } from '@/lib/prisma';
 import { createProductAction } from '../actions';
 
@@ -15,91 +23,117 @@ type NewProductPageDependencies = {
   action(formData: FormData): void | Promise<void>;
 };
 
-const CREATION_ERROR_MESSAGES: Record<string, string> = {
-  'invalid-input': 'Review the required Product fields and try again.',
-  'category-missing': 'The selected Category no longer exists. Refresh and choose another Category.',
-  'slug-taken': 'That Product slug is already in use. Choose a different slug.',
-};
-
 export function createNewProductPage({
   findCategories,
   action,
 }: NewProductPageDependencies) {
   return async function NewProductPage({ searchParams }: NewProductPageProps) {
+    const translations = await getAdminTranslations();
     const [query, categories] = await Promise.all([searchParams, findCategories()]);
+    const creationErrorMessages: Record<string, string> = {
+      'invalid-input': translations.createProduct.errors.invalidInput,
+      'category-missing': translations.createProduct.errors.categoryMissing,
+      'slug-taken': translations.createProduct.errors.slugTaken,
+    };
     const errorMessage = query.error
-      ? CREATION_ERROR_MESSAGES[query.error] ?? 'Product could not be created. Review the form and try again.'
+      ? creationErrorMessages[query.error] ?? translations.createProduct.errors.fallback
       : undefined;
 
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <Link href="/admin/products" className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300">
-            ← Products
+          <Link
+            href="/admin/products"
+            className="text-xs text-admin-muted-foreground hover:text-admin-foreground"
+          >
+            ← {translations.createProduct.back}
           </Link>
-          <h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">Create Product</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Create the Product identity, then continue to specifications.
+          <h1 className="mt-1 font-body text-2xl font-bold text-admin-foreground">
+            {translations.createProduct.title}
+          </h1>
+          <p className="mt-1 font-body text-sm text-admin-muted-foreground">
+            {translations.createProduct.description}
           </p>
         </div>
 
         {errorMessage && (
-          <p aria-live="polite" className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-            Product creation rejected. {errorMessage}
+          <p
+            role="alert"
+            className="rounded-md border border-admin-destructive/40 bg-admin-destructive/10 px-4 py-3 text-sm text-admin-destructive"
+          >
+            {translations.createProduct.rejected} {errorMessage}
           </p>
         )}
 
-        <form action={action} className="space-y-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900/60 dark:shadow-2xl dark:shadow-black/40">
-          <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">Name</label>
-            <input id="name" name="name" required className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-          </div>
+        <Card>
+          <CardContent className="p-5">
+            <form action={action} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="name">{translations.createProduct.name}</Label>
+                <Input id="name" name="name" required />
+              </div>
 
-          <div>
-            <label htmlFor="slug" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">Slug</label>
-            <input id="slug" name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-500">Lowercase letters, digits, and hyphens only.</p>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="slug" className="font-mono text-xs uppercase tracking-wide">
+                  {translations.createProduct.slug}
+                </Label>
+                <Input id="slug" name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" />
+                <p className="text-xs text-admin-muted-foreground">{translations.createProduct.slugHelp}</p>
+              </div>
 
-          <div>
-            <label htmlFor="categorySlug" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">Category</label>
-            <select id="categorySlug" name="categorySlug" required className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
-              <option value="">Select a Category</option>
-              {categories.map((category) => (
-                <option key={category.slug} value={category.slug}>{category.name}</option>
-              ))}
-            </select>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="categorySlug">{translations.createProduct.category}</Label>
+                <Select name="categorySlug" required>
+                  <SelectTrigger id="categorySlug">
+                    <SelectValue placeholder={translations.createProduct.selectCategory} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.slug} value={category.slug}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <label htmlFor="brandName" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">Brand name <span className="text-gray-500 dark:text-gray-500">(optional)</span></label>
-            <input id="brandName" name="brandName" className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="brandName">
+                  {translations.createProduct.brandName}{' '}
+                  <span className="text-admin-muted-foreground">({translations.createProduct.optional})</span>
+                </Label>
+                <Input id="brandName" name="brandName" />
+              </div>
 
-          <div>
-            <label htmlFor="description" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">Description</label>
-            <textarea id="description" name="description" required rows={4} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">{translations.createProduct.descriptionLabel}</Label>
+                <Textarea id="description" name="description" required rows={4} />
+              </div>
 
-          <div>
-            <label htmlFor="imageUrl" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">Image URL</label>
-            <input id="imageUrl" name="imageUrl" type="url" required className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">{translations.createProduct.imageUrl}</Label>
+                <Input id="imageUrl" name="imageUrl" type="url" required />
+              </div>
 
-          <div>
-            <label htmlFor="upcCode" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">UPC/SKU <span className="text-gray-500 dark:text-gray-500">(optional)</span></label>
-            <input id="upcCode" name="upcCode" className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="upcCode" className="font-mono text-xs uppercase tracking-wide">
+                  {translations.createProduct.upcSku}{' '}
+                  <span className="font-body normal-case text-admin-muted-foreground">
+                    ({translations.createProduct.optional})
+                  </span>
+                </Label>
+                <Input id="upcCode" name="upcCode" />
+              </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-            <input name="isSustainable" type="checkbox" value="on" className="rounded border-gray-300 bg-white text-brand-600 dark:border-gray-700 dark:bg-gray-800" />
-            Sustainable product
-          </label>
+              <div className="flex items-center gap-2">
+                <Checkbox id="isSustainable" name="isSustainable" value="on" />
+                <Label htmlFor="isSustainable">{translations.createProduct.sustainable}</Label>
+              </div>
 
-          <button type="submit" className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30">
-            Create Product
-          </button>
-        </form>
+              <Button type="submit">{translations.createProduct.submit}</Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     );
   };

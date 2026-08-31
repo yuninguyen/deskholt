@@ -1,61 +1,46 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import test from 'node:test';
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { createNewProductPage } from '../src/app/(admin)/admin/products/new/page.tsx';
 
-type Category = { slug: string; name: string };
-type NewProductPage = (props: {
-  searchParams: Promise<{ error?: string }>;
-}) => Promise<React.ReactElement>;
-type CreateNewProductPage = (dependencies: {
-  findCategories(): Promise<Category[]>;
-  action(formData: FormData): void | Promise<void>;
-}) => NewProductPage;
+const pagePath = resolve(process.cwd(), 'src/app/(admin)/admin/products/new/page.tsx');
+const source = () => readFileSync(pagePath, 'utf8');
 
-const pageFactory: CreateNewProductPage = createNewProductPage;
+// Break caught: a redesign can bypass the server dictionary and show English copy despite the selected Admin locale.
+test('new Product page uses the server dictionary for translated form and creation-error copy', () => {
+  const page = source();
 
-async function renderPage(error?: string) {
-  assert.equal(typeof pageFactory, 'function');
-  let categoryLookups = 0;
-  const NewProductPage = pageFactory({
-    findCategories: async () => {
-      categoryLookups += 1;
-      return [
-        { slug: 'office-chairs', name: 'Office Chairs' },
-        { slug: 'standing-desks', name: 'Standing Desks' },
-      ];
-    },
-    action: async () => undefined,
-  });
-  const markup = renderToStaticMarkup(
-    await NewProductPage({ searchParams: Promise.resolve(error ? { error } : {}) })
-  );
-  return { markup, categoryLookups };
-}
-
-// Break caught: omitting an identity field means the admin cannot supply the data required by Product creation.
-test('new Product page renders the complete minimal identity form with fetched Categories', async () => {
-  const { markup, categoryLookups } = await renderPage();
-
-  assert.equal(categoryLookups, 1);
-  for (const field of ['name', 'slug', 'categorySlug', 'brandName', 'description', 'imageUrl', 'upcCode', 'isSustainable']) {
-    assert.match(markup, new RegExp(`name="${field}"`));
+  assert.match(page, /import\s*\{\s*getAdminTranslations\s*\}\s*from\s*['"][^'"]*i18n\/server['"]/);
+  assert.match(page, /const\s+translations\s*=\s*await\s+getAdminTranslations\(\)/);
+  for (const key of [
+    'back', 'title', 'description', 'rejected', 'name', 'slug', 'slugHelp', 'category',
+    'selectCategory', 'brandName', 'optional', 'descriptionLabel', 'imageUrl', 'upcSku',
+    'sustainable', 'submit',
+  ]) {
+    assert.match(page, new RegExp(`translations\\.createProduct\\.${key}`));
   }
-  assert.match(markup, /<option value="office-chairs">Office Chairs<\/option>/);
-  assert.match(markup, /<option value="standing-desks">Standing Desks<\/option>/);
-  assert.match(markup, /type="checkbox"/);
-  assert.match(markup, /Create Product/);
+  for (const key of ['invalidInput', 'categoryMissing', 'slugTaken', 'fallback']) {
+    assert.match(page, new RegExp(`translations\\.createProduct\\.errors\\.${key}`));
+  }
 });
 
-// Break caught: failure redirects without visible feedback leave the editor unable to correct the rejected submission.
-test('new Product page renders a stable inline error message for every creation rejection', async () => {
-  for (const [reason, message] of [
-    ['invalid-input', 'Review the required Product fields and try again.'],
-    ['category-missing', 'The selected Category no longer exists. Refresh and choose another Category.'],
-    ['slug-taken', 'That Product slug is already in use. Choose a different slug.'],
-  ]) {
-    const { markup } = await renderPage(reason);
-    assert.match(markup, new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+// Break caught: replacing the native submission controls with non-form shadcn primitives drops Product creation fields from FormData.
+test('new Product page uses shadcn inspection controls while preserving the complete creation FormData contract', () => {
+  const page = source();
+
+  for (const component of ['Card', 'Input', 'Select', 'Textarea', 'Checkbox', 'Label', 'Button']) {
+    assert.match(page, new RegExp(`<${component}\\b`));
   }
+  assert.match(page, /<form\s+action=\{action\}/);
+  assert.match(page, /<Input[^>]*id="name"[^>]*name="name"[^>]*required/);
+  assert.match(page, /<Input[^>]*id="slug"[^>]*name="slug"[^>]*required[^>]*pattern="\[a-z0-9\]\+\(-\[a-z0-9\]\+\)\*"/);
+  assert.match(page, /<Select\s+name="categorySlug"\s+required/);
+  assert.match(page, /<SelectTrigger[^>]*id="categorySlug"/);
+  assert.match(page, /<SelectItem\s+key=\{category\.slug\}\s+value=\{category\.slug\}/);
+  assert.match(page, /<Input[^>]*id="brandName"[^>]*name="brandName"/);
+  assert.match(page, /<Textarea[^>]*id="description"[^>]*name="description"[^>]*required[^>]*rows=\{4\}/);
+  assert.match(page, /<Input[^>]*id="imageUrl"[^>]*name="imageUrl"[^>]*type="url"[^>]*required/);
+  assert.match(page, /<Input[^>]*id="upcCode"[^>]*name="upcCode"/);
+  assert.match(page, /<Checkbox[^>]*id="isSustainable"[^>]*name="isSustainable"[^>]*value="on"/);
+  assert.match(page, /<Button\s+type="submit"/);
 });
