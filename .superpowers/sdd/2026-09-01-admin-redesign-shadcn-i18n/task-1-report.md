@@ -32,4 +32,13 @@ Implemented and committed the prescribed Admin-only shadcn/ui foundation.
 
 - No root layout, Admin route/layout/page/component, public route, server action, or non-mandated `src/lib` module was changed.
 - `PRODUCT.md` was pre-existing and remains untracked; it was intentionally excluded from the commit.
-- No component behavior tests were added, per the task’s explicit configuration/UI primitive guidance.
+- No component behavior tests were added during the initial foundation delivery, per the task’s explicit configuration/UI primitive guidance.
+
+## Review fix round — Select portal scoping
+
+- **Root cause:** `SelectContent` retained Radix’s default body-level portal while its `bg-admin-popover`, `text-admin-popover-foreground`, and related CSS variables resolve only below `#admin-theme-root`.
+- **RED:** Added `tests/adminShadcnFoundation.test.ts`, a focused source-contract regression test for an Admin-root `container` and an SSR-safe `typeof document !== 'undefined'` lookup. Before the repair, it failed with 0 passing / 1 failing assertion because `adminThemeRoot` did not exist.
+- **Repair:** `SelectContent` now resolves `document.getElementById('admin-theme-root')` only when `document` exists, and passes the result to `<SelectPrimitive.Portal container={adminThemeRoot}>`. The portal remains in place; no CSS variable scope changed.
+- **GREEN:** `node --experimental-test-module-mocks --import tsx --test tests/adminShadcnFoundation.test.ts` passed (1/1). `npm run typecheck` and `npm run lint` both passed after the repair.
+- **Badge ruling:** Did not create a lowercase `badge.tsx`. The existing `src/components/ui/Badge.tsx` serves public consumers via exact uppercase imports; changing that canonical path would violate the binding public-scope constraint. Future Admin imports will use `@/components/ui/Badge`.
+- **Fix commit:** `016fe63 fix(admin): scope select portal`.
