@@ -28,12 +28,58 @@ test('Vietnamese dictionary has the same leaf-key shape as English', () => {
   assert.deepEqual(leafPaths(dictionaries.en).sort(), leafPaths(dictionaries.vi).sort());
 });
 
-test('uses the validated Admin root locale when localStorage has no valid locale', () => {
+test('uses the validated Admin root locale before persisted localStorage', () => {
   assert.equal(resolveAdminClientLocale(null, 'vi'), 'vi');
   assert.equal(resolveAdminClientLocale(undefined, 'vi'), 'vi');
   assert.equal(resolveAdminClientLocale('fr', 'vi'), 'vi');
-  assert.equal(resolveAdminClientLocale('en', 'vi'), 'en');
+  assert.equal(resolveAdminClientLocale('en', 'vi'), 'vi');
+  assert.equal(resolveAdminClientLocale('vi', 'fr'), 'vi');
   assert.equal(resolveAdminClientLocale(null, 'fr'), 'en');
+});
+
+test('getClientLocale prioritizes the immediate Admin root locale over persistence', async () => {
+  const documentDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  const windowDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  let rootLocale: string | null = 'vi';
+  let storedLocale: string | null = 'en';
+  let storageThrows = false;
+
+  Object.defineProperty(globalThis, 'document', {
+    configurable: true,
+    value: {
+      getElementById: () => ({ getAttribute: () => rootLocale }),
+    },
+  });
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      localStorage: {
+        getItem: () => {
+          if (storageThrows) throw new Error('storage unavailable');
+          return storedLocale;
+        },
+      },
+    },
+  });
+
+  try {
+    const { getClientLocale } = await import('@/lib/admin/i18n/client');
+
+    assert.equal(getClientLocale(), 'vi');
+    storageThrows = true;
+    assert.equal(getClientLocale(), 'vi');
+    storageThrows = false;
+    rootLocale = null;
+    storedLocale = 'vi';
+    assert.equal(getClientLocale(), 'vi');
+    storedLocale = 'fr';
+    assert.equal(getClientLocale(), 'en');
+  } finally {
+    if (documentDescriptor) Object.defineProperty(globalThis, 'document', documentDescriptor);
+    else delete (globalThis as { document?: unknown }).document;
+    if (windowDescriptor) Object.defineProperty(globalThis, 'window', windowDescriptor);
+    else delete (globalThis as { window?: unknown }).window;
+  }
 });
 
 test('Admin locale infrastructure preserves SSR defaults and persists client selection', async () => {

@@ -12,7 +12,7 @@ export function resolveAdminLocale(locale: unknown): Locale {
 }
 
 export function resolveAdminClientLocale(storedLocale: unknown, rootLocale: unknown): Locale {
-  return storedLocale === 'en' || storedLocale === 'vi'
-    ? storedLocale
-    : resolveAdminLocale(rootLocale);
+  return rootLocale === 'en' || rootLocale === 'vi'
+    ? rootLocale
+    : resolveAdminLocale(storedLocale);
 }

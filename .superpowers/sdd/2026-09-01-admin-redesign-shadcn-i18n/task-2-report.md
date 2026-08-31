@@ -35,6 +35,13 @@
 - Review RED: the focused suite failed as expected because `@/lib/admin/i18n/shared` did not exist. Review GREEN: `npm test -- tests/adminI18n.test.ts` passed with 319 passes, 0 failures, and 8 skips.
 - Review verification: `npm run typecheck`, `npm run lint`, and `git diff --check` passed.
 
+## Re-review correction
+
+- The immediate `#admin-theme-root[data-locale]` value is now authoritative over persisted localStorage, preventing a stale readable value from reverting an in-page EN→VI change when `localStorage.setItem` fails.
+- Added a direct browser-boundary test that executes `getClientLocale()` against mocked `document` and `window.localStorage`, covering stale storage, throwing storage reads, and a missing root fallback.
+- Re-review RED: the stale stored `en` versus root `vi` case failed with `'en' !== 'vi'`. Re-review GREEN: `npm test -- tests/adminI18n.test.ts` passed with 320 passes, 0 failures, and 8 skips.
+- Re-review verification: `npm run typecheck`, `npm run lint`, and `git diff --check` passed.
+
 ## Scope note
 
 `PRODUCT.md` was already untracked in the worktree and is intentionally excluded from the Task 2 commit.
