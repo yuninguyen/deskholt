@@ -77,8 +77,9 @@ export default async function AdminProductsPage({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
-        <table className="w-full border-collapse text-sm">
+      <div className="overflow-x-auto">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
+          <table className="min-w-[900px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
               <th className="px-4 py-3">Product</th>
@@ -185,6 +186,7 @@ export default async function AdminProductsPage({
             Chưa có Standing Desk product nào.
           </div>
         )}
+        </div>
       </div>
     </div>
   );
