@@ -13,6 +13,13 @@ const confidenceVariants = {
   UNVERIFIED: 'neutral',
 } as const;
 
+export function confidencePresentation(
+  confidence: Confidence,
+  labels: Record<Confidence, string>,
+) {
+  return { label: labels[confidence], variant: confidenceVariants[confidence] };
+}
+
 type SpecificationConfidenceSelectProps = {
   name: string;
   defaultValue: Confidence;
@@ -25,6 +32,7 @@ export default function SpecificationConfidenceSelect({
   labels,
 }: SpecificationConfidenceSelectProps) {
   const [confidence, setConfidence] = useState<Confidence>(defaultValue);
+  const presentation = confidencePresentation(confidence, labels);
 
   return (
     <>
@@ -40,8 +48,8 @@ export default function SpecificationConfidenceSelect({
           ))}
         </SelectContent>
       </Select>
-      <Badge variant={confidenceVariants[confidence]} className="mt-2 whitespace-nowrap">
-        {labels[confidence]}
+      <Badge variant={presentation.variant} className="mt-2 whitespace-nowrap">
+        {presentation.label}
       </Badge>
     </>
   );

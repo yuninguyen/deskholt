@@ -84,6 +84,17 @@ test('Specifications form renders clearable Boolean, ENUM, and source type optio
   assert.match(html, new RegExp(`name="value__${enumKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="BAMBOO" selected="">BAMBOO<\\/option>`));
   assert.match(html, new RegExp(`name="sourceType__${sourceTypeKey}"[\\s\\S]*?<option value="">Source type<\\/option>[\\s\\S]*?<option value="RETAILER" selected="">Retailer<\\/option>`));
   assert.doesNotMatch(html, /value="empty"/);
+
+  const blankHtml = await render(makeData({
+    rows: [
+      { rowKey: 'blank-boolean', attributeDefinitionId: 'blank-boolean-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'BOOLEAN', key: 'has_drawer', label: 'Has drawer', unit: null, allowedValues: null, isRequired: false, existing: null },
+      { rowKey: 'blank-enum', attributeDefinitionId: 'blank-enum-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'ENUM', key: 'finish', label: 'Finish', unit: null, allowedValues: ['BAMBOO'], isRequired: false, existing: null },
+      { rowKey: 'blank-source-type', attributeDefinitionId: 'blank-source-type-definition', variantId: null, variantLabel: null, scope: 'PRODUCT', dataType: 'STRING', key: 'material', label: 'Material', unit: null, allowedValues: null, isRequired: false, existing: null },
+    ],
+  }));
+  assert.match(blankHtml, /name="value__blank-boolean"[\s\S]*?<option value="" selected="">—<\/option>/);
+  assert.match(blankHtml, /name="value__blank-enum"[\s\S]*?<option value="" selected="">—<\/option>/);
+  assert.match(blankHtml, /name="sourceType__blank-source-type"[\s\S]*?<option value="" selected="">Source type<\/option>/);
 });
 
 test('Specifications form preserves in/cm and lb/kg source-unit defaults and invalid draft fallbacks', async () => {
@@ -110,6 +121,17 @@ test('Specifications form restores native clearable selects and delegates confid
   assert.match(source, /<SpecificationConfidenceSelect/);
 });
 
+test('Confidence presentation maps every stored enum to its label and semantic Badge variant', async () => {
+  const confidenceModule = await import('../src/components/admin/products/SpecificationConfidenceSelect');
+  const presentConfidence = (confidenceModule as { confidencePresentation?: (value: string, labels: Record<string, string>) => { label: string; variant: string } }).confidencePresentation;
+  const labels = { VERIFIED: 'Verified', LIKELY: 'Likely', UNVERIFIED: 'Unverified' };
+
+  assert.equal(typeof presentConfidence, 'function');
+  assert.deepEqual(presentConfidence?.('VERIFIED', labels), { label: 'Verified', variant: 'success' });
+  assert.deepEqual(presentConfidence?.('LIKELY', labels), { label: 'Likely', variant: 'warning' });
+  assert.deepEqual(presentConfidence?.('UNVERIFIED', labels), { label: 'Unverified', variant: 'neutral' });
+});
+
 test('Confidence client leaf updates its Badge from Select changes while preserving the field name', async () => {
   const source = await readFile(
     new URL('../src/components/admin/products/SpecificationConfidenceSelect.tsx', import.meta.url),
@@ -119,7 +141,8 @@ test('Confidence client leaf updates its Badge from Select changes while preserv
   assert.match(source, /^'use client';/);
   assert.match(source, /useState<Confidence>\(defaultValue\)/);
   assert.match(source, /<Select name=\{name\} defaultValue=\{defaultValue\} onValueChange=\{\(value\) => setConfidence\(value as Confidence\)\}>/);
-  assert.match(source, /<Badge variant=\{confidenceVariants\[confidence\]\}/);
+  assert.match(source, /<Badge variant=\{presentation\.variant\}/);
+  assert.match(source, /const presentation = confidencePresentation\(confidence, labels\)/);
 });
 
 test('Specifications form resolves translations and retains the external inspection contract', async () => {

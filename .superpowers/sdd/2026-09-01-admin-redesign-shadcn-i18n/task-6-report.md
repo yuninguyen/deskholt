@@ -20,3 +20,9 @@
 - Reinstated native token-styled selects for clearable Boolean, ENUM, and source type fields, including `value=""` options and conditional stale-ENUM ARIA attributes.
 - Added `SpecificationConfidenceSelect`, a compact client leaf that preserves Radix name/default submission and updates its semantic Badge through `onValueChange`.
 - Expanded focused tests for clear values, stale ENUM ARIA, field defaults/names/action, unit source defaults/fallbacks, required/derived display, active variants, and confidence state.
+
+## Maximal-harness coverage follow-up
+- Applied the recorded dependency-scope ruling: no DOM interaction dependency or browser executable was added.
+- Added deterministic server-render assertions for blank Boolean, ENUM, and source-type native options (`value=""` selected), exact names, and no sentinel value.
+- Extended action-level `FormData` coverage for blank row/source fields deleting existing records; existing LIKELY/UNVERIFIED coverage asserts blank source type persists as `null`.
+- Exported and unit-tested `confidencePresentation` for all three enum values; the client leaf still source-proves `onValueChange` updates state while its Select retains name/default value.

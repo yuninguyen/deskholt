@@ -266,7 +266,12 @@ test('clearing an existing row deletes it inside the transaction', async () => {
   });
   const testHarness = harness([value]);
 
-  await redirecting(testHarness.action, form({ [`value__${value.rowKey}`]: '' }));
+  await redirecting(testHarness.action, form({
+    [`value__${value.rowKey}`]: '',
+    [`sourceUrl__${value.rowKey}`]: '',
+    [`sourceType__${value.rowKey}`]: '',
+    [`confidence__${value.rowKey}`]: 'UNVERIFIED',
+  }));
 
   assert.deepEqual(testHarness.writes.map((entry) => entry.operation), ['findFirst', 'delete']);
 });
