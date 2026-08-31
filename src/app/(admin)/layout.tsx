@@ -3,13 +3,12 @@ import ThemeToggle from '@/components/admin/ThemeToggle';
 
 const THEME_INIT_SCRIPT = `
 (function () {
+  var theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   try {
     var stored = localStorage.getItem('admin-theme');
-    var theme = stored === 'light' || stored === 'dark'
-      ? stored
-      : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-    document.currentScript.parentElement.setAttribute('data-theme', theme);
+    if (stored === 'light' || stored === 'dark') theme = stored;
   } catch (e) {}
+  document.currentScript.parentElement.setAttribute('data-theme', theme);
 })();
 `;
 
