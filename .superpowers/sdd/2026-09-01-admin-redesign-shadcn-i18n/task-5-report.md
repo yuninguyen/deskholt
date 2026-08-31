@@ -22,3 +22,10 @@
 ## Note
 
 - The first `npm test -- tests/adminProductCreationPage.test.ts` invocation executes the repository-wide `tests/*.test.ts` script and exposed two pre-existing, unrelated pending translated-specifications test failures in addition to the expected RED failure. The direct focused command above verifies this task's test file only.
+
+## Review coverage follow-up
+
+- Restored behavioral coverage by dynamically importing the page after mocking its server dictionary and rendering both injected and default factory components. The tests prove injected category lookup invocation, mapped category option output, translated labels, known and fallback alert output, and the default Prisma category query configuration.
+- The initial restored render exposed that Radix Select does not emit its dynamic option collection in its closed server-rendered portal. The test uses a minimal server-only Select render adapter to observe the page's real `SelectItem` option mapping; it does not emulate interactions or FormData.
+- `npm ls --depth=0 jsdom @testing-library/react happy-dom` found no DOM or React interaction harness, so no fabricated selection/checked FormData test was added. Installed Radix source shows `SelectBubbleInput` emits a named, required native `<select>` and `CheckboxBubbleInput` emits a named native checkbox with `value="on"`; focused structural assertions retain this contract.
+- The restored focused command passed immediately after coverage adjustment: `node --experimental-test-module-mocks --import tsx --test tests/adminProductCreationPage.test.ts` (5 tests).
