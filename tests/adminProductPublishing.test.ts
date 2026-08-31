@@ -9,6 +9,10 @@ const adminProductsPageSource = readFileSync(
   join(process.cwd(), 'src/app/(admin)/admin/products/page.tsx'),
   'utf8'
 );
+const adminLayoutSource = readFileSync(
+  join(process.cwd(), 'src/app/(admin)/layout.tsx'),
+  'utf8'
+);
 
 const PRODUCT_ID = '00000000-0000-4000-8000-000000000036';
 
@@ -80,6 +84,24 @@ function actionHarness(initial: StoredState | null) {
 async function captureRedirect(action: (data: FormData) => Promise<void>, data: FormData) {
   await assert.rejects(() => action(data), /NEXT_REDIRECT:/);
 }
+
+test('Admin theme root tolerates intentional pre-hydration theme initialization', () => {
+  assert.match(
+    adminLayoutSource,
+    /id="admin-theme-root"[\s\S]*suppressHydrationWarning/
+  );
+});
+
+test('Admin Products uses one scrollable panel for narrow table viewports', () => {
+  assert.match(
+    adminProductsPageSource,
+    /<div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800">/
+  );
+  assert.doesNotMatch(
+    adminProductsPageSource,
+    /<div className="overflow-x-auto">\s*<div className="overflow-hidden/
+  );
+});
 
 test('Admin Products heading gives plain operational guidance', () => {
   assert.match(adminProductsPageSource, /Manage product publication and search-index visibility\./);
