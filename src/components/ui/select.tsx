@@ -36,8 +36,12 @@ function SelectTrigger({ className, children, ...props }: React.ComponentProps<t
 }
 
 function SelectContent({ className, children, position = "popper", ...props }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const adminThemeRoot = typeof document !== "undefined"
+    ? document.getElementById("admin-theme-root")
+    : null;
+
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={adminThemeRoot}>
       <SelectPrimitive.Content
         position={position}
         className={cn(
