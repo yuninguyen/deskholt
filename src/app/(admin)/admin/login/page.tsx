@@ -15,20 +15,20 @@ export default async function AdminLoginPage({
       >
         <div>
           <h1 className="text-lg font-bold text-gray-900 dark:text-white">Deskholt Admin</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Nháº­p máº­t kháº©u admin Ä‘á»ƒ tiáº¿p tá»¥c.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Nhập mật khẩu admin để tiếp tục.</p>
         </div>
 
         {from && <input type="hidden" name="from" value={from} />}
 
         {error && (
           <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-            Sai máº­t kháº©u. Vui lÃ²ng thá»­ láº¡i.
+            Sai mật khẩu. Vui lòng thử lại.
           </p>
         )}
 
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700 dark:text-white">
-            Máº­t kháº©u
+            Mật khẩu
           </label>
           <input
             id="password"
@@ -44,7 +44,7 @@ export default async function AdminLoginPage({
           type="submit"
           className="w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30"
         >
-          ÄÄƒng nháº­p
+          Đăng nhập
         </button>
       </form>
     </div>
