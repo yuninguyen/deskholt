@@ -5,6 +5,7 @@ import { takeSpecificationDraft } from '@/lib/products/specificationDraftStore';
 import { loadSpecificationData } from '@/lib/products/specificationRows';
 import ProductSpecificationsForm from '@/components/admin/products/ProductSpecificationsForm';
 import { saveSpecificationsAction } from './actions';
+import { getAdminTranslations } from '@/lib/admin/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,47 +26,50 @@ export function createProductSpecificationsPage({ takeDraft }: { takeDraft: type
     }
 
     const data = await loadSpecificationData(prisma, id);
+    const translations = await getAdminTranslations();
 
     if (!data) {
       return (
-        <div className="max-w-3xl mx-auto">
-          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-6 py-8 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-            Category cho sản phẩm này chưa được khai báo trong Attribute Engine — chưa có attribute nào để nhập.
+        <div className="mx-auto max-w-3xl">
+          <div className="border border-amber-500/30 bg-amber-500/10 px-6 py-8 text-sm text-amber-800 dark:text-amber-300">
+            {translations.specifications.categoryUnavailable}
           </div>
         </div>
       );
     }
 
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-admin-border pb-5">
           <div>
-            <Link href="/admin/products" className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300">
-              ← Products
+            <Link href="/admin/products" className="text-xs text-admin-muted-foreground hover:text-admin-foreground">
+              ← {translations.specifications.back}
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{data.product.name}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{data.categoryName}</p>
+            <h1 className="mt-1 text-2xl font-bold text-admin-foreground">{data.product.name}</h1>
+            <p className="text-sm text-admin-muted-foreground">{data.categoryName}</p>
           </div>
           <div className="text-right">
-            <div className="text-xs text-gray-500 dark:text-gray-400">Completeness</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">
+            <div className="font-mono text-xs font-semibold uppercase tracking-wide text-admin-muted-foreground">
+              {translations.specifications.completeness}
+            </div>
+            <div className="text-xl font-bold tabular-nums text-admin-foreground">
               {data.completeness.met}/{data.completeness.total}
             </div>
           </div>
         </div>
 
         {saved && (
-          <div className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-            Đã lưu specifications thành công.
+          <div className="border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300">
+            {translations.specifications.saved}
           </div>
         )}
 
         {error && (
-          <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300 space-y-1">
+          <div className="space-y-1 border border-admin-destructive/30 bg-admin-destructive/10 px-4 py-3 text-sm text-admin-destructive">
             <div className="font-semibold">
-              {count} dòng có lỗi, chưa lưu được — vui lòng sửa và lưu lại.
+              {count} {translations.specifications.errors.rowsInvalid}
             </div>
-            {detail && <div className="text-red-600 dark:text-red-400">{detail}</div>}
+            {detail && <div>{detail}</div>}
           </div>
         )}
 

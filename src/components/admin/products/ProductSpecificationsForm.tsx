@@ -1,13 +1,61 @@
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getAdminTranslations } from '@/lib/admin/i18n/server';
+import type { Dictionary } from '@/lib/admin/i18n/en';
 import type { SpecificationDraftRows } from '@/lib/products/specificationDraftStore';
 import type { SpecificationData, SpecRow } from '@/lib/products/specificationRows';
 
 const SOURCE_TYPES = ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'] as const;
 const CONFIDENCES = ['VERIFIED', 'LIKELY', 'UNVERIFIED'] as const;
 
-const FIELD_CLASS =
-  'w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white';
+type SpecificationsTranslations = Dictionary['specifications'];
+type SpecificationsFormProps = {
+  data: SpecificationData;
+  draft?: SpecificationDraftRows;
+  action: (formData: FormData) => void | Promise<void>;
+};
 
-function SpecRowFields({ row, draft }: { row: SpecRow; draft?: SpecificationDraftRows[string] }) {
+function InspectionSelect({
+  name,
+  defaultValue,
+  placeholder,
+  children,
+  invalid = false,
+  describedBy,
+}: {
+  name: string;
+  defaultValue: string;
+  placeholder: string;
+  children: React.ReactNode;
+  invalid?: boolean;
+  describedBy?: string;
+}) {
+  return (
+    <Select name={name} defaultValue={defaultValue}>
+      <SelectTrigger aria-invalid={invalid} aria-describedby={describedBy}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>{children}</SelectContent>
+    </Select>
+  );
+}
+
+function SpecRowFields({
+  row,
+  draft,
+  translations,
+}: {
+  row: SpecRow;
+  draft?: SpecificationDraftRows[string];
+  translations: SpecificationsTranslations;
+}) {
   const existing = row.existing;
   const existingValue =
     row.dataType === 'BOOLEAN'
@@ -17,180 +65,191 @@ function SpecRowFields({ row, draft }: { row: SpecRow; draft?: SpecificationDraf
       : row.dataType === 'DECIMAL' || row.dataType === 'INTEGER'
         ? existing?.valueNumber ?? ''
         : existing?.valueString ?? '';
-  const value = draft?.value ?? existingValue;
+  const value = String(draft?.value ?? existingValue);
   const allowedEnumValues = row.allowedValues ?? [];
   const staleEnumValue =
-    row.dataType === 'ENUM' && value !== '' && !allowedEnumValues.includes(String(value))
-      ? String(value)
-      : null;
+    row.dataType === 'ENUM' && value !== '' && !allowedEnumValues.includes(value) ? value : null;
   const staleEnumHelpId = `${row.rowKey}-stale-enum`;
+  const confidence = String(draft?.confidence ?? existing?.confidence ?? 'UNVERIFIED') as (typeof CONFIDENCES)[number];
+  const confidenceVariant = {
+    VERIFIED: 'success',
+    LIKELY: 'warning',
+    UNVERIFIED: 'neutral',
+  } as const;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 py-3 border-b border-gray-200 last:border-b-0 dark:border-gray-800">
+    <div className="grid grid-cols-1 gap-3 border-b border-admin-border py-4 last:border-b-0 sm:grid-cols-12 sm:items-start">
       <div className="sm:col-span-3">
-        <div className="text-sm font-medium text-gray-900 dark:text-white">
+        <div className="text-sm font-medium text-admin-foreground">
           {row.label}
-          {row.isRequired && row.scope !== 'DERIVED' && <span className="text-red-600 dark:text-red-400 ml-1">*</span>}
+          {row.isRequired && row.scope !== 'DERIVED' && <span className="ml-1 text-admin-destructive">*</span>}
         </div>
-        {row.unit && <div className="text-xs text-gray-500 dark:text-gray-500">{row.unit}</div>}
-        {row.scope === 'DERIVED' && (
-          <div className="text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-400 mt-0.5">Derived / suy luận</div>
-        )}
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {row.unit && <span className="font-mono text-xs text-admin-muted-foreground">{row.unit}</span>}
+          {row.scope === 'DERIVED' && <Badge variant="warning">{translations.derived}</Badge>}
+        </div>
       </div>
 
       <div className="sm:col-span-2">
         {row.dataType === 'BOOLEAN' ? (
-          <select
-            name={`value__${row.rowKey}`}
-            defaultValue={value}
-            className={FIELD_CLASS}
-          >
-            <option value="">—</option>
-            <option value="true">True</option>
-            <option value="false">False</option>
-          </select>
+          <InspectionSelect name={`value__${row.rowKey}`} defaultValue={value} placeholder={translations.emptyOption}>
+            <SelectItem value="true">{translations.true}</SelectItem>
+            <SelectItem value="false">{translations.false}</SelectItem>
+          </InspectionSelect>
         ) : row.dataType === 'ENUM' ? (
           <div className="space-y-1">
-            <select
+            <InspectionSelect
               name={`value__${row.rowKey}`}
               defaultValue={value}
-              aria-invalid={staleEnumValue !== null}
-              aria-describedby={staleEnumValue !== null ? staleEnumHelpId : undefined}
-              className={FIELD_CLASS}
+              placeholder={translations.emptyOption}
+              invalid={staleEnumValue !== null}
+              describedBy={staleEnumValue !== null ? staleEnumHelpId : undefined}
             >
-              <option value="">—</option>
-              {staleEnumValue !== null && (
-                <option value={staleEnumValue}>{staleEnumValue} (stored value — no longer allowed)</option>
+                {staleEnumValue !== null && (
+                <SelectItem value={staleEnumValue}>
+                  {staleEnumValue} ({translations.staleEnumSuffix})
+                </SelectItem>
               )}
-              {allowedEnumValues.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
+              {allowedEnumValues.map((allowedValue) => (
+                <SelectItem key={allowedValue} value={allowedValue}>
+                  {allowedValue}
+                </SelectItem>
               ))}
-            </select>
+            </InspectionSelect>
             {staleEnumValue !== null && (
               <p id={staleEnumHelpId} role="alert" className="text-xs text-amber-700 dark:text-amber-300">
-                Giá trị ENUM đã lưu không còn nằm trong danh sách cho phép. Chọn giá trị mới trước khi lưu.
+                {translations.errors.staleEnum}
               </p>
             )}
           </div>
         ) : row.dataType === 'DECIMAL' || row.dataType === 'INTEGER' ? (
-          <input
+          <Input
             type="number"
             step={row.dataType === 'INTEGER' ? '1' : 'any'}
             name={`value__${row.rowKey}`}
             defaultValue={value}
-            className={FIELD_CLASS}
+            className="tabular-nums"
           />
         ) : (
-          <input
-            type="text"
-            name={`value__${row.rowKey}`}
-            defaultValue={value}
-            className={FIELD_CLASS}
-          />
+          <Input type="text" name={`value__${row.rowKey}`} defaultValue={value} />
         )}
-        {(row.unit === 'in' || row.unit === 'lb') && (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && (
-          <select
-            name={`sourceUnit__${row.rowKey}`}
-            defaultValue={row.unit === 'in'
-              ? (draft?.sourceUnit === 'cm' ? 'cm' : 'in')
-              : (draft?.sourceUnit === 'kg' ? 'kg' : 'lb')}
-            className={`mt-2 ${FIELD_CLASS}`}
-          >
-            {row.unit === 'in' ? <><option value="in">in</option><option value="cm">cm</option></> : <><option value="lb">lb</option><option value="kg">kg</option></>}
-          </select>
-        )}
+        {(row.unit === 'in' || row.unit === 'lb') &&
+          (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER') && (
+            <div className="mt-2">
+              <InspectionSelect
+                name={`sourceUnit__${row.rowKey}`}
+                defaultValue={
+                  row.unit === 'in'
+                    ? draft?.sourceUnit === 'cm'
+                      ? 'cm'
+                      : 'in'
+                    : draft?.sourceUnit === 'kg'
+                      ? 'kg'
+                      : 'lb'
+                }
+                placeholder={row.unit}
+              >
+                {row.unit === 'in' ? (
+                  <>
+                    <SelectItem value="in">in</SelectItem>
+                    <SelectItem value="cm">cm</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="lb">lb</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </>
+                )}
+              </InspectionSelect>
+            </div>
+          )}
       </div>
 
       <div className="sm:col-span-4">
-        <input
+        <Input
           type="text"
           name={`sourceUrl__${row.rowKey}`}
-          placeholder="Source URL"
+          placeholder={translations.sourceUrl}
           defaultValue={draft?.sourceUrl ?? existing?.sourceUrl ?? ''}
-          className={FIELD_CLASS}
         />
       </div>
 
       <div className="sm:col-span-2">
-        <select
+        <InspectionSelect
           name={`sourceType__${row.rowKey}`}
-          defaultValue={draft?.sourceType ?? existing?.sourceType ?? ''}
-          className={FIELD_CLASS}
+          defaultValue={String(draft?.sourceType ?? existing?.sourceType ?? '')}
+          placeholder={translations.sourceType}
         >
-          <option value="">Source type</option>
-          {SOURCE_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
+          <SelectItem value="empty">{translations.sourceType}</SelectItem>
+          {SOURCE_TYPES.map((sourceType) => (
+            <SelectItem key={sourceType} value={sourceType}>
+              {translations.sourceTypes[sourceType]}
+            </SelectItem>
           ))}
-        </select>
+        </InspectionSelect>
       </div>
 
       <div className="sm:col-span-1">
-        <select
-          name={`confidence__${row.rowKey}`}
-          defaultValue={draft?.confidence ?? existing?.confidence ?? 'UNVERIFIED'}
-          className={FIELD_CLASS}
-        >
-          {CONFIDENCES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
+        <InspectionSelect name={`confidence__${row.rowKey}`} defaultValue={confidence} placeholder={translations.confidences.UNVERIFIED}>
+          {CONFIDENCES.map((confidenceValue) => (
+            <SelectItem key={confidenceValue} value={confidenceValue}>
+              {translations.confidences[confidenceValue]}
+            </SelectItem>
           ))}
-        </select>
+        </InspectionSelect>
+        <Badge variant={confidenceVariant[confidence]} className="mt-2 whitespace-nowrap">
+          {translations.confidences[confidence]}
+        </Badge>
       </div>
     </div>
   );
 }
 
-export default function ProductSpecificationsForm({
+export default async function ProductSpecificationsForm({
   data,
   draft,
   action,
-}: {
-  data: SpecificationData;
-  draft?: SpecificationDraftRows;
-  action: (formData: FormData) => void | Promise<void>;
-}) {
-  const productRows = data.rows.filter((r) => r.variantId === null);
-  const activeVariants = data.variants.filter((v) => v.isActive);
+}: SpecificationsFormProps) {
+  const translations = await getAdminTranslations();
+  const productRows = data.rows.filter((row) => row.variantId === null);
+  const activeVariants = data.variants.filter((variant) => variant.isActive);
 
   return (
     <form action={action} className="space-y-8">
       <input type="hidden" name="productId" value={data.product.id} />
       <section>
-        <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-2">Product-level</h2>
-        <div className="rounded-2xl border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900/60">
+        <h2 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-admin-muted-foreground">
+          {translations.specifications.productLevel}
+        </h2>
+        <div className="border border-admin-border bg-admin-card px-4">
           {productRows.map((row) => (
-            <SpecRowFields key={row.rowKey} row={row} draft={draft?.[row.rowKey]} />
+            <SpecRowFields key={row.rowKey} row={row} draft={draft?.[row.rowKey]} translations={translations.specifications} />
           ))}
           {productRows.length === 0 && (
-            <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-500">Không có attribute product-level nào.</div>
+            <div className="py-6 text-center text-sm text-admin-muted-foreground">
+              {translations.specifications.noProductAttributes}
+            </div>
           )}
         </div>
       </section>
 
       {activeVariants.length === 0 && (
-        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-          {data.variants.length === 0
-            ? 'Sản phẩm này chưa có Variant. Hãy tạo Variant trước để nhập specs cấp Variant.'
-            : 'Sản phẩm này không có Variant đang hoạt động. Hãy tạo hoặc kích hoạt Variant trước để nhập specs cấp Variant.'}
+        <div className="border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+          {data.variants.length === 0 ? translations.specifications.noVariants : translations.specifications.noActiveVariants}
         </div>
       )}
 
       {activeVariants.map((variant) => {
-        const rows = data.rows.filter((r) => r.variantId === variant.id);
+        const rows = data.rows.filter((row) => row.variantId === variant.id);
         if (rows.length === 0) return null;
         return (
           <section key={variant.id}>
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-2">
-              Variant: {variant.label}
+            <h2 className="mb-2 font-mono text-xs font-semibold uppercase tracking-wide text-admin-muted-foreground">
+              {translations.specifications.variant}: <span className="font-body normal-case text-admin-foreground">{variant.label}</span>
             </h2>
-            <div className="rounded-2xl border border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900/60">
+            <div className="border border-admin-border bg-admin-card px-4">
               {rows.map((row) => (
-                <SpecRowFields key={row.rowKey} row={row} draft={draft?.[row.rowKey]} />
+                <SpecRowFields key={row.rowKey} row={row} draft={draft?.[row.rowKey]} translations={translations.specifications} />
               ))}
             </div>
           </section>
@@ -199,9 +258,9 @@ export default function ProductSpecificationsForm({
 
       <button
         type="submit"
-        className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30"
+        className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring"
       >
-        Lưu Specifications
+        {translations.specifications.submit}
       </button>
     </form>
   );

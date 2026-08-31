@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { SpecificationData } from '../src/lib/products/specificationRows';
+import { en } from '../src/lib/admin/i18n/en';
 
 const productId = 'cm12345678901234567890';
 const rowKey = 'cm22345678901234567890__p';
@@ -70,6 +71,9 @@ const mocks = [
   }),
   moduleMock.module('@/lib/products/specificationRows', {
     namedExports: { loadSpecificationData: async () => data },
+  }),
+  moduleMock.module('@/lib/admin/i18n/server', {
+    namedExports: { getAdminTranslations: async () => en },
   }),
   moduleMock.module('@/components/admin/products/ProductSpecificationsForm', {
     defaultExport: (props: Record<string, unknown>) => {
@@ -149,3 +153,16 @@ for (const scenario of ['expired', 'wrong Product', 'already consumed']) {
     assert.equal(props.data, data);
   });
 }
+
+test('Specifications page resolves translated chrome without changing its factory contract', async () => {
+  const source = await (await import('node:fs/promises')).readFile(
+    new URL('../src/app/(admin)/admin/products/[id]/specifications/page.tsx', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /import \{ getAdminTranslations \} from '@\/lib\/admin\/i18n\/server';/);
+  assert.match(source, /const translations = await getAdminTranslations\(\);/);
+  assert.match(source, /createProductSpecificationsPage\(\{ takeDraft \}: \{ takeDraft: typeof takeSpecificationDraft \}\)/);
+  assert.match(source, /const draft = draftToken \? takeDraft\(id, draftToken\) \?\? undefined : undefined;/);
+  assert.match(source, /<ProductSpecificationsForm data=\{data\} draft=\{draft\} action=\{saveSpecificationsAction\} \/>/);
+});
