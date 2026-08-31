@@ -51,114 +51,137 @@ export default async function AdminProductsPage({
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Standing Desks — Admin</h1>
-          <p className="mt-1 text-sm text-gray-400">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Standing Desks — Admin</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Manage product publication and search-index visibility.
           </p>
         </div>
-        <Link href="/admin/products/new" className="rounded bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-500">
+        <Link
+          href="/admin/products/new"
+          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30"
+        >
           + New Product
         </Link>
       </div>
 
       <div aria-live="polite" aria-atomic="true">
         {query.saved && (
-          <p className="rounded border border-emerald-800 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-300">
+          <p className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
             Saved successfully. The affected Product is highlighted below.
           </p>
         )}
         {errorMessage && (
-          <p className="rounded border border-red-800 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+          <p className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
             Publishing action rejected. {errorMessage}
           </p>
         )}
       </div>
 
-      <div className="space-y-4">
-        {products.map((product) => {
-          const decision = evaluateProductAccess(product);
-          const isActive = product.status === 'ACTIVE';
-          const isFeedbackTarget = query.productId === product.id;
-          const isEnableDisabled = !isActive && !product.is_indexed;
-          const enableIndexHelpId = `enable-index-help-${product.id}`;
-          return (
-            <div
-              key={product.id}
-              id={`product-${product.id}`}
-              tabIndex={isFeedbackTarget ? 0 : undefined}
-              className={`rounded-xl border bg-gray-950/30 p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 ${
-                isFeedbackTarget
-                  ? 'border-amber-600/70 ring-2 ring-amber-500/40'
-                  : 'border-gray-800'
-              }`}
-            >
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <div className="font-semibold text-white">{product.name}</div>
-                  <div className="text-xs text-gray-500">{product.slug}</div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    <span className="rounded border border-gray-700 px-2 py-1 text-gray-300">
-                      Lifecycle saved: {LIFECYCLE_LABELS[product.status]}
+      <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+              <th className="px-4 py-3">Product</th>
+              <th className="px-4 py-3">Lifecycle</th>
+              <th className="px-4 py-3">Index</th>
+              <th className="px-4 py-3">Attrs</th>
+              <th className="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-900/40">
+            {products.map((product) => {
+              const decision = evaluateProductAccess(product);
+              const isActive = product.status === 'ACTIVE';
+              const isFeedbackTarget = query.productId === product.id;
+              const isEnableDisabled = !isActive && !product.is_indexed;
+              const enableIndexHelpId = `enable-index-help-${product.id}`;
+              return (
+                <tr
+                  key={product.id}
+                  id={`product-${product.id}`}
+                  tabIndex={isFeedbackTarget ? 0 : undefined}
+                  className={`border-b border-gray-200 last:border-b-0 align-top focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400 dark:border-gray-800 ${
+                    isFeedbackTarget ? 'bg-amber-50 dark:bg-amber-950/20' : ''
+                  }`}
+                >
+                  <td className="px-4 py-4">
+                    <div className="font-semibold text-gray-900 dark:text-white">{product.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">{product.slug}</div>
+                    <div className="mt-2">
+                      <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-medium text-brand-700 dark:bg-brand-950/40 dark:text-brand-300">
+                        {EFFECTIVE_ACCESS_LABELS[decision.reason]}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      {LIFECYCLE_LABELS[product.status]}
                     </span>
-                    <span className="rounded border border-gray-700 px-2 py-1 text-gray-300">
-                      Index saved: {product.is_indexed ? 'enabled' : 'disabled'}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                      {product.is_indexed ? 'Enabled' : 'Disabled'}
                     </span>
-                    <span className="rounded border border-brand-500/30 px-2 py-1 text-brand-300">
-                      Effective access: {EFFECTIVE_ACCESS_LABELS[decision.reason]}
-                    </span>
-                    <span className="rounded border border-gray-700 px-2 py-1 text-gray-400">
-                      {product._count.product_attributes} attribute{product._count.product_attributes === 1 ? '' : 's'}
-                    </span>
-                  </div>
-                </div>
+                  </td>
+                  <td className="px-4 py-4 text-gray-700 dark:text-gray-300">
+                    {product._count.product_attributes}
+                  </td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-col gap-2">
+                      <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="productId" value={product.id} />
+                        <input type="hidden" name="command" value="set-lifecycle" />
+                        <label className="sr-only" htmlFor={`status-${product.id}`}>Lifecycle</label>
+                        <select
+                          id={`status-${product.id}`}
+                          name="status"
+                          defaultValue={product.status}
+                          autoFocus={isFeedbackTarget}
+                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        >
+                          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{LIFECYCLE_LABELS[status]}</option>)}
+                        </select>
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500 dark:shadow-lg dark:shadow-black/30"
+                        >
+                          Save
+                        </button>
+                      </form>
 
-                <div className="flex flex-col gap-3 lg:min-w-[32rem]">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <input type="hidden" name="command" value="set-lifecycle" />
-                      <label className="sr-only" htmlFor={`status-${product.id}`}>Lifecycle</label>
-                      <select
-                        id={`status-${product.id}`}
-                        name="status"
-                        defaultValue={product.status}
-                        autoFocus={isFeedbackTarget}
-                        className="rounded border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
+                      <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="productId" value={product.id} />
+                        <input type="hidden" name="command" value={product.is_indexed ? 'disable-index' : 'enable-index'} />
+                        <button
+                          type="submit"
+                          disabled={isEnableDisabled}
+                          aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
+                          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 enabled:hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:enabled:hover:border-brand-500"
+                        >
+                          {product.is_indexed ? 'Disable index' : 'Enable index'}
+                        </button>
+                        {isEnableDisabled && (
+                          <span id={enableIndexHelpId} className="max-w-56 text-xs text-amber-700 dark:text-amber-300">
+                            Set lifecycle to Active to enable indexing.
+                          </span>
+                        )}
+                      </form>
+
+                      <Link
+                        href={`/admin/products/${product.id}/specifications`}
+                        className="text-sm text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300"
                       >
-                        {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{LIFECYCLE_LABELS[status]}</option>)}
-                      </select>
-                      <button type="submit" className="rounded bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-500">Save lifecycle</button>
-                    </form>
-
-                    <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <input type="hidden" name="command" value={product.is_indexed ? 'disable-index' : 'enable-index'} />
-                      <button
-                        type="submit"
-                        disabled={isEnableDisabled}
-                        aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
-                        className="rounded border border-gray-700 px-3 py-2 text-sm text-gray-200 enabled:hover:border-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {product.is_indexed ? 'Disable index' : 'Enable index'}
-                      </button>
-                      {isEnableDisabled && (
-                        <span id={enableIndexHelpId} className="max-w-56 text-xs text-amber-300">
-                          Set lifecycle to Active to enable indexing.
-                        </span>
-                      )}
-                    </form>
-                  </div>
-
-                  <Link href={`/admin/products/${product.id}/specifications`} className="text-sm text-brand-400 hover:text-brand-300">
-                    Edit specifications ({product._count.product_attributes}) →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                        Edit specifications ({product._count.product_attributes}) →
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
         {products.length === 0 && (
-          <div className="rounded-xl border border-gray-800 px-5 py-8 text-center text-sm text-gray-500">
+          <div className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-500">
             Chưa có Standing Desk product nào.
           </div>
         )}
