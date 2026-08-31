@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdminTranslations } from '@/lib/admin/i18n';
+import { useAdminTranslations } from '@/lib/admin/i18n/client';
 
 export default function ThemeToggle() {
   const translations = useAdminTranslations();

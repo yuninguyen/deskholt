@@ -26,6 +26,15 @@
 - Impact/context checks for `AdminLayout`, `ThemeToggle`, and `handleClick` reported the exact limitation: target symbol not found. The current index is otherwise up to date.
 - The installed GitNexus CLI exposes no `detect-changes` command, so the required `gitnexus_detect_changes()` MCP operation was unavailable; scope was instead verified with Git status and protected-path diffs.
 
+## Review fix round
+
+- Split pure i18n types, dictionaries, and locale resolvers into `shared.ts`; the `client.ts` entrypoint is explicitly `'use client'` and exclusively owns `useSyncExternalStore`.
+- `server.ts` now imports only shared code and adds `getAdminTranslations()` for Server Component consumers.
+- Added behavior coverage for invalid, absent, and failed-localStorage values falling back to the validated Admin root locale, allowing client translations to update after the LocaleToggle event even when storage is unavailable.
+- Applied `font-body` to the Admin root and header title, retaining `font-mono` only on the EN/VI locale control.
+- Review RED: the focused suite failed as expected because `@/lib/admin/i18n/shared` did not exist. Review GREEN: `npm test -- tests/adminI18n.test.ts` passed with 319 passes, 0 failures, and 8 skips.
+- Review verification: `npm run typecheck`, `npm run lint`, and `git diff --check` passed.
+
 ## Scope note
 
 `PRODUCT.md` was already untracked in the worktree and is intentionally excluded from the Task 2 commit.

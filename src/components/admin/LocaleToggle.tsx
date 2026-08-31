@@ -1,6 +1,7 @@
 'use client';
 
-import { ADMIN_LOCALE_CHANGE_EVENT, resolveAdminLocale, useAdminTranslations, type Locale } from '@/lib/admin/i18n';
+import { useAdminTranslations } from '@/lib/admin/i18n/client';
+import { ADMIN_LOCALE_CHANGE_EVENT, resolveAdminLocale, type Locale } from '@/lib/admin/i18n/shared';
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
