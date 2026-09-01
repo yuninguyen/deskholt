@@ -134,7 +134,7 @@ export default async function AdminProductsPage({
                   {product._count.product_attributes}
                 </TableCell>
                 <TableCell className="px-4 py-4">
-                  <div className="flex flex-col gap-2">
+                  <div className="space-y-2">
                     <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
                       <input type="hidden" name="productId" value={product.id} />
                       <input type="hidden" name="command" value="set-lifecycle" />
@@ -156,30 +156,33 @@ export default async function AdminProductsPage({
                       </button>
                     </form>
 
-                    <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <input type="hidden" name="command" value={product.is_indexed ? 'disable-index' : 'enable-index'} />
-                      <button
-                        type="submit"
-                        disabled={isEnableDisabled}
-                        aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 enabled:hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:enabled:hover:border-brand-500"
-                      >
-                        {product.is_indexed ? translations.products.index.disable : translations.products.index.enable}
-                      </button>
-                      {isEnableDisabled && (
-                        <span id={enableIndexHelpId} className="max-w-56 text-xs text-amber-700 dark:text-amber-300">
-                          {translations.products.index.enableHelp}
-                        </span>
-                      )}
-                    </form>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="productId" value={product.id} />
+                        <input type="hidden" name="command" value={product.is_indexed ? 'disable-index' : 'enable-index'} />
+                        <button
+                          type="submit"
+                          disabled={isEnableDisabled}
+                          aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
+                          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 enabled:hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:enabled:hover:border-brand-500"
+                        >
+                          {product.is_indexed ? translations.products.index.disable : translations.products.index.enable}
+                        </button>
+                      </form>
 
-                    <Link
-                      href={`/admin/products/${product.id}/specifications`}
-                      className="text-sm text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300"
-                    >
-                      {translations.products.actions.editSpecifications} ({product._count.product_attributes}) →
-                    </Link>
+                      <Link
+                        href={`/admin/products/${product.id}/specifications`}
+                        className="text-sm text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300"
+                      >
+                        {translations.products.actions.editSpecifications} ({product._count.product_attributes}) →
+                      </Link>
+                    </div>
+
+                    {isEnableDisabled && (
+                      <span id={enableIndexHelpId} className="max-w-56 text-xs text-amber-700 dark:text-amber-300">
+                        {translations.products.index.enableHelp}
+                      </span>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
