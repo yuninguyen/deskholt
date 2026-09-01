@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import test, { mock } from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -6,6 +7,7 @@ import { en } from '../src/lib/admin/i18n/en';
 import type { SpecificationData } from '../src/lib/products/specificationRows';
 
 const formSourcePath = new URL('../src/components/admin/products/ProductSpecificationsForm.tsx', import.meta.url);
+const sourceTypeSelectPath = new URL('../src/components/admin/products/SpecificationSourceTypeSelect.tsx', import.meta.url);
 const moduleMock = mock as unknown as {
   module(specifier: string, options: { namedExports?: Record<string, unknown> }): { restore(): void };
 };
@@ -83,6 +85,7 @@ test('Specifications form renders clearable Boolean and ENUM options plus named 
   assert.match(html, new RegExp(`name="value__${booleanKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="true" selected="">True<\\/option>`));
   assert.match(html, new RegExp(`name="value__${enumKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="BAMBOO" selected="">BAMBOO<\\/option>`));
   assert.match(html, new RegExp(`role="combobox"[\\s\\S]*?name="sourceType__${sourceTypeKey}"`));
+  assert.equal([...html.matchAll(new RegExp(`name="sourceType__${sourceTypeKey}"`, 'g'))].length, 1);
   assert.doesNotMatch(html, /value="empty"/);
 
   const blankHtml = await render(makeData({
@@ -109,14 +112,25 @@ test('Specifications form preserves in/cm and lb/kg source-unit defaults and inv
   assert.match(source, /<SelectItem value="kg">kg<\/SelectItem>/);
 });
 
-test('Specifications form keeps native clearable value selects but uses Radix for source type and confidence', async () => {
+test('Specifications form keeps native clearable value selects and delegates source type and confidence to client leaves', async () => {
   const source = await readFile(formSourcePath, 'utf8');
+  const sourceTypeSelect = existsSync(sourceTypeSelectPath) ? await readFile(sourceTypeSelectPath, 'utf8') : '';
 
   assert.match(source, /<select[\s\S]*name=\{`value__\$\{row\.rowKey\}`\}/);
   assert.match(source, /<option value="">\{translations\.emptyOption\}<\/option>/);
-  assert.match(source, /<Select name=\{`sourceType__\$\{row\.rowKey\}`\} defaultValue=\{String\(draft\?\.sourceType \?\? existing\?\.sourceType \?\? ''\)\}>[\s\S]*?<SelectTrigger>[\s\S]*?<SelectValue placeholder=\{translations\.sourceType\} \/>[\s\S]*?<SelectContent>[\s\S]*?SOURCE_TYPES\.map\(\(sourceType\) => \([\s\S]*?<SelectItem key=\{sourceType\} value=\{sourceType\}>[\s\S]*?\{translations\.sourceTypes\[sourceType\]\}/);
+  assert.match(source, /import SpecificationSourceTypeSelect from '\.\/SpecificationSourceTypeSelect';/);
+  assert.match(source, /<SpecificationSourceTypeSelect\s+name=\{`sourceType__\$\{row\.rowKey\}`\}\s+defaultValue=\{String\(draft\?\.sourceType \?\? existing\?\.sourceType \?\? ''\)\}\s+placeholder=\{translations\.sourceType\}\s+labels=\{translations\.sourceTypes\}/);
   assert.doesNotMatch(source, /<select[^>]*name=\{`sourceType__\$\{row\.rowKey\}`\}/);
-  assert.doesNotMatch(source, /SelectItem value=""|SelectItem value="empty"/);
+  assert.match(sourceTypeSelect, /^'use client';/);
+  assert.match(sourceTypeSelect, /const CLEAR_SOURCE_TYPE_VALUE = '__clear-source-type__';/);
+  assert.match(sourceTypeSelect, /useState\(defaultValue\)/);
+  assert.match(sourceTypeSelect, /<Select value=\{selectedValue\} onValueChange=\{\(value\) => setSelectedValue\(value === CLEAR_SOURCE_TYPE_VALUE \? '' : value\)\}>/);
+  assert.match(sourceTypeSelect, /<SelectValue placeholder=\{placeholder\} \/>/);
+  assert.match(sourceTypeSelect, /<SelectItem value=\{CLEAR_SOURCE_TYPE_VALUE\}>\{placeholder\}<\/SelectItem>/);
+  assert.match(sourceTypeSelect, /SOURCE_TYPES\.map\(\(sourceType\) => \([\s\S]*?<SelectItem key=\{sourceType\} value=\{sourceType\}>[\s\S]*?\{labels\[sourceType\]\}/);
+  assert.match(sourceTypeSelect, /<input type="hidden" name=\{name\} value=\{selectedValue\} \/>/);
+  assert.equal((sourceTypeSelect.match(/<input type="hidden" name=\{name\} value=\{selectedValue\} \/>/g) ?? []).length, 1);
+  assert.doesNotMatch(sourceTypeSelect, /<Select name=\{name\}|SelectItem value=""/);
   assert.match(source, /aria-invalid=\{staleEnumValue \? true : undefined\}/);
   assert.match(source, /from '\.\/SpecificationConfidenceSelect';/);
   assert.match(source, /<SpecificationConfidenceSelect/);

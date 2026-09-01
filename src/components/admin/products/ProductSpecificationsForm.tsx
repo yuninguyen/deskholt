@@ -1,5 +1,6 @@
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import SpecificationConfidenceSelect from './SpecificationConfidenceSelect';
+import SpecificationSourceTypeSelect from './SpecificationSourceTypeSelect';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -13,7 +14,6 @@ import type { Dictionary } from '@/lib/admin/i18n/en';
 import type { SpecificationDraftRows } from '@/lib/products/specificationDraftStore';
 import type { SpecificationData, SpecRow } from '@/lib/products/specificationRows';
 
-const SOURCE_TYPES = ['MANUFACTURER', 'MANUAL', 'RETAILER', 'CERTIFICATION', 'OTHER'] as const;
 type Confidence = 'VERIFIED' | 'LIKELY' | 'UNVERIFIED';
 const NATIVE_SELECT_CLASS =
   'h-8 w-full rounded-md border border-admin-input bg-transparent px-2.5 py-1 text-sm text-admin-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring';
@@ -171,18 +171,12 @@ function SpecRowFields({
       </div>
 
       <div className="sm:col-span-2">
-        <Select name={`sourceType__${row.rowKey}`} defaultValue={String(draft?.sourceType ?? existing?.sourceType ?? '')}>
-          <SelectTrigger>
-            <SelectValue placeholder={translations.sourceType} />
-          </SelectTrigger>
-          <SelectContent>
-            {SOURCE_TYPES.map((sourceType) => (
-              <SelectItem key={sourceType} value={sourceType}>
-                {translations.sourceTypes[sourceType]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SpecificationSourceTypeSelect
+          name={`sourceType__${row.rowKey}`}
+          defaultValue={String(draft?.sourceType ?? existing?.sourceType ?? '')}
+          placeholder={translations.sourceType}
+          labels={translations.sourceTypes}
+        />
       </div>
 
       <div className="sm:col-span-2">
