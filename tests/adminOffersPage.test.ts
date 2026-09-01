@@ -158,3 +158,14 @@ test('offers page keeps server page and controlled Select form contracts', () =>
   assert.doesNotMatch(pageSource, /tracking_url/);
   assert.doesNotMatch(pageSource, />\s*(Network|Price|Product URL|In stock|Priority|Add offer|Save)\s*</);
 });
+
+// Break caught: raw emerald utilities create a success state outside the established Admin token palette.
+test('offers saved banner uses Admin tokens instead of raw emerald utilities', () => {
+  const pageSource = readFileSync(pagePath, 'utf8');
+
+  assert.doesNotMatch(pageSource, /(?:border|bg|text)-emerald-|dark:text-emerald-/);
+  assert.match(
+    pageSource,
+    /role="status"[\s\S]*className="rounded-md border border-admin-primary\/30 bg-admin-primary\/10 px-4 py-3 text-sm text-admin-foreground"/,
+  );
+});

@@ -61,3 +61,11 @@
 - Type correction: the generated Prisma client models `Product.category` as a scalar string and `AffiliateLink.network` as a string. The final page selects/displays the scalar category and narrows each persisted network solely for translated-label indexing; focused test, typecheck, lint, complete tests, and diff checks passed afterwards.
 - Impeccable detector (once after UI implementation): `node C:\laragon\www\deskholt\.agents\skills\impeccable\scripts\detect.mjs --json "src/app/(admin)/admin/products/[id]/offers/page.tsx" "src/lib/admin/i18n/en.ts" "src/lib/admin/i18n/vi.ts"` returned `[]`.
 - Final verification: focused i18n/Admin visual suite passed 17/17; `npm run typecheck`, `npm run lint`, `npm test` (362 pass, 8 intentional skips), and `git diff --check` passed. Unrelated generated AGENTS/CLAUDE/.claude and `PRODUCT.md` changes remain excluded.
+
+## Task 3 review follow-up — Admin-token saved banner
+- Review ruling recorded: the missing Products `Offers (N)` entry point remains Task 4 scope and was not changed here.
+- Verified the review finding in the offers page: its `role="status"` saved banner used raw `border-emerald-*`, `bg-emerald-*`, `text-emerald-*`, and `dark:text-emerald-*` utilities despite the Admin palette having no success semantic token.
+- GitNexus: refreshed stale index (`2,357` nodes, `3,920` relationships, `127` flows); `OffersPage` upstream impact is LOW, with one direct test caller and no affected execution flows.
+- TDD RED: added the source regression in `tests/adminOffersPage.test.ts`; focused test run failed 1/5 because the raw emerald utilities remained.
+- GREEN: changed only the saved banner class to `border-admin-primary/30 bg-admin-primary/10 text-admin-foreground`, preserving its structure, status semantics, copy, and error banner.
+- Verification: focused Admin offers/i18n/shadcn/visual suite passed 18/18; `npm run lint`, `npm run typecheck`, and `git diff --check` passed. Impeccable detector was run once after the edit on the page and test and returned `[]`.

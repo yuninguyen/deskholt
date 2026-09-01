@@ -60,7 +60,7 @@ export default async function OffersPage({ params, searchParams }: OffersPagePro
       {saved && (
         <p
           role="status"
-          className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"
+          className="rounded-md border border-admin-primary/30 bg-admin-primary/10 px-4 py-3 text-sm text-admin-foreground"
         >
           {translations.offers.saved}
         </p>
