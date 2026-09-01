@@ -89,6 +89,9 @@ test('getClientLocale prioritizes the immediate Admin root locale over persisten
     assert.equal(getClientLocale(), 'vi');
     storedLocale = 'fr';
     assert.equal(getClientLocale(), 'en');
+    rootLocale = 'en';
+    storedLocale = 'vi';
+    assert.equal(getClientLocale(), 'en');
   } finally {
     if (documentDescriptor) Object.defineProperty(globalThis, 'document', documentDescriptor);
     else delete (globalThis as { document?: unknown }).document;
@@ -136,6 +139,15 @@ async function runThemeInitScript(storedLocale: string | null | 'unavailable', r
   return root.getAttribute('data-locale');
 }
 
+// Break caught: a direct document read gives the locale buttons an English server selection even when their locale snapshot is Vietnamese.
+test('LocaleToggle SSR selects Vietnamese from its initial locale without document access', async () => {
+  const { default: LocaleToggle } = await import('../src/components/admin/LocaleToggle.tsx');
+  const markup = renderToStaticMarkup(React.createElement(LocaleToggle, { initialLocale: 'vi' }));
+
+  assert.match(markup, /aria-label="Ngôn ngữ"/);
+  assert.match(markup, /<button[^>]*aria-pressed="false"[^>]*>EN<\/button><button[^>]*aria-pressed="true"[^>]*>VI<\/button>/);
+});
+
 // Break caught: overwriting the cookie-seeded root locale before hydration makes SSR and client snapshots disagree.
 test('prepaint initialization keeps the root locale without valid stored locale and accepts a valid override', async () => {
   assert.equal(await runThemeInitScript(null), 'vi');
@@ -158,6 +170,8 @@ test('Admin locale infrastructure preserves SSR defaults and persists client sel
   assert.match(layoutSource, /root\.getAttribute\('data-locale'\)/);
   assert.match(layoutSource, /localStorage\.getItem\('admin-locale'\)/);
   assert.match(layoutSource, /suppressHydrationWarning/);
+  assert.match(localeToggleSource, /const locale = useAdminLocale\(initialLocale\);/);
+  assert.doesNotMatch(localeToggleSource, /resolveAdminLocale/);
   assert.match(localeToggleSource, /localStorage\.setItem\('admin-locale', locale\)/);
   assert.match(localeToggleSource, /document\.cookie = `admin-locale=\$\{locale\}; Path=\/; SameSite=Lax; Max-Age=/);
   assert.match(localeToggleSource, /root\.setAttribute\('data-locale', locale\)/);

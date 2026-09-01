@@ -30,7 +30,10 @@ function subscribeToLocaleChanges(onStoreChange: () => void) {
   return () => window.removeEventListener(ADMIN_LOCALE_CHANGE_EVENT, onStoreChange);
 }
 
+export function useAdminLocale(initialLocale: Locale = 'en'): Locale {
+  return useSyncExternalStore(subscribeToLocaleChanges, getClientLocale, () => initialLocale);
+}
+
 export function useAdminTranslations(initialLocale: Locale = 'en'): Dictionary {
-  const locale = useSyncExternalStore(subscribeToLocaleChanges, getClientLocale, () => initialLocale);
-  return dictionaries[locale];
+  return dictionaries[useAdminLocale(initialLocale)];
 }

@@ -1,15 +1,13 @@
 'use client';
 
-import { useAdminTranslations } from '@/lib/admin/i18n/client';
-import { ADMIN_LOCALE_CHANGE_EVENT, resolveAdminLocale, type Locale } from '@/lib/admin/i18n/shared';
+import { useAdminLocale, useAdminTranslations } from '@/lib/admin/i18n/client';
+import { ADMIN_LOCALE_CHANGE_EVENT, type Locale } from '@/lib/admin/i18n/shared';
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export default function LocaleToggle({ initialLocale }: { initialLocale: Locale }) {
   const translations = useAdminTranslations(initialLocale);
-  const locale = typeof document === 'undefined'
-    ? initialLocale
-    : resolveAdminLocale(document.getElementById('admin-theme-root')?.getAttribute('data-locale'));
+  const locale = useAdminLocale(initialLocale);
 
   function setLocale(locale: Locale) {
     const root = document.getElementById('admin-theme-root');
