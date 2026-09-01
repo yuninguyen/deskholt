@@ -6,6 +6,11 @@ import test from 'node:test';
 const root = process.cwd();
 const globals = readFileSync(join(root, 'src/app/globals.css'), 'utf8');
 const productsPage = readFileSync(join(root, 'src/app/(admin)/admin/products/page.tsx'), 'utf8');
+const badgeSource = readFileSync(join(root, 'src/components/ui/Badge.tsx'), 'utf8');
+const specificationsFormSource = readFileSync(join(root, 'src/components/admin/products/ProductSpecificationsForm.tsx'), 'utf8');
+const confidenceSelectSource = readFileSync(join(root, 'src/components/admin/products/SpecificationConfidenceSelect.tsx'), 'utf8');
+
+type Rgb = readonly [number, number, number];
 
 function scopedBlock(selector: string): string {
   const start = globals.indexOf(selector);
@@ -15,9 +20,41 @@ function scopedBlock(selector: string): string {
   return globals.slice(start, end);
 }
 
+function hexToRgb(hex: string): Rgb {
+  return [
+    Number.parseInt(hex.slice(1, 3), 16),
+    Number.parseInt(hex.slice(3, 5), 16),
+    Number.parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function hslToRgb(hue: number, saturation: number, lightness: number): Rgb {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const second = chroma * (1 - Math.abs((hue / 60) % 2 - 1));
+  const match = lightness - chroma / 2;
+  const [red, green, blue] =
+    hue < 60 ? [chroma, second, 0] :
+    hue < 120 ? [second, chroma, 0] :
+    hue < 180 ? [0, chroma, second] :
+    hue < 240 ? [0, second, chroma] :
+    hue < 300 ? [second, 0, chroma] : [chroma, 0, second];
+  return [
+    Math.round((red + match) * 255),
+    Math.round((green + match) * 255),
+    Math.round((blue + match) * 255),
+  ];
+}
+
 function expectTokens(scope: string, tokens: Record<string, string>) {
-  for (const [token, value] of Object.entries(tokens)) {
-    assert.match(scope, new RegExp(`--${token}: [^;]+; /\\* ${value} \\*/`));
+  for (const [token, expectedHex] of Object.entries(tokens)) {
+    const declaration = new RegExp(`--${token}:\\s*([\\d.]+)\\s+([\\d.]+)%\\s+([\\d.]+)%\\s*;`).exec(scope);
+    assert.ok(declaration, `missing HSL declaration for --${token}`);
+    const [, hue, saturation, lightness] = declaration;
+    assert.deepEqual(
+      hslToRgb(Number(hue), Number(saturation) / 100, Number(lightness) / 100),
+      hexToRgb(expectedHex),
+      `--${token} must evaluate to ${expectedHex}`
+    );
   }
 }
 
@@ -51,6 +88,22 @@ test('Admin warm ink and slate tokens retain the approved literal palette inside
   assert.match(light, /--destructive: 0 0% 32%;/);
   assert.match(dark, /--destructive: 0 0% 70%;/);
   assert.doesNotMatch(globals, /(^|\n)\s*(?::root|html|body)\s*\{[^}]*--background:/);
+});
+
+test('Admin product status, access, index, Badge, and confidence mappings retain semantic colors', () => {
+  assert.match(productsPage, /const lifecycleVariant = \{\s*DRAFT: 'warning',\s*ACTIVE: 'success',\s*BLOCKED: 'destructive',\s*ARCHIVED: 'outline',\s*\} as const;/);
+  assert.match(productsPage, /const accessVariant = \{\s*eligible: 'brand',\s*'explicit-noindex': 'neutral',\s*draft: 'warning',\s*blocked: 'destructive',\s*archived: 'outline',\s*\} as const;/);
+  assert.match(productsPage, /<Badge variant=\{product\.is_indexed \? 'success' : 'outline'\}>/);
+
+  assert.match(badgeSource, /success: 'border-emerald-500\/30 bg-emerald-500\/10 text-emerald-700 dark:text-emerald-300',/);
+  assert.match(badgeSource, /warning: 'border-amber-500\/30 bg-amber-500\/10 text-amber-800 dark:text-amber-300',/);
+  assert.match(badgeSource, /destructive: 'bg-admin-destructive text-admin-primary-foreground',/);
+  assert.match(badgeSource, /neutral: 'border-admin-border bg-admin-muted text-admin-muted-foreground',/);
+
+  assert.match(specificationsFormSource, /import SpecificationConfidenceSelect from '\.\/SpecificationConfidenceSelect';/);
+  assert.match(specificationsFormSource, /<SpecificationConfidenceSelect[\s\S]*?labels=\{translations\.confidences\}/);
+  assert.match(confidenceSelectSource, /const confidenceVariants = \{\s*VERIFIED: 'success',\s*LIKELY: 'warning',\s*UNVERIFIED: 'neutral',\s*\} as const;/);
+  assert.match(confidenceSelectSource, /<Badge variant=\{presentation\.variant\}/);
 });
 
 test('Admin product Actions cell keeps controls in two horizontal rows', () => {

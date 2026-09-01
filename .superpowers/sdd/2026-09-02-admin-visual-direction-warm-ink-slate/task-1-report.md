@@ -62,3 +62,34 @@ Result: 14 passing, 0 failing.
 ## Scope audit
 
 The task changes are limited to the two approved production files, one focused regression test, and this report. Pre-existing unrelated worktree entries `next-env.d.ts` and `PRODUCT.md` were left untouched and excluded from the commit.
+
+## Coverage-only follow-up
+
+### Scope
+
+- Updated only `tests/adminVisualDirectionWarmInkSlate.test.ts` and this report; no production source changed.
+- Replaced the palette test's trailing-comment check with parsing of each scoped HSL declaration and HSL-to-RGB evaluation against every approved hex value. The Admin-only selector assertions remain in place.
+- Added semantic regression coverage for:
+  - product lifecycle, access, and index Badge variants;
+  - `Badge.tsx` success, warning, destructive, and neutral class mappings; and
+  - Specification Confidence's VERIFIED/LIKELY/UNVERIFIED success/warning/neutral mapping and rendered Badge connection.
+
+### Coverage execution
+
+This repair was deliberately coverage-only. The new assertions passed immediately because the already-committed production implementation satisfied them; no artificial RED run or production behavior change was used.
+
+```text
+node --experimental-test-module-mocks --import tsx --test tests/adminVisualDirectionWarmInkSlate.test.ts tests/adminProductPublishing.test.ts tests/productSpecificationsForm.test.ts
+```
+
+Result: 22 passing, 0 failing.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Typecheck | `npm run typecheck` | Passed. |
+| Lint | `npm run lint` | Passed. |
+| Whitespace | `git diff --check` | Passed; Git emitted only a CRLF checkout warning. |
+| UI detector | Not run | Not applicable: this follow-up changes no UI target, only a test and task report. |
+| GitNexus change detection | `npx gitnexus detect-changes --repo deskholt` | Attempted as required; failed with the known CLI result: `error: unknown command 'detect-changes'`. No workaround used. |
+
+The follow-up commit contains only the focused test and task report. Pre-existing unrelated worktree entries `next-env.d.ts` and `PRODUCT.md` remain untouched and excluded.
