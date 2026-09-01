@@ -168,6 +168,33 @@ test('executeCreateAffiliateLink persists the normalized offer and returns its i
   }]);
 });
 
+// Break caught: direct callers can bypass form parsing and persist an offer under an unsafe route-segment product id.
+test('executeCreateAffiliateLink rejects unsafe product ids before store work', async () => {
+  const calls: string[] = [];
+  const store: AffiliateLinkStore = {
+    createAffiliateLink: async () => {
+      calls.push('create');
+      return { id: 'link-1' };
+    },
+    findAffiliateLinkForProduct: async () => {
+      calls.push('find');
+      return { id: 'link-1' };
+    },
+    updateAffiliateLink: async () => {
+      calls.push('update');
+      return { id: 'link-1' };
+    },
+  };
+
+  for (const productId of ['../x', 'x?foo=bar', 'x#fragment']) {
+    assert.deepEqual(await executeCreateAffiliateLink(store, productId, input()), {
+      ok: false,
+      reason: 'invalid-input',
+    });
+  }
+  assert.deepEqual(calls, []);
+});
+
 // Break caught: a create for a non-existent product must surface as invalid input instead of leaking a database failure.
 test('executeCreateAffiliateLink maps a Prisma foreign-key error to invalid input', async () => {
   const harness = inMemoryStore();
@@ -188,6 +215,33 @@ test('parseUpdateAffiliateLinkInput requires both product and link ids', () => {
   assert.throws(() => parseUpdateAffiliateLinkInput(missingProduct), /productId is required/i);
 
   assert.throws(() => parseUpdateAffiliateLinkInput(validCreateForm()), /linkId is required/i);
+});
+
+// Break caught: direct callers can bypass form parsing and probe or mutate an offer with an unsafe route-segment product id.
+test('executeUpdateAffiliateLink rejects unsafe product ids before store work', async () => {
+  const calls: string[] = [];
+  const store: AffiliateLinkStore = {
+    createAffiliateLink: async () => {
+      calls.push('create');
+      return { id: 'link-1' };
+    },
+    findAffiliateLinkForProduct: async () => {
+      calls.push('find');
+      return { id: 'link-1' };
+    },
+    updateAffiliateLink: async () => {
+      calls.push('update');
+      return { id: 'link-1' };
+    },
+  };
+
+  for (const productId of ['../x', 'x?foo=bar', 'x#fragment']) {
+    assert.deepEqual(await executeUpdateAffiliateLink(store, 'link-1', {
+      ...input({ productId }),
+      linkId: 'link-1',
+    }), { ok: false, reason: 'invalid-input' });
+  }
+  assert.deepEqual(calls, []);
 });
 
 // Break caught: an update that skips product-bound lookup lets one product mutate another product's offer.

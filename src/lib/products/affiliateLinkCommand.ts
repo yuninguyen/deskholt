@@ -130,7 +130,7 @@ export async function executeCreateAffiliateLink(
   productId: string,
   input: CreateAffiliateLinkInput
 ): Promise<AffiliateLinkCommandResult> {
-  if (productId.trim() === '') return { ok: false, reason: 'invalid-input' };
+  if (!isSafeAffiliateLinkProductId(productId)) return { ok: false, reason: 'invalid-input' };
 
   try {
     const link = await store.createAffiliateLink(offerData(productId, input));
@@ -148,7 +148,9 @@ export async function executeUpdateAffiliateLink(
   linkId: string,
   input: UpdateAffiliateLinkInput
 ): Promise<AffiliateLinkCommandResult> {
-  if (linkId.trim() === '' || input.productId.trim() === '') return { ok: false, reason: 'invalid-input' };
+  if (linkId.trim() === '' || !isSafeAffiliateLinkProductId(input.productId)) {
+    return { ok: false, reason: 'invalid-input' };
+  }
 
   const existing = await store.findAffiliateLinkForProduct(linkId, input.productId);
   if (!existing) return { ok: false, reason: 'not-found' };

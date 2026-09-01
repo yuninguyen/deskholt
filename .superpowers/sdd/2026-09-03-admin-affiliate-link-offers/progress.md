@@ -43,3 +43,12 @@
 - Focused GREEN: `node --experimental-test-module-mocks --import tsx --test tests/affiliateLinkActions.test.ts tests/affiliateLinkCommand.test.ts` passed 22/22.
 - Verification: `npm run lint`, `npm run typecheck`, and both working/staged `git diff --check` checks passed.
 - Pre-commit detector: `npx gitnexus detect-changes --repo admin-redesign-shadcn-i18n` was attempted against the staged correction scope and the installed CLI returned `error: unknown command 'detect-changes'`; no substitute detector was used.
+
+## Task 2 re-review follow-up — direct executor safe-ID guards
+- Root cause: public `executeCreateAffiliateLink(store, productId, input)` and `executeUpdateAffiliateLink(store, linkId, input)` guarded only blank product IDs, so direct callers could bypass parser-level safe route-segment validation and reach store methods with delimiter/navigation IDs.
+- GitNexus: fresh pre-edit upstream impact attempts for both executor symbols returned `Target ... not found`; no indexed callers or execution-flow blast radius were reported.
+- TDD RED: direct create/update tests using `../x`, `x?foo=bar`, and `x#fragment` failed 2/24 because the executors returned successful results and invoked the fake stores.
+- GREEN: changed only executor guards to use the established shared `isSafeAffiliateLinkProductId` invariant while preserving the existing empty-`linkId` guard. Direct unsafe calls now return `{ ok: false, reason: 'invalid-input' }` before every create/find/update operation.
+- Focused GREEN: `node --experimental-test-module-mocks --import tsx --test tests/affiliateLinkActions.test.ts tests/affiliateLinkCommand.test.ts` passed 24/24.
+- Verification: `npm run lint`, `npm run typecheck`, and working/staged `git diff --check` passed.
+- Pre-commit detector: `npx gitnexus detect-changes --repo admin-redesign-shadcn-i18n` was attempted against the staged guard scope and the installed CLI returned `error: unknown command 'detect-changes'`; no substitute detector was used.
