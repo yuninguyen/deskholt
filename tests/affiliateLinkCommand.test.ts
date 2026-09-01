@@ -93,6 +93,14 @@ test('parseCreateAffiliateLinkInput requires a product id', () => {
   assert.throws(() => parseCreateAffiliateLinkInput(data), /productId is required/i);
 });
 
+// Break caught: route delimiters or navigation segments in product IDs can escape the intended admin offers path.
+test('parseCreateAffiliateLinkInput rejects unsafe route-segment product ids', () => {
+  for (const productId of ['../x', 'x?foo=bar', 'x#fragment']) {
+    assert.throws(() => parseCreateAffiliateLinkInput(validCreateForm({ productId })), /invalid productId/i);
+  }
+  assert.equal(parseCreateAffiliateLinkInput(validCreateForm()).productId, 'product-1');
+});
+
 // Break caught: form-supplied tracking URLs would allow a client to override server-side affiliate tagging.
 test('parseCreateAffiliateLinkInput derives tracking data server-side and defaults priority', () => {
   const parsed = parseCreateAffiliateLinkInput(validCreateForm({
@@ -158,6 +166,19 @@ test('executeCreateAffiliateLink persists the normalized offer and returns its i
     is_in_stock: true,
     priority_order: 2,
   }]);
+});
+
+// Break caught: a create for a non-existent product must surface as invalid input instead of leaking a database failure.
+test('executeCreateAffiliateLink maps a Prisma foreign-key error to invalid input', async () => {
+  const harness = inMemoryStore();
+  harness.store.createAffiliateLink = async () => {
+    throw Object.assign(new Error('foreign key constraint'), { code: 'P2003' });
+  };
+
+  assert.deepEqual(await executeCreateAffiliateLink(harness.store, 'product-1', input()), {
+    ok: false,
+    reason: 'invalid-input',
+  });
 });
 
 // Break caught: an update form without either identity could mutate an offer outside its submitted product scope.

@@ -38,6 +38,12 @@ export type AffiliateLinkCommandResult =
   | { ok: false; reason: 'invalid-input' | 'not-found' };
 
 const AFFILIATE_NETWORKS: readonly AffiliateNetwork[] = ['amazon', 'walmart', 'target', 'awin', 'impact', 'cj'];
+// A product ID must be one URL path segment: ASCII letters, digits, underscores, or hyphens.
+const SAFE_PRODUCT_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+export function isSafeAffiliateLinkProductId(productId: string): boolean {
+  return SAFE_PRODUCT_ID_PATTERN.test(productId);
+}
 
 function requiredText(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -49,6 +55,12 @@ function optionalText(formData: FormData, key: string): string | undefined {
   const value = formData.get(key);
   if (typeof value !== 'string' || value.trim() === '') return undefined;
   return value.trim();
+}
+
+function requiredProductId(formData: FormData): string {
+  const productId = requiredText(formData, 'productId');
+  if (!isSafeAffiliateLinkProductId(productId)) throw new Error('invalid productId');
+  return productId;
 }
 
 function parseOfferInput(formData: FormData): CreateAffiliateLinkInput {
@@ -66,7 +78,7 @@ function parseOfferInput(formData: FormData): CreateAffiliateLinkInput {
   if (!Number.isInteger(priorityOrder) || priorityOrder <= 0) throw new Error('invalid priority');
 
   return {
-    productId: requiredText(formData, 'productId'),
+    productId: requiredProductId(formData),
     network: network as AffiliateNetwork,
     price,
     rawUrl,
@@ -120,8 +132,15 @@ export async function executeCreateAffiliateLink(
 ): Promise<AffiliateLinkCommandResult> {
   if (productId.trim() === '') return { ok: false, reason: 'invalid-input' };
 
-  const link = await store.createAffiliateLink(offerData(productId, input));
-  return { ok: true, linkId: link.id };
+  try {
+    const link = await store.createAffiliateLink(offerData(productId, input));
+    return { ok: true, linkId: link.id };
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2003') {
+      return { ok: false, reason: 'invalid-input' };
+    }
+    throw error;
+  }
 }
 
 export async function executeUpdateAffiliateLink(

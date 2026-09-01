@@ -66,7 +66,13 @@ function factory(kind: 'create' | 'update'): ActionFactory {
   return value;
 }
 
-function harness({ existing = true }: { existing?: boolean } = {}) {
+function harness({
+  existing = true,
+  createError,
+}: {
+  existing?: boolean;
+  createError?: Error & { code?: string };
+} = {}) {
   const invalidations: string[] = [];
   const redirects: string[] = [];
   let createCalls = 0;
@@ -77,6 +83,7 @@ function harness({ existing = true }: { existing?: boolean } = {}) {
     store: {
       createAffiliateLink: async () => {
         createCalls += 1;
+        if (createError) throw createError;
         return { id: 'link-2' };
       },
       findAffiliateLinkForProduct: async () => {
@@ -132,15 +139,30 @@ test('offer actions redirect invalid submitted offers to their product route', a
   }
 });
 
-// Break caught: a malformed form with no usable product identity must not construct an offers route from invalid input.
-test('offer actions redirect malformed forms without a product id to the products error route', async () => {
-  const testHarness = harness();
+// Break caught: a malformed form with no safe product identity must not construct an offers route from invalid input.
+test('offer actions redirect malformed forms without a safe product id to the products error route', async () => {
+  for (const productId of ['', '../x', 'x?foo=bar', 'x#fragment']) {
+    const testHarness = harness();
 
-  await captureRedirect(factory('create')(testHarness.dependencies), validForm({ productId: '', price: '0' }));
+    await captureRedirect(factory('create')(testHarness.dependencies), validForm({ productId, price: '0' }));
 
-  assert.deepEqual(testHarness.calls(), { createCalls: 0, findCalls: 0, updateCalls: 0 });
+    assert.deepEqual(testHarness.calls(), { createCalls: 0, findCalls: 0, updateCalls: 0 });
+    assert.deepEqual(testHarness.invalidations, []);
+    assert.deepEqual(testHarness.redirects, ['/admin/products?error=invalid-input']);
+  }
+});
+
+// Break caught: a foreign-key rejection for an absent product must return the valid submitted offers route with invalid input.
+test('create action redirects a rejected product foreign key to invalid input', async () => {
+  const testHarness = harness({
+    createError: Object.assign(new Error('foreign key constraint'), { code: 'P2003' }),
+  });
+
+  await captureRedirect(factory('create')(testHarness.dependencies), validForm());
+
+  assert.deepEqual(testHarness.calls(), { createCalls: 1, findCalls: 0, updateCalls: 0 });
   assert.deepEqual(testHarness.invalidations, []);
-  assert.deepEqual(testHarness.redirects, ['/admin/products?error=invalid-input']);
+  assert.deepEqual(testHarness.redirects, ['/admin/products/product-1/offers?error=invalid-input']);
 });
 
 // Break caught: forwarding a missing or cross-product update as a success would conceal the product-scoped authorization guard.

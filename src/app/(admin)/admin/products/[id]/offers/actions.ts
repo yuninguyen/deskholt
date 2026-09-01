@@ -7,6 +7,7 @@ import {
   createPrismaAffiliateLinkStore,
   executeCreateAffiliateLink,
   executeUpdateAffiliateLink,
+  isSafeAffiliateLinkProductId,
   parseCreateAffiliateLinkInput,
   parseUpdateAffiliateLinkInput,
   type AffiliateLinkStore,
@@ -29,7 +30,8 @@ async function requireAdminSession(): Promise<void> {
 function submittedProductId(formData: FormData): string | undefined {
   const productId = formData.get('productId');
   if (typeof productId !== 'string' || productId.trim() === '') return undefined;
-  return productId.trim();
+  const trimmedProductId = productId.trim();
+  return isSafeAffiliateLinkProductId(trimmedProductId) ? trimmedProductId : undefined;
 }
 
 function invalidInputPath(formData: FormData): string {
