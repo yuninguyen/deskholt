@@ -40,6 +40,7 @@ test('Round 2 uses the Admin-only tinted dot status badge for products and speci
   assert.match(specificationsForm, /import \{ AdminStatusBadge \} from '@\/components\/admin\/AdminStatusBadge';/);
   assert.match(specificationsForm, /<AdminStatusBadge variant="warning">\{translations\.derived\}<\/AdminStatusBadge>/);
   assert.match(confidenceSelect, /import \{ AdminStatusBadge \} from '@\/components\/admin\/AdminStatusBadge';/);
+  assert.match(confidenceSelect, /<SelectContent side="top">/);
   assert.match(confidenceSelect, /<AdminStatusBadge variant=\{presentation\.variant\} className="mt-2">/);
   assert.doesNotMatch(productsPage, /from '@\/components\/ui\/Badge'/);
   assert.doesNotMatch(specificationsForm, /from '@\/components\/ui\/Badge'/);

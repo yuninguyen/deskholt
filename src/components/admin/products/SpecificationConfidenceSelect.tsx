@@ -40,7 +40,7 @@ export default function SpecificationConfidenceSelect({
         <SelectTrigger>
           <SelectValue placeholder={labels.UNVERIFIED} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent side="top">
           {CONFIDENCES.map((confidenceValue) => (
             <SelectItem key={confidenceValue} value={confidenceValue}>
               {labels[confidenceValue]}
