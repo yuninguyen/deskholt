@@ -151,7 +151,7 @@ export default async function AdminProductsPage({
                         </select>
                         <button
                           type="submit"
-                          className="box-border h-[34px] rounded-[7px] bg-admin-primary px-3 text-[13px] font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
+                          className="box-border h-[34px] rounded-[7px] bg-admin-primary px-3 text-[13px] font-semibold dark:font-bold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
                         >
                           {translations.products.actions.save}
                         </button>
