@@ -85,7 +85,8 @@ export function parseUpdateAffiliateLinkInput(formData: FormData): UpdateAffilia
 
 export function deriveTrackingUrl(rawUrl: string): string {
   // deskholt-pending is intentional until real affiliate tags exist.
-  return `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}tag=deskholt-pending`;
+  const [url, fragment = ''] = rawUrl.split('#', 2);
+  return `${url}${url.includes('?') ? '&' : '?'}tag=deskholt-pending${fragment === '' ? '' : `#${fragment}`}`;
 }
 
 function offerData(productId: string, input: CreateAffiliateLinkInput): AffiliateLinkData {

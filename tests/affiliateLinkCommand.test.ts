@@ -46,6 +46,18 @@ test('deriveTrackingUrl appends the pending tag with the correct delimiter', () 
   assert.deepEqual(deriveTrackingUrl('https://shop.test/product?sku=1'), 'https://shop.test/product?sku=1&tag=deskholt-pending');
 });
 
+// Break caught: appending a tag after a fragment leaves it inside the non-request fragment instead of the merchant URL query.
+test('deriveTrackingUrl inserts the pending tag before a preserved fragment', () => {
+  assert.deepEqual(
+    deriveTrackingUrl('https://shop.test/item#details'),
+    'https://shop.test/item?tag=deskholt-pending#details'
+  );
+  assert.deepEqual(
+    deriveTrackingUrl('https://shop.test/item#details?tab=1'),
+    'https://shop.test/item?tag=deskholt-pending#details?tab=1'
+  );
+});
+
 // Break caught: accepting an unapproved merchant network lets public click tracking drift from its fixed supported set.
 test('parseCreateAffiliateLinkInput rejects networks outside the approved set', () => {
   assert.throws(() => parseCreateAffiliateLinkInput(validCreateForm({ network: 'other' })), /invalid network/i);
