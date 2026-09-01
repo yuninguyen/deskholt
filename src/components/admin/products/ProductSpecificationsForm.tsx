@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/Badge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import SpecificationConfidenceSelect from './SpecificationConfidenceSelect';
 import { Input } from '@/components/ui/input';
 import {
@@ -80,7 +80,7 @@ function SpecRowFields({
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           {row.unit && <span className="font-mono text-xs text-admin-muted-foreground">{row.unit}</span>}
-          {row.scope === 'DERIVED' && <Badge variant="warning">{translations.derived}</Badge>}
+          {row.scope === 'DERIVED' && <AdminStatusBadge variant="warning">{translations.derived}</AdminStatusBadge>}
         </div>
       </div>
 
@@ -161,7 +161,7 @@ function SpecRowFields({
           )}
       </div>
 
-      <div className="sm:col-span-4">
+      <div className="sm:col-span-3">
         <Input
           type="text"
           name={`sourceUrl__${row.rowKey}`}
@@ -185,7 +185,7 @@ function SpecRowFields({
         </select>
       </div>
 
-      <div className="sm:col-span-1">
+      <div className="sm:col-span-2">
         <SpecificationConfidenceSelect
           name={`confidence__${row.rowKey}`}
           defaultValue={confidence}

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ProductStatus } from '@prisma/client';
-import { Badge } from '@/components/ui/Badge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getAdminTranslations } from '@/lib/admin/i18n/server';
 import { prisma } from '@/lib/prisma';
@@ -119,57 +119,58 @@ export default async function AdminProductsPage({
                   <div className="font-body font-semibold text-admin-foreground">{product.name}</div>
                   <div className="font-mono text-xs text-admin-muted-foreground">{product.slug}</div>
                   <div className="mt-2">
-                    <Badge variant={accessVariant[decision.reason]}>{accessLabels[decision.reason]}</Badge>
+                    <AdminStatusBadge variant={accessVariant[decision.reason]}>{accessLabels[decision.reason]}</AdminStatusBadge>
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-4">
-                  <Badge variant={lifecycleVariant[product.status]}>{lifecycleLabels[product.status]}</Badge>
+                  <AdminStatusBadge variant={lifecycleVariant[product.status]}>{lifecycleLabels[product.status]}</AdminStatusBadge>
                 </TableCell>
                 <TableCell className="px-4 py-4">
-                  <Badge variant={product.is_indexed ? 'success' : 'outline'}>
+                  <AdminStatusBadge variant={product.is_indexed ? 'success' : 'outline'}>
                     {product.is_indexed ? translations.products.index.enabled : translations.products.index.disabled}
-                  </Badge>
+                  </AdminStatusBadge>
                 </TableCell>
                 <TableCell className="px-4 py-4 text-admin-foreground tabular-nums">
                   {product._count.product_attributes}
                 </TableCell>
                 <TableCell className="px-4 py-4">
-                  <div className="space-y-2">
-                    <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <input type="hidden" name="command" value="set-lifecycle" />
-                      <label className="sr-only" htmlFor={`status-${product.id}`}>{translations.products.table.lifecycle}</label>
-                      <select
-                        id={`status-${product.id}`}
-                        name="status"
-                        defaultValue={product.status}
-                        autoFocus={isFeedbackTarget}
-                        className="rounded-lg border border-admin-input bg-admin-card px-3 py-2 text-sm text-admin-foreground outline-none focus:border-admin-primary"
-                      >
-                        {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{lifecycleLabels[status]}</option>)}
-                      </select>
-                      <button
-                        type="submit"
-                        className="rounded-lg bg-admin-primary px-3 py-2 text-sm font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
-                      >
-                        {translations.products.actions.save}
-                      </button>
-                    </form>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <form action={productPublishingAction} className="flex flex-wrap items-center gap-2">
+                  <div>
+                    <div className="flex flex-nowrap items-center gap-2">
+                      <form action={productPublishingAction} className="contents">
+                        <input type="hidden" name="productId" value={product.id} />
+                        <input type="hidden" name="command" value="set-lifecycle" />
+                        <label className="sr-only" htmlFor={`status-${product.id}`}>{translations.products.table.lifecycle}</label>
+                        <select
+                          id={`status-${product.id}`}
+                          name="status"
+                          defaultValue={product.status}
+                          autoFocus={isFeedbackTarget}
+                          className="box-border h-[34px] rounded-[7px] border border-admin-input bg-admin-card px-3 text-[13px] font-semibold text-admin-foreground outline-none focus:border-admin-primary"
+                        >
+                          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{lifecycleLabels[status]}</option>)}
+                        </select>
+                        <button
+                          type="submit"
+                          className="box-border h-[34px] rounded-[7px] bg-admin-primary px-3 text-[13px] font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
+                        >
+                          {translations.products.actions.save}
+                        </button>
+                      </form>
+                      <form action={productPublishingAction} className="contents">
                         <input type="hidden" name="productId" value={product.id} />
                         <input type="hidden" name="command" value={product.is_indexed ? 'disable-index' : 'enable-index'} />
                         <button
                           type="submit"
                           disabled={isEnableDisabled}
                           aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
-                          className="rounded-lg border border-admin-input px-3 py-2 text-sm text-admin-foreground enabled:hover:border-admin-primary disabled:cursor-not-allowed disabled:opacity-40"
+                          className="box-border h-[34px] rounded-[7px] border border-admin-input px-3 text-[13px] font-semibold text-admin-foreground enabled:hover:border-admin-primary disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {product.is_indexed ? translations.products.index.disable : translations.products.index.enable}
                         </button>
                       </form>
+                    </div>
 
+                    <div className="mt-2 flex items-center gap-2">
                       <Link
                         href={`/admin/products/${product.id}/specifications`}
                         className="text-sm text-admin-primary hover:text-admin-primary/90"
@@ -179,7 +180,7 @@ export default async function AdminProductsPage({
                     </div>
 
                     {isEnableDisabled && (
-                      <span id={enableIndexHelpId} className="max-w-56 text-xs text-amber-700 dark:text-amber-300">
+                      <span id={enableIndexHelpId} className="mt-2 block max-w-56 text-xs text-amber-700 dark:text-amber-300">
                         {translations.products.index.enableHelp}
                       </span>
                     )}

@@ -21,8 +21,14 @@ const moduleMock = mock as unknown as {
 const serverLocaleMock = moduleMock.module('@/lib/admin/i18n/server', {
   namedExports: { getAdminLocale: async () => 'vi' },
 });
+const nextFontMock = moduleMock.module('next/font/google', {
+  namedExports: { IBM_Plex_Sans: () => ({ variable: 'admin-font' }) },
+});
 
-test.after(() => serverLocaleMock.restore());
+test.after(() => {
+  serverLocaleMock.restore();
+  nextFontMock.restore();
+});
 
 function leafPaths(value: unknown, prefix = ''): string[] {
   if (typeof value === 'string') return [prefix];

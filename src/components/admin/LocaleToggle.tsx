@@ -25,14 +25,14 @@ export default function LocaleToggle({ initialLocale }: { initialLocale: Locale 
   }
 
   return (
-    <div aria-label={translations.header.localeLabel} className="inline-flex rounded-md border border-admin-input p-0.5">
+    <div aria-label={translations.header.localeLabel} className="inline-flex h-[34px] rounded-[8px] border border-[#E3DACB] bg-[#EFE9DC] p-[3px] dark:border-[#34291E] dark:bg-[#17140F]">
       {(['en', 'vi'] as const).map((option) => (
         <button
           key={option}
           type="button"
           aria-pressed={locale === option}
           onClick={() => setLocale(option)}
-          className={`rounded px-2 py-1 font-mono text-xs font-semibold tracking-wide ${locale === option ? 'bg-admin-primary text-admin-primary-foreground' : 'text-admin-muted-foreground hover:text-admin-foreground'}`}
+          className={`h-full w-[38px] rounded-[6px] text-xs font-bold ${locale === option ? 'bg-admin-primary text-admin-primary-foreground shadow-sm' : 'text-admin-muted-foreground hover:text-admin-foreground'}`}
         >
           {option.toUpperCase()}
         </button>

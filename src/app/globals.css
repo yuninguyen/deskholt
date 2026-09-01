@@ -9,6 +9,7 @@
   }
 
   #admin-theme-root {
+    font-family: var(--font-admin-sans), sans-serif;
     --background: 40 33.3333% 92.9412%; /* #F3EFE7 */
     --foreground: 36.6667 27.2727% 12.9412%; /* #2A2318 */
     --card: 42.8571 46.6667% 97.0588%; /* #FBF9F4 */
@@ -37,8 +38,8 @@
     --card-foreground: 40 33.3333% 92.9412%; /* #F3EFE7 */
     --popover: 32.3077 22.0339% 11.5686%; /* #241E17 */
     --popover-foreground: 40 33.3333% 92.9412%; /* #F3EFE7 */
-    --primary: 210.8108 14.741% 49.2157%; /* #6B7D90 */
-    --primary-foreground: 210 22.2222% 7.0588%; /* #0E1216 */
+    --primary: 211.25 22.4299% 58.0392%; /* #7C93AC */
+    --primary-foreground: 210 18.1818% 7.8431%; /* #101418 */
     --secondary: 211.5789 18.4466% 20.1961%; /* #2A333D */
     --secondary-foreground: 207.4286 22.293% 69.2157%; /* #9FB2C2 */
     --muted: 211.5789 18.4466% 20.1961%; /* #2A333D */
@@ -48,7 +49,11 @@
     --destructive: 0 0% 70%;
     --border: 36 20.8333% 18.8235%; /* #3A3226 */
     --input: 36 20.8333% 18.8235%; /* #3A3226 */
-    --ring: 210.8108 14.741% 49.2157%; /* #6B7D90 */
+    --ring: 211.25 22.4299% 58.0392%; /* #7C93AC */
+  }
+
+  #admin-theme-root .font-body {
+    font-family: var(--font-admin-sans), sans-serif;
   }
 
   #admin-theme-root * {

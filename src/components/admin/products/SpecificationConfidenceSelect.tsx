@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/Badge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CONFIDENCES = ['VERIFIED', 'LIKELY', 'UNVERIFIED'] as const;
@@ -48,9 +48,9 @@ export default function SpecificationConfidenceSelect({
           ))}
         </SelectContent>
       </Select>
-      <Badge variant={presentation.variant} className="mt-2 whitespace-nowrap">
+      <AdminStatusBadge variant={presentation.variant} className="mt-2">
         {presentation.label}
-      </Badge>
+      </AdminStatusBadge>
     </>
   );
 }

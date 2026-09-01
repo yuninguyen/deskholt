@@ -102,11 +102,11 @@ test('Admin Products uses typed server translations for all operator copy', () =
 
 test('Admin Products uses shadcn Table and semantic named Badges in one direct horizontal scroll panel', () => {
   assert.match(adminProductsPageSource, /import \{ Table, TableBody, TableCell, TableHead, TableHeader, TableRow \} from '@\/components\/ui\/table';/);
-  assert.match(adminProductsPageSource, /import \{ Badge \} from '@\/components\/ui\/Badge';/);
+  assert.match(adminProductsPageSource, /import \{ AdminStatusBadge \} from '@\/components\/admin\/AdminStatusBadge';/);
   assert.match(adminProductsPageSource, /<Table\s+containerClassName="overflow-x-auto[^\"]*"\s+className="min-w-\[900px\]/);
   assert.match(adminProductsPageSource, /<TableHeader(?:\s|>)/);
   assert.match(adminProductsPageSource, /<TableBody>/);
-  assert.match(adminProductsPageSource, /<Badge variant=\{.*\}>/);
+  assert.match(adminProductsPageSource, /<AdminStatusBadge variant=\{.*\}>/);
   assert.doesNotMatch(adminProductsPageSource, /overflow-hidden/);
 });
 

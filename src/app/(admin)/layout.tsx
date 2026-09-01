@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
+import { IBM_Plex_Sans } from 'next/font/google';
 import AdminHeader from '@/components/admin/AdminHeader';
 import { getAdminLocale } from '@/lib/admin/i18n/server';
+
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  variable: '--font-admin-sans',
+  display: 'swap',
+});
 
 const THEME_INIT_SCRIPT = `
 (function () {
@@ -27,7 +35,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       suppressHydrationWarning
       data-theme="dark"
       data-locale={locale}
-      className="min-h-screen font-body bg-admin-background text-admin-foreground"
+      className={`${ibmPlexSans.variable} min-h-screen font-body bg-admin-background text-admin-foreground`}
     >
       <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       <AdminHeader initialLocale={locale} />

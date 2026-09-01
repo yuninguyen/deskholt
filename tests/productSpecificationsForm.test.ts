@@ -121,7 +121,7 @@ test('Specifications form restores native clearable selects and delegates confid
   assert.match(source, /<SpecificationConfidenceSelect/);
 });
 
-test('Confidence presentation maps every stored enum to its label and semantic Badge variant', async () => {
+test('Confidence presentation maps every stored enum to its label and semantic Admin status variant', async () => {
   const confidenceModule = await import('../src/components/admin/products/SpecificationConfidenceSelect');
   const presentConfidence = (confidenceModule as { confidencePresentation?: (value: string, labels: Record<string, string>) => { label: string; variant: string } }).confidencePresentation;
   const labels = { VERIFIED: 'Verified', LIKELY: 'Likely', UNVERIFIED: 'Unverified' };
@@ -132,7 +132,7 @@ test('Confidence presentation maps every stored enum to its label and semantic B
   assert.deepEqual(presentConfidence?.('UNVERIFIED', labels), { label: 'Unverified', variant: 'neutral' });
 });
 
-test('Confidence client leaf updates its Badge from Select changes while preserving the field name', async () => {
+test('Confidence client leaf updates its Admin status label from Select changes while preserving the field name', async () => {
   const source = await readFile(
     new URL('../src/components/admin/products/SpecificationConfidenceSelect.tsx', import.meta.url),
     'utf8',
@@ -141,7 +141,7 @@ test('Confidence client leaf updates its Badge from Select changes while preserv
   assert.match(source, /^'use client';/);
   assert.match(source, /useState<Confidence>\(defaultValue\)/);
   assert.match(source, /<Select name=\{name\} defaultValue=\{defaultValue\} onValueChange=\{\(value\) => setConfidence\(value as Confidence\)\}>/);
-  assert.match(source, /<Badge variant=\{presentation\.variant\}/);
+  assert.match(source, /<AdminStatusBadge variant=\{presentation\.variant\}/);
   assert.match(source, /const presentation = confidencePresentation\(confidence, labels\)/);
 });
 
@@ -151,7 +151,7 @@ test('Specifications form resolves translations and retains the external inspect
   assert.match(source, /import \{ getAdminTranslations \} from '@\/lib\/admin\/i18n\/server';/);
   assert.match(source, /const translations = await getAdminTranslations\(\);/);
   assert.match(source, /import \{ Input \} from '@\/components\/ui\/input';/);
-  assert.match(source, /import \{ Badge \} from '@\/components\/ui\/Badge';/);
+  assert.match(source, /import \{ AdminStatusBadge \} from '@\/components\/admin\/AdminStatusBadge';/);
   assert.match(source, /import \{\s*Select,/);
   assert.match(source, /border-b border-admin-border/);
   assert.match(source, /row\.isRequired && row\.scope !== 'DERIVED'/);
