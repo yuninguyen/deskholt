@@ -102,7 +102,7 @@ test('Admin product status, access, index, Badge, and confidence mappings retain
   assert.match(productsPage, /<AdminStatusBadge variant=\{product\.is_indexed \? 'success' : 'outline'\}>/);
 
   assert.match(adminBadgeSource, /success: 'border-\[rgba\(63,145,66,0\.18\)\] bg-\[rgba\(63,145,66,0\.08\)\] text-\[#3F6B3F\]/);
-  assert.match(adminBadgeSource, /brand: 'border-\[rgba\(68,82,99,0\.18\)\] bg-\[rgba\(68,82,99,0\.08\)\] text-\[#445263\]/);
+  assert.match(adminBadgeSource, /brand: 'border-\[rgba\(34,197,94,0\.18\)\] bg-\[rgba\(34,197,94,0\.08\)\] text-\[#15803D\]/);
   assert.match(adminBadgeSource, /warning: 'border-\[rgba\(169,118,46,0\.18\)\] bg-\[rgba\(169,118,46,0\.08\)\] text-\[#80551C\]/);
   assert.match(adminBadgeSource, /destructive: 'border-\[rgba\(168,67,43,0\.18\)\] bg-\[rgba\(168,67,43,0\.08\)\] text-\[#8B3827\]/);
   assert.match(adminBadgeSource, /neutral: 'border-\[rgba\(140,129,104,0\.18\)\] bg-\[rgba\(140,129,104,0\.08\)\] text-\[#655D4D\]/);
@@ -131,7 +131,7 @@ test('Admin surfaces consume warm ink and slate tokens instead of raw neutral or
 
 test('Admin semantic status exceptions remain context-bound and all other reviewed utilities consume tokens', () => {
   const badgeSuccessVariant = "success: 'border-[rgba(63,145,66,0.18)] bg-[rgba(63,145,66,0.08)] text-[#3F6B3F] dark:border-[rgba(94,196,98,0.18)] dark:bg-[rgba(94,196,98,0.10)] dark:text-[#8FCB8F]',";
-  const badgeBrandVariant = "brand: 'border-[rgba(68,82,99,0.18)] bg-[rgba(68,82,99,0.08)] text-[#445263] dark:border-[rgba(124,147,172,0.18)] dark:bg-[rgba(124,147,172,0.10)] dark:text-[#B8C9DA]',";
+  const badgeBrandVariant = "brand: 'border-[rgba(34,197,94,0.18)] bg-[rgba(34,197,94,0.08)] text-[#15803D] dark:border-[rgba(74,222,128,0.18)] dark:bg-[rgba(74,222,128,0.10)] dark:text-[#86EFAC]',";
   const productsSavedFeedback = /\{query\.saved && \(\s*<p className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950\/40 dark:text-emerald-300">\s*\{translations\.products\.saved\}\s*<\/p>\s*\)\}/;
   const specificationsSavedFeedback = /\{saved && \(\s*<div className="border border-emerald-500\/30 bg-emerald-500\/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300">\s*\{translations\.specifications\.saved\}\s*<\/div>\s*\)\}/;
 

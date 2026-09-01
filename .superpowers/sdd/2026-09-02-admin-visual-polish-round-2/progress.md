@@ -29,3 +29,9 @@
 - `npm run lint` — pass.
 - `git diff --check` — pass.
 - Impeccable detector command run over changed Admin targets. It returned one advisory only: pre-existing public `.bg-paper-grid` two-axis gradient in changed shared `src/app/globals.css` (line 79), which is out of scope and intentionally untouched; no Admin target finding.
+
+### Review correction — brand semantic hue
+- Review identified a semantic regression: `accessVariant.eligible` maps to `brand`, whose pre-change palette was green. The initial Admin-only implementation incorrectly assigned this status the slate primary hue.
+- RED: updated `tests/adminVisualPolishRound2.test.ts` first to require `brand` light `rgba(34,197,94,0.08/.18)`, `#15803D`, `#22C55E`, and dark `rgba(74,222,128,0.10/.18)`, `#86EFAC`, `#4ADE80`. Command: `node --experimental-test-module-mocks --import tsx --test tests/adminVisualPolishRound2.test.ts`; result: 1 expected failure / 3 pass, showing the current slate `#445263/#7C93AC` implementation.
+- GREEN: changed only `AdminStatusBadge` `brand` container and dot classes to that green semantic palette; retained geometry, mappings, all other variants, contracts, and public isolation. Updated the existing semantic palette assertions to match.
+- Verification: `node --experimental-test-module-mocks --import tsx --test tests/adminVisualPolishRound2.test.ts tests/adminVisualDirectionWarmInkSlate.test.ts tests/adminProductPublishing.test.ts` — 21 pass, 0 fail. `npm run typecheck`, `npm run lint`, and `git diff --check` — pass.

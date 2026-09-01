@@ -31,6 +31,8 @@ test('Round 2 uses the Admin-only tinted dot status badge for products and speci
   assert.match(adminBadge, /<span aria-hidden className=\{cn\('h-\[6px\] w-\[6px\] shrink-0 rounded-full', dotVariants\[variant\]\)\} \/>/);
   assert.match(adminBadge, /bg-\[rgba\(63,145,66,0\.08\)\][\s\S]*text-\[#3F6B3F\][\s\S]*dark:bg-\[rgba\(94,196,98,0\.10\)\][\s\S]*dark:text-\[#8FCB8F\]/);
   assert.match(adminBadge, /bg-\[#3F9142\][\s\S]*dark:bg-\[#5EC462\]/);
+  assert.match(adminBadge, /brand: 'border-\[rgba\(34,197,94,0\.18\)\] bg-\[rgba\(34,197,94,0\.08\)\] text-\[#15803D\] dark:border-\[rgba\(74,222,128,0\.18\)\] dark:bg-\[rgba\(74,222,128,0\.10\)\] dark:text-\[#86EFAC\]'/);
+  assert.match(adminBadge, /brand: 'bg-\[#22C55E\] dark:bg-\[#4ADE80\]'/);
   assert.match(productsPage, /import \{ AdminStatusBadge \} from '@\/components\/admin\/AdminStatusBadge';/);
   assert.match(productsPage, /<AdminStatusBadge variant=\{accessVariant\[decision\.reason\]\}>/);
   assert.match(productsPage, /<AdminStatusBadge variant=\{lifecycleVariant\[product\.status\]\}>/);
