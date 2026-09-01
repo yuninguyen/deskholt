@@ -53,7 +53,7 @@ test('Round 2 makes product actions a two-row equal-control layout without chang
   const actions = productsPage.slice(actionStart, productsPage.indexOf('</TableCell>', actionStart));
 
   assert.match(actions, /<div className="flex flex-nowrap items-center gap-2">[\s\S]*?<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="status"[\s\S]*?type="submit"[\s\S]*?<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\}/);
-  assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] px-3 text-\[13px\] font-semibold"/);
+  assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] px-3 py-0 text-\[13px\] font-semibold"/);
   assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] bg-admin-primary px-3 text-\[13px\] font-semibold dark:font-bold text-admin-primary-foreground/);
   assert.match(actions, /className="inline-flex items-center justify-center whitespace-nowrap box-border h-\[34px\] rounded-\[7px\] border border-admin-input px-3 text-\[13px\] font-semibold text-admin-foreground/);
   assert.match(actions, /\{product\.is_indexed \? translations\.products\.index\.disable : translations\.products\.index\.enable\}/);

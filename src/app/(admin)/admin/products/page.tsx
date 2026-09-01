@@ -145,7 +145,7 @@ export default async function AdminProductsPage({
                           <SelectTrigger
                             id={`status-${product.id}`}
                             autoFocus={isFeedbackTarget}
-                            className="box-border h-[34px] rounded-[7px] px-3 text-[13px] font-semibold"
+                            className="box-border h-[34px] rounded-[7px] px-3 py-0 text-[13px] font-semibold"
                           >
                             <SelectValue />
                           </SelectTrigger>

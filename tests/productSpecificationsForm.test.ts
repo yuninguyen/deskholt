@@ -124,7 +124,8 @@ test('Specifications form keeps native clearable value selects and delegates sou
   assert.match(sourceTypeSelect, /^'use client';/);
   assert.match(sourceTypeSelect, /const CLEAR_SOURCE_TYPE_VALUE = '__clear-source-type__';/);
   assert.match(sourceTypeSelect, /useState\(defaultValue\)/);
-  assert.match(sourceTypeSelect, /<Select value=\{selectedValue\} onValueChange=\{\(value\) => setSelectedValue\(value === CLEAR_SOURCE_TYPE_VALUE \? '' : value\)\}>/);
+  assert.match(sourceTypeSelect, /export function mapSourceTypeSelection\(value: string\) \{\s*return value === CLEAR_SOURCE_TYPE_VALUE \? '' : value;\s*\}/);
+  assert.match(sourceTypeSelect, /<Select value=\{selectedValue\} onValueChange=\{\(value\) => setSelectedValue\(mapSourceTypeSelection\(value\)\)\}>/);
   assert.match(sourceTypeSelect, /<SelectValue placeholder=\{placeholder\} \/>/);
   assert.match(sourceTypeSelect, /<SelectItem value=\{CLEAR_SOURCE_TYPE_VALUE\}>\{placeholder\}<\/SelectItem>/);
   assert.match(sourceTypeSelect, /SOURCE_TYPES\.map\(\(sourceType\) => \([\s\S]*?<SelectItem key=\{sourceType\} value=\{sourceType\}>[\s\S]*?\{labels\[sourceType\]\}/);
@@ -134,6 +135,15 @@ test('Specifications form keeps native clearable value selects and delegates sou
   assert.match(source, /aria-invalid=\{staleEnumValue \? true : undefined\}/);
   assert.match(source, /from '\.\/SpecificationConfidenceSelect';/);
   assert.match(source, /<SpecificationConfidenceSelect/);
+});
+
+test('Source Type client leaf maps its private clear sentinel to empty and preserves valid source types', async () => {
+  const sourceTypeModule = await import('../src/components/admin/products/SpecificationSourceTypeSelect');
+  const mapSourceTypeSelection = (sourceTypeModule as { mapSourceTypeSelection?: (value: string) => string }).mapSourceTypeSelection;
+
+  assert.equal(typeof mapSourceTypeSelection, 'function');
+  assert.equal(mapSourceTypeSelection?.('__clear-source-type__'), '');
+  assert.equal(mapSourceTypeSelection?.('MANUFACTURER'), 'MANUFACTURER');
 });
 
 test('Confidence presentation maps every stored enum to its label and semantic Admin status variant', async () => {
