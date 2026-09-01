@@ -13,6 +13,7 @@ const adminLayoutSource = readFileSync(join(root, 'src/app/(admin)/layout.tsx'),
 const adminHeaderSource = readFileSync(join(root, 'src/components/admin/AdminHeader.tsx'), 'utf8');
 const themeToggleSource = readFileSync(join(root, 'src/components/admin/ThemeToggle.tsx'), 'utf8');
 const localeToggleSource = readFileSync(join(root, 'src/components/admin/LocaleToggle.tsx'), 'utf8');
+const specificationsPageSource = readFileSync(join(root, 'src/app/(admin)/admin/products/[id]/specifications/page.tsx'), 'utf8');
 
 type Rgb = readonly [number, number, number];
 
@@ -131,9 +132,29 @@ test('Admin surfaces consume warm ink and slate tokens instead of raw neutral or
     themeToggleSource,
     localeToggleSource,
     productsPage,
+    specificationsPageSource,
     specificationsFormSource,
   })) {
     assert.doesNotMatch(source, rawNeutralOrGreen, `${surface} bypasses the Admin token palette`);
+  }
+});
+
+test('Admin success feedback keeps emerald limited to the two approved semantic banners', () => {
+  const productsSavedBanner = 'className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"';
+  const specificationsSavedBanner = 'className="border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"';
+
+  assert.match(productsPage, new RegExp(productsSavedBanner));
+  assert.match(specificationsPageSource, new RegExp(specificationsSavedBanner));
+  assert.doesNotMatch(productsPage.replace(productsSavedBanner, ''), /emerald-/);
+  assert.doesNotMatch(specificationsPageSource.replace(specificationsSavedBanner, ''), /emerald-/);
+  for (const [surface, source] of Object.entries({
+    adminLayoutSource,
+    adminHeaderSource,
+    themeToggleSource,
+    localeToggleSource,
+    specificationsFormSource,
+  })) {
+    assert.doesNotMatch(source, /emerald-/, `${surface} must not introduce an emerald utility`);
   }
 });
 

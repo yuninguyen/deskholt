@@ -141,3 +141,33 @@ The new coverage requires every approved surface to consume matching Admin token
 | GitNexus impact | Re-analysis supplied by review for `AdminProductsPage` and `Badge`; local impact for `ProductSpecificationsForm` | Low risk, 0 indexed callers/processes. The index did not resolve the four default Admin shell components by name. |
 
 `npx gitnexus detect-changes --repo deskholt` was attempted immediately before committing and returned the known unsupported outcome: `error: unknown command 'detect-changes'`. No workaround was used.
+
+## Emerald semantic-success guard follow-up
+
+### Scope
+
+Updated only `tests/adminVisualDirectionWarmInkSlate.test.ts` and this report. No production source changed.
+
+The test now documents and locks the two approved raw emerald success-feedback exceptions:
+
+1. The Products saved-feedback banner.
+2. The Specifications saved-feedback banner.
+
+It asserts each exact banner class snippet, removes that exact approved snippet for a residual-source check, and rejects any other `emerald-*` use in either page and in the remaining reviewed Admin surfaces. The existing broad raw `gray-*`, `white`, and `brand-*` rejection remains active.
+
+### Coverage execution
+
+This guard intentionally passed immediately because both semantic-success banners were already correct. No artificial RED run or production change was used.
+
+```text
+node --experimental-test-module-mocks --import tsx --test tests/adminVisualDirectionWarmInkSlate.test.ts tests/adminProductPublishing.test.ts tests/productSpecificationsPage.test.ts tests/productSpecificationsForm.test.ts
+```
+
+Result: 30 passing, 0 failing.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Typecheck | `npm run typecheck` | Passed. |
+| Lint | `npm run lint` | Passed. |
+| Whitespace | `git diff --check` | Passed; Git emitted only a CRLF checkout warning. |
+| GitNexus change detection | `npx gitnexus detect-changes --repo deskholt` | Attempted immediately before committing; `error: unknown command 'detect-changes'`. No workaround used. |
