@@ -19,3 +19,10 @@
 - GREEN: changed only `deriveTrackingUrl` to split once at `#`, choose `?`/`&` from the pre-fragment segment, add the pending tag, then reattach the unchanged fragment. No URL serialization is used, preserving unrelated raw URL presentation. Focused command suite passed 12/12.
 - GitNexus: `npx gitnexus impact deriveTrackingUrl --direction upstream --repo admin-redesign-shadcn-i18n` reported `Target 'deriveTrackingUrl' not found`, confirming the user-reported absence from the current index and no indexed blast radius.
 - Verification: `npm run lint`, `npm run typecheck`, and `git diff --check` passed. `npx gitnexus detect-changes --repo admin-redesign-shadcn-i18n` will be re-attempted before the follow-up commit; this CLI previously reported `unknown command 'detect-changes'`.
+
+## Task 1 second review follow-up — multi-hash fragment preservation
+- Review finding verified: `rawUrl.split('#', 2)` retained only the first fragment component and dropped subsequent literal `#` content.
+- TDD RED: added the direct `https://shop.test/item#one#two` regression assertion. The focused suite failed 1/13, producing `https://shop.test/item?tag=deskholt-pending#one` instead of the required full-suffix output.
+- GREEN: replaced the split with `indexOf('#')` plus `slice` for the pre-fragment URL and entire fragment suffix, exactly preserving multi-hash fragments. The focused suite passed 13/13.
+- GitNexus: pre-edit `deriveTrackingUrl` impact attempt again reported `Target 'deriveTrackingUrl' not found`; there is no current indexed blast radius.
+- Verification: `npm run lint`, `npm run typecheck`, and `git diff --check` passed. `npx gitnexus detect-changes --repo admin-redesign-shadcn-i18n` will be attempted before commit; the installed CLI previously reported `unknown command 'detect-changes'`.

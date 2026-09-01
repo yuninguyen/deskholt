@@ -58,6 +58,14 @@ test('deriveTrackingUrl inserts the pending tag before a preserved fragment', ()
   );
 });
 
+// Break caught: splitting a fragment at every hash drops valid literal fragment text after the first hash.
+test('deriveTrackingUrl preserves every character in a multi-hash fragment', () => {
+  assert.deepEqual(
+    deriveTrackingUrl('https://shop.test/item#one#two'),
+    'https://shop.test/item?tag=deskholt-pending#one#two'
+  );
+});
+
 // Break caught: accepting an unapproved merchant network lets public click tracking drift from its fixed supported set.
 test('parseCreateAffiliateLinkInput rejects networks outside the approved set', () => {
   assert.throws(() => parseCreateAffiliateLinkInput(validCreateForm({ network: 'other' })), /invalid network/i);
