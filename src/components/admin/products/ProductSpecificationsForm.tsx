@@ -18,6 +18,19 @@ type Confidence = 'VERIFIED' | 'LIKELY' | 'UNVERIFIED';
 const NATIVE_SELECT_CLASS =
   'h-8 w-full rounded-md border border-admin-input bg-transparent px-2.5 py-1 text-sm text-admin-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring';
 
+const ENUM_LABEL_ACRONYMS = new Set(['MDF']);
+
+function humanizeEnumLabel(value: string): string {
+  return value
+    .split('_')
+    .map((word) =>
+      ENUM_LABEL_ACRONYMS.has(word)
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(' ');
+}
+
 type SpecificationsTranslations = Dictionary['specifications'];
 type SpecificationsFormProps = {
   data: SpecificationData;
@@ -79,7 +92,11 @@ function SpecRowFields({
           {row.isRequired && row.scope !== 'DERIVED' && <span className="ml-1 text-admin-destructive">*</span>}
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2">
-          {row.unit && <span className="font-mono text-xs text-admin-muted-foreground">{row.unit}</span>}
+          {row.unit &&
+            !(
+              (row.unit === 'in' || row.unit === 'lb') &&
+              (row.dataType === 'DECIMAL' || row.dataType === 'INTEGER')
+            ) && <span className="font-mono text-xs text-admin-muted-foreground">{row.unit}</span>}
           {row.scope === 'DERIVED' && <AdminStatusBadge variant="warning">{translations.derived}</AdminStatusBadge>}
         </div>
       </div>
@@ -103,12 +120,12 @@ function SpecRowFields({
               <option value="">{translations.emptyOption}</option>
               {staleEnumValue !== null && (
                 <option value={staleEnumValue}>
-                  {staleEnumValue} ({translations.staleEnumSuffix})
+                  {humanizeEnumLabel(staleEnumValue)} ({translations.staleEnumSuffix})
                 </option>
               )}
               {allowedEnumValues.map((allowedValue) => (
                 <option key={allowedValue} value={allowedValue}>
-                  {allowedValue}
+                  {humanizeEnumLabel(allowedValue)}
                 </option>
               ))}
             </select>

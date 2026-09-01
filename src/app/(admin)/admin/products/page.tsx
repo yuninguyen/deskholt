@@ -177,7 +177,7 @@ export default async function AdminProductsPage({
                     <div className="mt-2 flex items-center gap-2">
                       <Link
                         href={`/admin/products/${product.id}/specifications`}
-                        className="text-sm text-admin-primary hover:text-admin-primary/90"
+                        className="text-xs text-admin-primary hover:text-admin-primary/90"
                       >
                         {translations.products.actions.editSpecifications} ({product._count.product_attributes}) →
                       </Link>
