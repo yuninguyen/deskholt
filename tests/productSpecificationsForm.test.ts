@@ -68,7 +68,7 @@ test('Specifications form preserves row field names, draft defaults, stale ENUM 
   assert.doesNotMatch(html, /Hidden/);
 });
 
-test('Specifications form renders clearable Boolean, ENUM, and source type options without synthetic values', async () => {
+test('Specifications form renders clearable Boolean and ENUM options plus named Radix source-type controls without synthetic values', async () => {
   const booleanKey = 'boolean-row';
   const enumKey = 'enum-row';
   const sourceTypeKey = 'source-type-row';
@@ -82,7 +82,7 @@ test('Specifications form renders clearable Boolean, ENUM, and source type optio
 
   assert.match(html, new RegExp(`name="value__${booleanKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="true" selected="">True<\\/option>`));
   assert.match(html, new RegExp(`name="value__${enumKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="BAMBOO" selected="">BAMBOO<\\/option>`));
-  assert.match(html, new RegExp(`name="sourceType__${sourceTypeKey}"[\\s\\S]*?<option value="">Source type<\\/option>[\\s\\S]*?<option value="RETAILER" selected="">Retailer<\\/option>`));
+  assert.match(html, new RegExp(`role="combobox"[\\s\\S]*?name="sourceType__${sourceTypeKey}"`));
   assert.doesNotMatch(html, /value="empty"/);
 
   const blankHtml = await render(makeData({
@@ -94,7 +94,7 @@ test('Specifications form renders clearable Boolean, ENUM, and source type optio
   }));
   assert.match(blankHtml, /name="value__blank-boolean"[\s\S]*?<option value="" selected="">—<\/option>/);
   assert.match(blankHtml, /name="value__blank-enum"[\s\S]*?<option value="" selected="">—<\/option>/);
-  assert.match(blankHtml, /name="sourceType__blank-source-type"[\s\S]*?<option value="" selected="">Source type<\/option>/);
+  assert.match(blankHtml, /role="combobox"[\s\S]*?name="sourceType__blank-source-type"/);
 });
 
 test('Specifications form preserves in/cm and lb/kg source-unit defaults and invalid draft fallbacks', async () => {
@@ -109,13 +109,14 @@ test('Specifications form preserves in/cm and lb/kg source-unit defaults and inv
   assert.match(source, /<SelectItem value="kg">kg<\/SelectItem>/);
 });
 
-test('Specifications form restores native clearable selects and delegates confidence state to a client leaf', async () => {
+test('Specifications form keeps native clearable value selects but uses Radix for source type and confidence', async () => {
   const source = await readFile(formSourcePath, 'utf8');
 
   assert.match(source, /<select[\s\S]*name=\{`value__\$\{row\.rowKey\}`\}/);
   assert.match(source, /<option value="">\{translations\.emptyOption\}<\/option>/);
-  assert.match(source, /<select[\s\S]*name=\{`sourceType__\$\{row\.rowKey\}`\}/);
-  assert.doesNotMatch(source, /SelectItem value="empty"/);
+  assert.match(source, /<Select name=\{`sourceType__\$\{row\.rowKey\}`\} defaultValue=\{String\(draft\?\.sourceType \?\? existing\?\.sourceType \?\? ''\)\}>[\s\S]*?<SelectTrigger>[\s\S]*?<SelectValue placeholder=\{translations\.sourceType\} \/>[\s\S]*?<SelectContent>[\s\S]*?SOURCE_TYPES\.map\(\(sourceType\) => \([\s\S]*?<SelectItem key=\{sourceType\} value=\{sourceType\}>[\s\S]*?\{translations\.sourceTypes\[sourceType\]\}/);
+  assert.doesNotMatch(source, /<select[^>]*name=\{`sourceType__\$\{row\.rowKey\}`\}/);
+  assert.doesNotMatch(source, /SelectItem value=""|SelectItem value="empty"/);
   assert.match(source, /aria-invalid=\{staleEnumValue \? true : undefined\}/);
   assert.match(source, /from '\.\/SpecificationConfidenceSelect';/);
   assert.match(source, /<SpecificationConfidenceSelect/);

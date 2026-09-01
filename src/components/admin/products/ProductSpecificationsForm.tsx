@@ -171,18 +171,18 @@ function SpecRowFields({
       </div>
 
       <div className="sm:col-span-2">
-        <select
-          name={`sourceType__${row.rowKey}`}
-          defaultValue={String(draft?.sourceType ?? existing?.sourceType ?? '')}
-          className={NATIVE_SELECT_CLASS}
-        >
-          <option value="">{translations.sourceType}</option>
-          {SOURCE_TYPES.map((sourceType) => (
-            <option key={sourceType} value={sourceType}>
-              {translations.sourceTypes[sourceType]}
-            </option>
-          ))}
-        </select>
+        <Select name={`sourceType__${row.rowKey}`} defaultValue={String(draft?.sourceType ?? existing?.sourceType ?? '')}>
+          <SelectTrigger>
+            <SelectValue placeholder={translations.sourceType} />
+          </SelectTrigger>
+          <SelectContent>
+            {SOURCE_TYPES.map((sourceType) => (
+              <SelectItem key={sourceType} value={sourceType}>
+                {translations.sourceTypes[sourceType]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="sm:col-span-2">

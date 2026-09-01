@@ -53,7 +53,7 @@ test('Round 2 makes product actions a two-row equal-control layout without chang
   const actions = productsPage.slice(actionStart, productsPage.indexOf('</TableCell>', actionStart));
 
   assert.match(actions, /<div className="flex flex-nowrap items-center gap-2">[\s\S]*?<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="status"[\s\S]*?type="submit"[\s\S]*?<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\}/);
-  assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] border border-admin-input bg-admin-card px-3 text-\[13px\] font-semibold text-admin-foreground/);
+  assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] px-3 text-\[13px\] font-semibold"/);
   assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] bg-admin-primary px-3 text-\[13px\] font-semibold dark:font-bold text-admin-primary-foreground/);
   assert.match(actions, /className="box-border h-\[34px\] rounded-\[7px\] border border-admin-input px-3 text-\[13px\] font-semibold text-admin-foreground/);
   assert.match(actions, /<div className="mt-2 flex items-center gap-2">[\s\S]*?<Link/);
@@ -62,6 +62,8 @@ test('Round 2 makes product actions a two-row equal-control layout without chang
 
 test('Round 2 applies the exact dark primary, grid, and header control geometry', () => {
   assert.match(globals, /#admin-theme-root\[data-theme="dark"\] \{[\s\S]*--primary: 211\.25 22\.4299% 58\.0392%; \/\* #7C93AC \*\/[\s\S]*--primary-foreground: 210 18\.1818% 7\.8431%; \/\* #101418 \*\//);
+  assert.match(globals, /:where\(#admin-theme-root \*\) \{[\s\S]*border-color: hsl\(var\(--border\)\);/);
+  assert.doesNotMatch(globals, /#admin-theme-root \* \{/);
   assert.match(specificationsForm, /<div className="sm:col-span-2">[\s\S]*name=\{`sourceType__/);
   assert.match(specificationsForm, /<div className="sm:col-span-2">[\s\S]*<SpecificationConfidenceSelect/);
   assert.match(localeToggle, /<div role="group" aria-label=\{translations\.header\.localeLabel\} className="inline-flex h-\[34px\] rounded-\[8px\] border border-\[#E3DACB\] bg-\[#EFE9DC\] p-\[3px\][\s\S]*dark:border-\[#34291E\][\s\S]*dark:bg-\[#17140F\]/);

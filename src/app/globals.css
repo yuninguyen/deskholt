@@ -56,7 +56,7 @@
     font-family: var(--font-admin-sans), sans-serif;
   }
 
-  #admin-theme-root * {
+  :where(#admin-theme-root *) {
     border-color: hsl(var(--border));
     outline-color: hsl(var(--ring) / 0.5);
   }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ProductStatus } from '@prisma/client';
 import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getAdminTranslations } from '@/lib/admin/i18n/server';
 import { prisma } from '@/lib/prisma';
@@ -140,15 +141,18 @@ export default async function AdminProductsPage({
                         <input type="hidden" name="productId" value={product.id} />
                         <input type="hidden" name="command" value="set-lifecycle" />
                         <label className="sr-only" htmlFor={`status-${product.id}`}>{translations.products.table.lifecycle}</label>
-                        <select
-                          id={`status-${product.id}`}
-                          name="status"
-                          defaultValue={product.status}
-                          autoFocus={isFeedbackTarget}
-                          className="box-border h-[34px] rounded-[7px] border border-admin-input bg-admin-card px-3 text-[13px] font-semibold text-admin-foreground outline-none focus:border-admin-primary"
-                        >
-                          {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{lifecycleLabels[status]}</option>)}
-                        </select>
+                        <Select name="status" defaultValue={product.status}>
+                          <SelectTrigger
+                            id={`status-${product.id}`}
+                            autoFocus={isFeedbackTarget}
+                            className="box-border h-[34px] rounded-[7px] px-3 text-[13px] font-semibold"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUS_OPTIONS.map((status) => <SelectItem key={status} value={status}>{lifecycleLabels[status]}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                         <button
                           type="submit"
                           className="box-border h-[34px] rounded-[7px] bg-admin-primary px-3 text-[13px] font-semibold dark:font-bold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"

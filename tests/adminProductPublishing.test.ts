@@ -121,8 +121,10 @@ test('Admin Products renders its translated empty state as a table row inside Ta
   );
 });
 
-test('Admin Products preserves publishing submission and feedback contracts', () => {
-  assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value="set-lifecycle" \/>[\s\S]*?<select[\s\S]*?name="status"[\s\S]*?defaultValue=\{product\.status\}[\s\S]*?autoFocus=\{isFeedbackTarget\}/);
+test('Admin Products preserves publishing submission and feedback contracts with a Radix lifecycle select', () => {
+  assert.match(adminProductsPageSource, /import \{ Select, SelectContent, SelectItem, SelectTrigger, SelectValue \} from '@\/components\/ui\/select';/);
+  assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value="set-lifecycle" \/>[\s\S]*?<Select name="status" defaultValue=\{product\.status\}>[\s\S]*?<SelectTrigger\s+id=\{`status-\$\{product\.id\}`\}\s+autoFocus=\{isFeedbackTarget\}\s+className="box-border h-\[34px\] rounded-\[7px\] px-3 text-\[13px\] font-semibold"[\s\S]*?<SelectValue \/>[\s\S]*?<SelectContent>[\s\S]*?STATUS_OPTIONS\.map\(\(status\) => <SelectItem key=\{status\} value=\{status\}>\{lifecycleLabels\[status\]\}<\/SelectItem>\)/);
+  assert.doesNotMatch(adminProductsPageSource, /<select[\s\S]*?name="status"/);
   assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\} \/>[\s\S]*?disabled=\{isEnableDisabled\}[\s\S]*?aria-describedby=\{isEnableDisabled \? enableIndexHelpId : undefined\}/);
   assert.match(adminProductsPageSource, /id={`product-\$\{product\.id\}`}/);
   assert.match(adminProductsPageSource, /tabIndex=\{isFeedbackTarget \? 0 : undefined\}/);

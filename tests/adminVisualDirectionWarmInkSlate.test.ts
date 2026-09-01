@@ -122,7 +122,7 @@ test('Admin surfaces consume warm ink and slate tokens instead of raw neutral or
   assert.match(localeToggleSource, /bg-admin-primary text-admin-primary-foreground shadow-sm/);
   assert.match(localeToggleSource, /text-admin-muted-foreground hover:text-admin-foreground/);
   assert.match(productsPage, /bg-admin-primary[^"']*text-admin-primary-foreground[^"']*hover:bg-admin-primary\/90/);
-  assert.match(productsPage, /border-admin-input bg-admin-card[^"']*text-admin-foreground[^"']*focus:border-admin-primary/);
+  assert.match(productsPage, /<SelectTrigger[\s\S]*?className="box-border h-\[34px\] rounded-\[7px\] px-3 text-\[13px\] font-semibold"/);
   assert.match(productsPage, /border-admin-input[^"']*text-admin-foreground enabled:hover:border-admin-primary/);
   assert.match(productsPage, /text-admin-primary hover:text-admin-primary\/90/);
   assert.match(specificationsFormSource, /bg-admin-primary[^"']*text-admin-primary-foreground hover:bg-admin-primary\/90/);
