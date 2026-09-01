@@ -1,9 +1,10 @@
 'use client';
 
 import { useAdminTranslations } from '@/lib/admin/i18n/client';
+import type { Locale } from '@/lib/admin/i18n/shared';
 
-export default function ThemeToggle() {
-  const translations = useAdminTranslations();
+export default function ThemeToggle({ initialLocale }: { initialLocale: Locale }) {
+  const translations = useAdminTranslations(initialLocale);
 
   function handleClick() {
     const root = document.getElementById('admin-theme-root');

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import test, { mock } from 'node:test';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { dictionaries, resolveAdminClientLocale, resolveAdminLocale } from '@/lib/admin/i18n/shared';
 
 const layoutSourcePath = new URL('../src/app/(admin)/layout.tsx', import.meta.url);
@@ -8,6 +10,19 @@ const adminHeaderSourcePath = new URL('../src/components/admin/AdminHeader.tsx',
 const clientSourcePath = new URL('../src/lib/admin/i18n/client.ts', import.meta.url);
 const localeToggleSourcePath = new URL('../src/components/admin/LocaleToggle.tsx', import.meta.url);
 const serverSourcePath = new URL('../src/lib/admin/i18n/server.ts', import.meta.url);
+
+const moduleMock = mock as unknown as {
+  module(
+    specifier: string,
+    options: { namedExports?: Record<string, unknown>; defaultExport?: unknown },
+  ): { restore(): void };
+};
+
+const serverLocaleMock = moduleMock.module('@/lib/admin/i18n/server', {
+  namedExports: { getAdminLocale: async () => 'vi' },
+});
+
+test.after(() => serverLocaleMock.restore());
 
 function leafPaths(value: unknown, prefix = ''): string[] {
   if (typeof value === 'string') return [prefix];
@@ -82,6 +97,53 @@ test('getClientLocale prioritizes the immediate Admin root locale over persisten
   }
 });
 
+// Break caught: a cookie-resolved Vietnamese page with no usable localStorage can SSR an English root or header controls.
+test('Admin layout SSR preserves the cookie locale through the root and header controls', async () => {
+  const { default: AdminLayout } = await import('../src/app/(admin)/layout.tsx');
+  const markup = renderToStaticMarkup(
+    await AdminLayout({ children: React.createElement('p', null, 'Admin content') }),
+  );
+
+  assert.match(markup, /id="admin-theme-root"[^>]*data-locale="vi"/);
+  assert.match(markup, /Quản trị Deskholt/);
+  assert.match(markup, /aria-label="Ngôn ngữ"/);
+  assert.match(markup, /aria-label="Chuyển giao diện sáng\/tối"/);
+  assert.match(markup, />Tối<\/span>/);
+});
+
+async function runThemeInitScript(storedLocale: string | null | 'unavailable', rootLocale = 'vi'): Promise<string | null> {
+  const layoutSource = await readFile(layoutSourcePath, 'utf8');
+  const script = layoutSource.match(/const THEME_INIT_SCRIPT = `([\s\S]*?)`;/)?.[1];
+  assert.ok(script, 'Admin layout must define the prepaint theme initialization script');
+
+  const attributes = new Map<string, string>([['data-locale', rootLocale]]);
+  const root = {
+    getAttribute: (name: string) => attributes.get(name) ?? null,
+    setAttribute: (name: string, value: string) => attributes.set(name, value),
+  };
+  const localStorage = {
+    getItem: () => {
+      if (storedLocale === 'unavailable') throw new Error('storage unavailable');
+      return storedLocale;
+    },
+  };
+  new Function('window', 'document', 'localStorage', script)(
+    { matchMedia: () => ({ matches: false }) },
+    { currentScript: { parentElement: root } },
+    localStorage,
+  );
+
+  return root.getAttribute('data-locale');
+}
+
+// Break caught: overwriting the cookie-seeded root locale before hydration makes SSR and client snapshots disagree.
+test('prepaint initialization keeps the root locale without valid stored locale and accepts a valid override', async () => {
+  assert.equal(await runThemeInitScript(null), 'vi');
+  assert.equal(await runThemeInitScript('unavailable'), 'vi');
+  assert.equal(await runThemeInitScript('fr'), 'vi');
+  assert.equal(await runThemeInitScript('en'), 'en');
+});
+
 test('Admin locale infrastructure preserves SSR defaults and persists client selection', async () => {
   const [layoutSource, adminHeaderSource, clientSource, localeToggleSource, serverSource] = await Promise.all([
     readFile(layoutSourcePath, 'utf8'),
@@ -91,7 +153,9 @@ test('Admin locale infrastructure preserves SSR defaults and persists client sel
     readFile(serverSourcePath, 'utf8'),
   ]);
 
-  assert.match(layoutSource, /data-locale="en"/);
+  assert.match(layoutSource, /data-locale=\{locale\}/);
+  assert.match(layoutSource, /getAdminLocale\(\)/);
+  assert.match(layoutSource, /root\.getAttribute\('data-locale'\)/);
   assert.match(layoutSource, /localStorage\.getItem\('admin-locale'\)/);
   assert.match(layoutSource, /suppressHydrationWarning/);
   assert.match(localeToggleSource, /localStorage\.setItem\('admin-locale', locale\)/);
@@ -102,6 +166,11 @@ test('Admin locale infrastructure preserves SSR defaults and persists client sel
   assert.doesNotMatch(serverSource, /from ['"]\.\/index['"]/);
   assert.match(serverSource, /from ['"]\.\/shared['"]/);
   assert.match(layoutSource, /font-body/);
+  assert.match(adminHeaderSource, /initialLocale: Locale/);
+  assert.match(adminHeaderSource, /useAdminTranslations\(initialLocale\)/);
+  assert.match(adminHeaderSource, /<LocaleToggle initialLocale=\{initialLocale\}/);
+  assert.match(adminHeaderSource, /<ThemeToggle initialLocale=\{initialLocale\}/);
+  assert.match(clientSource, /useAdminTranslations\(initialLocale: Locale = 'en'\)/);
   assert.match(adminHeaderSource, /font-body/);
   assert.doesNotMatch(adminHeaderSource, /font-mono/);
 });

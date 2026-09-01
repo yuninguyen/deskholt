@@ -23,10 +23,6 @@ export function getClientLocale(): Locale {
   }
 }
 
-function getServerLocale(): Locale {
-  return 'en';
-}
-
 function subscribeToLocaleChanges(onStoreChange: () => void) {
   if (typeof window === 'undefined') return () => {};
 
@@ -34,7 +30,7 @@ function subscribeToLocaleChanges(onStoreChange: () => void) {
   return () => window.removeEventListener(ADMIN_LOCALE_CHANGE_EVENT, onStoreChange);
 }
 
-export function useAdminTranslations(): Dictionary {
-  const locale = useSyncExternalStore(subscribeToLocaleChanges, getClientLocale, getServerLocale);
+export function useAdminTranslations(initialLocale: Locale = 'en'): Dictionary {
+  const locale = useSyncExternalStore(subscribeToLocaleChanges, getClientLocale, () => initialLocale);
   return dictionaries[locale];
 }

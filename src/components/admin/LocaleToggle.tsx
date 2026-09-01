@@ -5,10 +5,10 @@ import { ADMIN_LOCALE_CHANGE_EVENT, resolveAdminLocale, type Locale } from '@/li
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-export default function LocaleToggle() {
-  const translations = useAdminTranslations();
+export default function LocaleToggle({ initialLocale }: { initialLocale: Locale }) {
+  const translations = useAdminTranslations(initialLocale);
   const locale = typeof document === 'undefined'
-    ? 'en'
+    ? initialLocale
     : resolveAdminLocale(document.getElementById('admin-theme-root')?.getAttribute('data-locale'));
 
   function setLocale(locale: Locale) {
