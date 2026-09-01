@@ -101,6 +101,7 @@ test('Admin product status, access, index, Badge, and confidence mappings retain
   assert.match(productsPage, /<Badge variant=\{product\.is_indexed \? 'success' : 'outline'\}>/);
 
   assert.match(badgeSource, /success: 'border-emerald-500\/30 bg-emerald-500\/10 text-emerald-700 dark:text-emerald-300',/);
+  assert.match(badgeSource, /brand: 'border-brand-500\/30 bg-brand-500\/10 text-brand-700 dark:text-brand-300',/);
   assert.match(badgeSource, /warning: 'border-amber-500\/30 bg-amber-500\/10 text-amber-800 dark:text-amber-300',/);
   assert.match(badgeSource, /destructive: 'bg-admin-destructive text-admin-primary-foreground',/);
   assert.match(badgeSource, /neutral: 'border-admin-border bg-admin-muted text-admin-muted-foreground',/);
@@ -125,36 +126,33 @@ test('Admin surfaces consume warm ink and slate tokens instead of raw neutral or
   assert.match(productsPage, /text-admin-primary hover:text-admin-primary\/90/);
   assert.match(specificationsFormSource, /bg-admin-primary[^"']*text-admin-primary-foreground hover:bg-admin-primary\/90/);
 
-  const rawNeutralOrGreen = /(?:bg|text|border)-(?:gray-\d+|white|brand-\d+)/;
-  for (const [surface, source] of Object.entries({
-    adminLayoutSource,
-    adminHeaderSource,
-    themeToggleSource,
-    localeToggleSource,
-    productsPage,
-    specificationsPageSource,
-    specificationsFormSource,
-  })) {
-    assert.doesNotMatch(source, rawNeutralOrGreen, `${surface} bypasses the Admin token palette`);
-  }
 });
 
-test('Admin success feedback keeps emerald limited to the two approved semantic banners', () => {
-  const productsSavedBanner = 'className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"';
-  const specificationsSavedBanner = 'className="border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300"';
+test('Admin semantic status exceptions remain context-bound and all other reviewed utilities consume tokens', () => {
+  const badgeSuccessVariant = "success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',";
+  const badgeBrandVariant = "brand: 'border-brand-500/30 bg-brand-500/10 text-brand-700 dark:text-brand-300',";
+  const productsSavedFeedback = /\{query\.saved && \(\s*<p className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950\/40 dark:text-emerald-300">\s*\{translations\.products\.saved\}\s*<\/p>\s*\)\}/;
+  const specificationsSavedFeedback = /\{saved && \(\s*<div className="border border-emerald-500\/30 bg-emerald-500\/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-300">\s*\{translations\.specifications\.saved\}\s*<\/div>\s*\)\}/;
 
-  assert.match(productsPage, new RegExp(productsSavedBanner));
-  assert.match(specificationsPageSource, new RegExp(specificationsSavedBanner));
-  assert.doesNotMatch(productsPage.replace(productsSavedBanner, ''), /emerald-/);
-  assert.doesNotMatch(specificationsPageSource.replace(specificationsSavedBanner, ''), /emerald-/);
-  for (const [surface, source] of Object.entries({
+  assert.ok(badgeSource.includes(badgeSuccessVariant), 'Badge success must retain its approved semantic emerald classes');
+  assert.ok(badgeSource.includes(badgeBrandVariant), 'Badge brand must retain its approved semantic brand classes');
+  assert.match(productsPage, productsSavedFeedback);
+  assert.match(specificationsPageSource, specificationsSavedFeedback);
+
+  const rawPaletteUtility = /(?:bg|text|border)-(?:gray-\d+|white|brand-\d+|emerald-\d+)/;
+  const reviewedSources = {
     adminLayoutSource,
     adminHeaderSource,
     themeToggleSource,
     localeToggleSource,
+    productsPage: productsPage.replace(productsSavedFeedback, ''),
+    specificationsPageSource: specificationsPageSource.replace(specificationsSavedFeedback, ''),
     specificationsFormSource,
-  })) {
-    assert.doesNotMatch(source, /emerald-/, `${surface} must not introduce an emerald utility`);
+    confidenceSelectSource,
+    badgeSource: badgeSource.replace(badgeSuccessVariant, '').replace(badgeBrandVariant, ''),
+  };
+  for (const [surface, source] of Object.entries(reviewedSources)) {
+    assert.doesNotMatch(source, rawPaletteUtility, `${surface} bypasses the Admin token palette outside an approved semantic exception`);
   }
 });
 

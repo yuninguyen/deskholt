@@ -171,3 +171,33 @@ Result: 30 passing, 0 failing.
 | Lint | `npm run lint` | Passed. |
 | Whitespace | `git diff --check` | Passed; Git emitted only a CRLF checkout warning. |
 | GitNexus change detection | `npx gitnexus detect-changes --repo deskholt` | Attempted immediately before committing; `error: unknown command 'detect-changes'`. No workaround used. |
+
+## Badge and conditional semantic-exception guard correction
+
+### Scope
+
+Updated only `tests/adminVisualDirectionWarmInkSlate.test.ts` and this report. No production source changed.
+
+The corrected guard now:
+
+- locks the exact approved `Badge.tsx` `success` (emerald) and `brand` class definitions while retaining lifecycle/access/index/confidence mappings to their semantic variants;
+- binds Products saved feedback to its `{query.saved && (` branch and Specifications saved feedback to its `{saved && (` branch before removal;
+- removes only those complete approved conditional snippets and the two exact Badge semantic variant definitions before residual checks; and
+- scans every declared reviewed Admin source, including `Badge.tsx` and the confidence component, for raw `gray-*`, `white`, `brand-*`, and `emerald-*` background/text/border utilities outside the approved exceptions.
+
+### Coverage execution
+
+This correction passed immediately because the existing source already has the approved semantic exceptions and no residual raw palette bypasses. No artificial RED run or production change was used.
+
+```text
+node --experimental-test-module-mocks --import tsx --test tests/adminVisualDirectionWarmInkSlate.test.ts tests/adminProductPublishing.test.ts tests/productSpecificationsPage.test.ts tests/productSpecificationsForm.test.ts
+```
+
+Result: 30 passing, 0 failing.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Typecheck | `npm run typecheck` | Passed. |
+| Lint | `npm run lint` | Passed. |
+| Whitespace | `git diff --check` | Passed; Git emitted only a CRLF checkout warning. |
+| GitNexus change detection | `npx gitnexus detect-changes --repo deskholt` | Attempted immediately before committing; `error: unknown command 'detect-changes'`. No workaround used. |
