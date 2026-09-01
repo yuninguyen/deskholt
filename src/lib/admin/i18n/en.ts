@@ -29,7 +29,7 @@ export const en = {
       archived: 'Archived—not public',
     },
     index: { enabled: 'Enabled', disabled: 'Disabled', enable: 'Enable index', disable: 'Disable index', enableHelp: 'Set lifecycle to Active to enable indexing.' },
-    actions: { save: 'Save', editSpecifications: 'Edit specifications' },
+    actions: { save: 'Save', editSpecifications: 'Edit specifications', offers: 'Offers' },
     empty: 'No Standing Desk products yet.',
     errors: {
       invalidInput: 'Invalid publishing request. Review the Product and command values, then try again.',
@@ -62,6 +62,19 @@ export const en = {
     variant: 'Variant', submit: 'Save Specifications',
     sourceTypes: { MANUFACTURER: 'Manufacturer', MANUAL: 'Manual', RETAILER: 'Retailer', CERTIFICATION: 'Certification', OTHER: 'Other' },
     confidences: { VERIFIED: 'Verified', LIKELY: 'Likely', UNVERIFIED: 'Unverified' },
+  },
+  offers: {
+    back: 'Products', title: 'Offers', addOffer: 'Add offer', save: 'Save',
+    network: 'Network', price: 'Price', rawUrl: 'Product URL', inStock: 'In stock',
+    priorityOrder: 'Priority', inStockBadge: 'In stock', outOfStockBadge: 'Out of stock',
+    saved: 'Offer saved successfully.', selectNetwork: 'Select a network',
+    networks: { amazon: 'Amazon', walmart: 'Walmart', target: 'Target', awin: 'Awin', impact: 'Impact', cj: 'CJ' },
+    empty: 'No offers yet for this product.',
+    errors: {
+      invalidInput: 'Review the offer fields (network, price, URL) and try again.',
+      notFound: 'That offer could not be found for this product. Refresh and try again.',
+      fallback: 'Offer could not be saved. Review the form and try again.',
+    },
   },
 } as const;
 

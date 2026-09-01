@@ -12,7 +12,7 @@ export const vi = {
     lifecycle: { DRAFT: 'Bản nháp', ACTIVE: 'Hoạt động', BLOCKED: 'Bị chặn', ARCHIVED: 'Đã lưu trữ' },
     access: { eligible: 'Đủ điều kiện hiển thị công khai và lập chỉ mục', explicitNoindex: 'Công khai, không lập chỉ mục', draft: 'Bản nháp—chưa công khai', blocked: 'Bị chặn—chưa công khai', archived: 'Đã lưu trữ—chưa công khai' },
     index: { enabled: 'Đã bật', disabled: 'Đã tắt', enable: 'Bật chỉ mục', disable: 'Tắt chỉ mục', enableHelp: 'Đặt vòng đời thành Hoạt động để bật lập chỉ mục.' },
-    actions: { save: 'Lưu', editSpecifications: 'Sửa thông số' }, empty: 'Chưa có sản phẩm Bàn đứng.',
+    actions: { save: 'Lưu', editSpecifications: 'Sửa thông số', offers: 'Ưu đãi' }, empty: 'Chưa có sản phẩm Bàn đứng.',
     errors: { invalidInput: 'Yêu cầu xuất bản không hợp lệ. Kiểm tra lại giá trị Sản phẩm và lệnh rồi thử lại.', missing: 'Không tìm thấy sản phẩm. Làm mới danh sách trước khi thử lệnh xuất bản khác.', activeOnly: 'Đặt vòng đời thành Hoạt động trước khi bật lập chỉ mục.', concurrencyConflict: 'Sản phẩm đã thay đổi khi lệnh đang chạy. Kiểm tra trạng thái hiện tại rồi thử lại.', fallback: 'Không thể hoàn tất thao tác xuất bản. Kiểm tra trạng thái Sản phẩm rồi thử lại.' },
   },
   createProduct: {
@@ -22,5 +22,18 @@ export const vi = {
   specifications: {
     categoryUnavailable: 'Danh mục của sản phẩm này chưa được khai báo trong Attribute Engine — chưa có thuộc tính nào để nhập.', back: 'Sản phẩm', completeness: 'Mức độ hoàn chỉnh', saved: 'Đã lưu thông số thành công.', errors: { rowsInvalid: 'dòng có lỗi, chưa lưu được — vui lòng sửa và lưu lại.', staleEnum: 'Giá trị ENUM đã lưu không còn nằm trong danh sách cho phép. Chọn giá trị mới trước khi lưu.' }, derived: 'Suy luận', true: 'Đúng', false: 'Sai', emptyOption: '—', staleEnumSuffix: 'giá trị đã lưu — không còn được phép', sourceUrl: 'URL nguồn', sourceType: 'Loại nguồn', productLevel: 'Cấp sản phẩm', noProductAttributes: 'Không có thuộc tính cấp sản phẩm.', noVariants: 'Sản phẩm này chưa có Biến thể. Hãy tạo Biến thể trước để nhập thông số cấp Biến thể.', noActiveVariants: 'Sản phẩm này không có Biến thể đang hoạt động. Hãy tạo hoặc kích hoạt Biến thể trước để nhập thông số cấp Biến thể.', variant: 'Biến thể', submit: 'Lưu thông số',
     sourceTypes: { MANUFACTURER: 'Nhà sản xuất', MANUAL: 'Hướng dẫn', RETAILER: 'Nhà bán lẻ', CERTIFICATION: 'Chứng nhận', OTHER: 'Khác' }, confidences: { VERIFIED: 'Đã xác minh', LIKELY: 'Có khả năng', UNVERIFIED: 'Chưa xác minh' },
+  },
+  offers: {
+    back: 'Sản phẩm', title: 'Ưu đãi', addOffer: 'Thêm ưu đãi', save: 'Lưu',
+    network: 'Mạng lưới', price: 'Giá', rawUrl: 'URL sản phẩm', inStock: 'Còn hàng',
+    priorityOrder: 'Ưu tiên', inStockBadge: 'Còn hàng', outOfStockBadge: 'Hết hàng',
+    saved: 'Đã lưu ưu đãi thành công.', selectNetwork: 'Chọn một mạng lưới',
+    networks: { amazon: 'Amazon', walmart: 'Walmart', target: 'Target', awin: 'Awin', impact: 'Impact', cj: 'CJ' },
+    empty: 'Chưa có ưu đãi nào cho sản phẩm này.',
+    errors: {
+      invalidInput: 'Kiểm tra các trường ưu đãi (mạng lưới, giá, URL) rồi thử lại.',
+      notFound: 'Không tìm thấy ưu đãi này cho sản phẩm. Hãy làm mới và thử lại.',
+      fallback: 'Không thể lưu ưu đãi. Kiểm tra biểu mẫu rồi thử lại.',
+    },
   },
 } as const satisfies Dictionary;
