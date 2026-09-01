@@ -93,3 +93,51 @@ Result: 22 passing, 0 failing.
 | GitNexus change detection | `npx gitnexus detect-changes --repo deskholt` | Attempted as required; failed with the known CLI result: `error: unknown command 'detect-changes'`. No workaround used. |
 
 The follow-up commit contains only the focused test and task report. Pre-existing unrelated worktree entries `next-env.d.ts` and `PRODUCT.md` remain untouched and excluded.
+
+## Visual token-consumption correction
+
+### Scope
+
+Replaced only raw neutral/green color utilities in the approved Admin surfaces with existing token-backed `admin-*` utilities:
+
+- `src/app/(admin)/layout.tsx`
+- `src/components/admin/AdminHeader.tsx`
+- `src/components/admin/ThemeToggle.tsx`
+- `src/components/admin/LocaleToggle.tsx`
+- `src/app/(admin)/admin/products/page.tsx`
+- `src/components/admin/products/ProductSpecificationsForm.tsx`
+
+No DOM nesting, forms/actions, i18n, hydration, table contracts, public code, Tailwind configuration, dependencies, or semantic Badge status variants changed.
+
+### TDD evidence
+
+RED command:
+
+```text
+node --experimental-test-module-mocks --import tsx --test tests/adminVisualDirectionWarmInkSlate.test.ts
+```
+
+Result: 3 passing, 1 failing. The new consumption assertion correctly failed because `AdminLayout` still used `bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100` instead of `bg-admin-background text-admin-foreground`, demonstrating the raw-neutral token bypass.
+
+GREEN command:
+
+```text
+node --experimental-test-module-mocks --import tsx --test tests/adminVisualDirectionWarmInkSlate.test.ts
+```
+
+Result: 4 passing, 0 failing.
+
+The new coverage requires every approved surface to consume matching Admin token utilities and rejects raw `gray-*`, `white`, and `brand-*` background/text/border utilities in those sources. It retains the existing semantic Badge mapping coverage.
+
+### Verification
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Relevant suites | `node --experimental-test-module-mocks --import tsx --test tests/adminVisualDirectionWarmInkSlate.test.ts tests/adminProductPublishing.test.ts tests/adminI18n.test.ts tests/adminProductCreationPage.test.ts tests/productSpecificationsForm.test.ts` | 36 passing, 0 failing. |
+| Typecheck | `npm run typecheck` | Passed. |
+| Lint | `npm run lint` | Passed. |
+| Whitespace | `git diff --check` | Passed; Git emitted only CRLF checkout warnings. |
+| UI detector | `node C:\laragon\www\deskholt\.agents\skills\impeccable\scripts\detect.mjs --json` | Passed with `[]`; no findings. |
+| GitNexus impact | Re-analysis supplied by review for `AdminProductsPage` and `Badge`; local impact for `ProductSpecificationsForm` | Low risk, 0 indexed callers/processes. The index did not resolve the four default Admin shell components by name. |
+
+`npx gitnexus detect-changes --repo deskholt` was attempted immediately before committing and returned the known unsupported outcome: `error: unknown command 'detect-changes'`. No workaround was used.

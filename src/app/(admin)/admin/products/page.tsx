@@ -54,7 +54,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500"
+          className="rounded-lg bg-admin-primary px-3 py-2 text-sm font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
         >
           {translations.products.newProduct}
         </Link>
@@ -144,13 +144,13 @@ export default async function AdminProductsPage({
                         name="status"
                         defaultValue={product.status}
                         autoFocus={isFeedbackTarget}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                        className="rounded-lg border border-admin-input bg-admin-card px-3 py-2 text-sm text-admin-foreground outline-none focus:border-admin-primary"
                       >
                         {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{lifecycleLabels[status]}</option>)}
                       </select>
                       <button
                         type="submit"
-                        className="rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-500"
+                        className="rounded-lg bg-admin-primary px-3 py-2 text-sm font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
                       >
                         {translations.products.actions.save}
                       </button>
@@ -164,7 +164,7 @@ export default async function AdminProductsPage({
                           type="submit"
                           disabled={isEnableDisabled}
                           aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 enabled:hover:border-brand-400 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-200 dark:enabled:hover:border-brand-500"
+                          className="rounded-lg border border-admin-input px-3 py-2 text-sm text-admin-foreground enabled:hover:border-admin-primary disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {product.is_indexed ? translations.products.index.disable : translations.products.index.enable}
                         </button>
@@ -172,7 +172,7 @@ export default async function AdminProductsPage({
 
                       <Link
                         href={`/admin/products/${product.id}/specifications`}
-                        className="text-sm text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300"
+                        className="text-sm text-admin-primary hover:text-admin-primary/90"
                       >
                         {translations.products.actions.editSpecifications} ({product._count.product_attributes}) →
                       </Link>

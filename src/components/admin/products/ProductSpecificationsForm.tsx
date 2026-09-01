@@ -249,7 +249,7 @@ export default async function ProductSpecificationsForm({
 
       <button
         type="submit"
-        className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring"
+        className="rounded-lg bg-admin-primary px-6 py-2.5 text-sm font-semibold text-admin-primary-foreground hover:bg-admin-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-ring"
       >
         {translations.specifications.submit}
       </button>

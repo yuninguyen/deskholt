@@ -9,6 +9,10 @@ const productsPage = readFileSync(join(root, 'src/app/(admin)/admin/products/pag
 const badgeSource = readFileSync(join(root, 'src/components/ui/Badge.tsx'), 'utf8');
 const specificationsFormSource = readFileSync(join(root, 'src/components/admin/products/ProductSpecificationsForm.tsx'), 'utf8');
 const confidenceSelectSource = readFileSync(join(root, 'src/components/admin/products/SpecificationConfidenceSelect.tsx'), 'utf8');
+const adminLayoutSource = readFileSync(join(root, 'src/app/(admin)/layout.tsx'), 'utf8');
+const adminHeaderSource = readFileSync(join(root, 'src/components/admin/AdminHeader.tsx'), 'utf8');
+const themeToggleSource = readFileSync(join(root, 'src/components/admin/ThemeToggle.tsx'), 'utf8');
+const localeToggleSource = readFileSync(join(root, 'src/components/admin/LocaleToggle.tsx'), 'utf8');
 
 type Rgb = readonly [number, number, number];
 
@@ -104,6 +108,33 @@ test('Admin product status, access, index, Badge, and confidence mappings retain
   assert.match(specificationsFormSource, /<SpecificationConfidenceSelect[\s\S]*?labels=\{translations\.confidences\}/);
   assert.match(confidenceSelectSource, /const confidenceVariants = \{\s*VERIFIED: 'success',\s*LIKELY: 'warning',\s*UNVERIFIED: 'neutral',\s*\} as const;/);
   assert.match(confidenceSelectSource, /<Badge variant=\{presentation\.variant\}/);
+});
+
+test('Admin surfaces consume warm ink and slate tokens instead of raw neutral or green utilities', () => {
+  assert.match(adminLayoutSource, /className="min-h-screen font-body bg-admin-background text-admin-foreground"/);
+  assert.match(adminHeaderSource, /border-b border-admin-border bg-admin-card/);
+  assert.match(adminHeaderSource, /text-admin-foreground/);
+  assert.match(themeToggleSource, /border-admin-input[^"']*text-admin-foreground hover:border-admin-primary/);
+  assert.match(localeToggleSource, /border border-admin-input/);
+  assert.match(localeToggleSource, /bg-admin-primary text-admin-primary-foreground/);
+  assert.match(localeToggleSource, /text-admin-muted-foreground hover:text-admin-foreground/);
+  assert.match(productsPage, /bg-admin-primary[^"']*text-admin-primary-foreground[^"']*hover:bg-admin-primary\/90/);
+  assert.match(productsPage, /border-admin-input bg-admin-card[^"']*text-admin-foreground[^"']*focus:border-admin-primary/);
+  assert.match(productsPage, /border-admin-input[^"']*text-admin-foreground enabled:hover:border-admin-primary/);
+  assert.match(productsPage, /text-admin-primary hover:text-admin-primary\/90/);
+  assert.match(specificationsFormSource, /bg-admin-primary[^"']*text-admin-primary-foreground hover:bg-admin-primary\/90/);
+
+  const rawNeutralOrGreen = /(?:bg|text|border)-(?:gray-\d+|white|brand-\d+)/;
+  for (const [surface, source] of Object.entries({
+    adminLayoutSource,
+    adminHeaderSource,
+    themeToggleSource,
+    localeToggleSource,
+    productsPage,
+    specificationsFormSource,
+  })) {
+    assert.doesNotMatch(source, rawNeutralOrGreen, `${surface} bypasses the Admin token palette`);
+  }
 });
 
 test('Admin product Actions cell keeps controls in two horizontal rows', () => {

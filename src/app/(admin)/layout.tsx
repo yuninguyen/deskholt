@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       suppressHydrationWarning
       data-theme="dark"
       data-locale={locale}
-      className="min-h-screen font-body bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100"
+      className="min-h-screen font-body bg-admin-background text-admin-foreground"
     >
       <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       <AdminHeader initialLocale={locale} />
