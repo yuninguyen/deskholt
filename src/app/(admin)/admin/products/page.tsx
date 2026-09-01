@@ -167,7 +167,7 @@ export default async function AdminProductsPage({
                           type="submit"
                           disabled={isEnableDisabled}
                           aria-describedby={isEnableDisabled ? enableIndexHelpId : undefined}
-                          className="box-border h-[34px] rounded-[7px] border border-admin-input px-3 text-[13px] font-semibold text-admin-foreground enabled:hover:border-admin-primary disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex items-center justify-center whitespace-nowrap box-border h-[34px] rounded-[7px] border border-admin-input px-3 text-[13px] font-semibold text-admin-foreground enabled:hover:border-admin-primary disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {product.is_indexed ? translations.products.index.disable : translations.products.index.enable}
                         </button>
