@@ -83,7 +83,7 @@ test('Specifications form renders clearable Boolean and ENUM options plus named 
   }));
 
   assert.match(html, new RegExp(`name="value__${booleanKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="true" selected="">True<\\/option>`));
-  assert.match(html, new RegExp(`name="value__${enumKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="BAMBOO" selected="">BAMBOO<\\/option>`));
+  assert.match(html, new RegExp(`name="value__${enumKey}"[\\s\\S]*?<option value="">—<\\/option>[\\s\\S]*?<option value="BAMBOO" selected="">Bamboo<\\/option>`));
   assert.match(html, new RegExp(`role="combobox"[\\s\\S]*?name="sourceType__${sourceTypeKey}"`));
   assert.equal([...html.matchAll(new RegExp(`name="sourceType__${sourceTypeKey}"`, 'g'))].length, 1);
   assert.doesNotMatch(html, /value="empty"/);
