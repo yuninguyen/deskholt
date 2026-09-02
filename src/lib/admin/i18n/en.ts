@@ -17,6 +17,7 @@ export const en = {
     title: 'Standing Desks — Admin',
     description: 'Manage product publication and search-index visibility.',
     newProduct: 'New Product',
+    downloadBackup: 'Download backup (JSON)',
     saved: 'Saved successfully. The affected Product is highlighted below.',
     publishingRejected: 'Publishing action rejected.',
     table: { product: 'Product', lifecycle: 'Lifecycle', index: 'Index', attributes: 'Attrs', actions: 'Actions' },
@@ -29,7 +30,7 @@ export const en = {
       archived: 'Archived—not public',
     },
     index: { enabled: 'Enabled', disabled: 'Disabled', enable: 'Enable index', disable: 'Disable index', enableHelp: 'Set lifecycle to Active to enable indexing.' },
-    actions: { save: 'Save', editSpecifications: 'Edit specifications', offers: 'Offers' },
+    actions: { save: 'Save', edit: 'Edit', editSpecifications: 'Edit specifications', offers: 'Offers' },
     empty: 'No Standing Desk products yet.',
     errors: {
       invalidInput: 'Invalid publishing request. Review the Product and command values, then try again.',
@@ -49,6 +50,19 @@ export const en = {
       categoryMissing: 'The selected Category no longer exists. Refresh and choose another Category.',
       slugTaken: 'That Product slug is already in use. Choose a different slug.',
       fallback: 'Product could not be created. Review the form and try again.',
+    },
+  },
+  editProduct: {
+    back: 'Products', title: 'Edit product', submit: 'Save changes',
+    name: 'Name', slug: 'Slug', slugLockedHelp: 'Slug can only be changed while the Product is in Draft.',
+    brandName: 'Brand name', optional: 'optional', descriptionLabel: 'Description', imageUrl: 'Image URL',
+    upcSku: 'UPC/SKU', sustainable: 'Sustainable product', saved: 'Product updated successfully.',
+    errors: {
+      invalidInput: 'Review the required Product fields and try again.',
+      notFound: 'Product could not be found. Refresh the list and try again.',
+      slugTaken: 'That Product slug is already in use. Choose a different slug.',
+      slugLocked: 'Slug can only be changed while the Product is in Draft.',
+      fallback: 'Product could not be updated. Review the form and try again.',
     },
   },
   specifications: {
