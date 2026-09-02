@@ -14,3 +14,11 @@
 - **Verification:** `npm run lint`, `npm run typecheck`, `git diff --check`, and Impeccable detector passed. The detector returned `[]` for the two changed Admin UI files.
 - **GitNexus detector:** attempted `npx gitnexus detect-changes --repo admin-redesign-shadcn-i18n`; the installed CLI reports `unknown command 'detect-changes'`.
 - **Excluded unrelated worktree changes:** `.claude/skills/gitnexus/*`, root `AGENTS.md`, root `CLAUDE.md`, and `PRODUCT.md` were pre-existing and are not staged for this task.
+
+## Task 1 review follow-up — Direct dirty-state behavior
+
+- **Review finding:** source-regex assertions did not execute the slug dirty-state behavior.
+- **Impact analysis:** `SlugAutoFillFields` and `slugify` are not present in the current GitNexus index; the existing component/page interfaces have no change.
+- **RED:** direct transition tests failed because `transitionSlugAutoFill` was not exported (`TypeError: ... is not a function`).
+- **GREEN:** direct pure-state sequences passed for untouched name updates, customized-slug freeze, and manually cleared-slug freeze; focused component/page suite: 9 tests, 0 failures.
+- **Verification:** `npm run lint`, `npm run typecheck`, and `git diff --check` passed. Impeccable detector returned `[]` for `SlugAutoFillFields.tsx`. GitNexus detector was re-attempted and remains unsupported by the installed CLI (`unknown command 'detect-changes'`).

@@ -1,18 +1,33 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { slugify } from '../src/components/admin/products/SlugAutoFillFields';
+import { slugify, transitionSlugAutoFill } from '../src/components/admin/products/SlugAutoFillFields';
 
-const componentPath = new URL('../src/components/admin/products/SlugAutoFillFields.tsx', import.meta.url);
+const initialState = { name: '', slug: '', slugTouched: false };
 
 test('slugify collapses whitespace, punctuation, and uppercase letters', () => {
   assert.equal(slugify('FlexiSpot E7 Pro (Black)'), 'flexispot-e7-pro-black');
 });
 
-test('name input fills the slug until a direct slug change marks it touched', async () => {
-  const source = await readFile(componentPath, 'utf8');
+test('untouched name changes continue to track the slugified name', () => {
+  const first = transitionSlugAutoFill(initialState, { field: 'name', value: 'FlexiSpot E7' });
+  const second = transitionSlugAutoFill(first, { field: 'name', value: 'FlexiSpot E7 Pro (Black)' });
 
-  assert.match(source, /const \[slugTouched, setSlugTouched\] = useState\(false\);/);
-  assert.match(source, /function onNameChange\(value: string\) \{\s*setName\(value\);\s*if \(!slugTouched\) setSlug\(slugify\(value\)\);\s*\}/);
-  assert.match(source, /function onSlugChange\(value: string\) \{\s*setSlugTouched\(true\);\s*setSlug\(value\);\s*\}/);
+  assert.deepEqual(first, { name: 'FlexiSpot E7', slug: 'flexispot-e7', slugTouched: false });
+  assert.deepEqual(second, { name: 'FlexiSpot E7 Pro (Black)', slug: 'flexispot-e7-pro-black', slugTouched: false });
+});
+
+test('a manually customized slug freezes later name changes', () => {
+  const autoFilled = transitionSlugAutoFill(initialState, { field: 'name', value: 'FlexiSpot E7' });
+  const customized = transitionSlugAutoFill(autoFilled, { field: 'slug', value: 'custom-standing-desk' });
+  const renamed = transitionSlugAutoFill(customized, { field: 'name', value: 'FlexiSpot E7 Pro' });
+
+  assert.deepEqual(renamed, { name: 'FlexiSpot E7 Pro', slug: 'custom-standing-desk', slugTouched: true });
+});
+
+test('manually clearing the slug also freezes later name changes', () => {
+  const autoFilled = transitionSlugAutoFill(initialState, { field: 'name', value: 'FlexiSpot E7' });
+  const cleared = transitionSlugAutoFill(autoFilled, { field: 'slug', value: '' });
+  const renamed = transitionSlugAutoFill(cleared, { field: 'name', value: 'FlexiSpot E7 Pro' });
+
+  assert.deepEqual(renamed, { name: 'FlexiSpot E7 Pro', slug: '', slugTouched: true });
 });

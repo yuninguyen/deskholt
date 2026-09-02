@@ -10,12 +10,38 @@ type SlugAutoFillFieldsProps = {
   slugHelp: string;
 };
 
+export type SlugAutoFillState = {
+  name: string;
+  slug: string;
+  slugTouched: boolean;
+};
+
+type SlugAutoFillChange = {
+  field: 'name' | 'slug';
+  value: string;
+};
+
 export function slugify(value: string): string {
   return value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+export function transitionSlugAutoFill(
+  state: SlugAutoFillState,
+  change: SlugAutoFillChange,
+): SlugAutoFillState {
+  if (change.field === 'slug') {
+    return { ...state, slug: change.value, slugTouched: true };
+  }
+
+  return {
+    ...state,
+    name: change.value,
+    slug: state.slugTouched ? state.slug : slugify(change.value),
+  };
 }
 
 export default function SlugAutoFillFields({
@@ -29,12 +55,19 @@ export default function SlugAutoFillFields({
 
   function onNameChange(value: string) {
     setName(value);
-    if (!slugTouched) setSlug(slugify(value));
+    setSlug((currentSlug) => transitionSlugAutoFill(
+      { name, slug: currentSlug, slugTouched },
+      { field: 'name', value },
+    ).slug);
   }
 
   function onSlugChange(value: string) {
-    setSlugTouched(true);
-    setSlug(value);
+    const nextState = transitionSlugAutoFill(
+      { name, slug, slugTouched },
+      { field: 'slug', value },
+    );
+    setSlugTouched(nextState.slugTouched);
+    setSlug(nextState.slug);
   }
 
   return (
