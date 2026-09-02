@@ -182,22 +182,22 @@ export default async function AdminProductsPage({
                       </form>
                     </div>
 
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                       <Link
                         href={`/admin/products/${product.id}/edit`}
-                        className="text-xs text-admin-primary hover:text-admin-primary/90"
+                        className="whitespace-nowrap text-xs text-admin-primary hover:text-admin-primary/90"
                       >
                         {translations.products.actions.edit} →
                       </Link>
                       <Link
                         href={`/admin/products/${product.id}/specifications`}
-                        className="text-xs text-admin-primary hover:text-admin-primary/90"
+                        className="whitespace-nowrap text-xs text-admin-primary hover:text-admin-primary/90"
                       >
                         {translations.products.actions.editSpecifications} ({product._count.product_attributes}) →
                       </Link>
                       <Link
                         href={`/admin/products/${product.id}/offers`}
-                        className="text-xs text-admin-primary hover:text-admin-primary/90"
+                        className="whitespace-nowrap text-xs text-admin-primary hover:text-admin-primary/90"
                       >
                         {translations.products.actions.offers} ({product._count.affiliate_links}) →
                       </Link>
