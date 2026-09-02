@@ -1,11 +1,13 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useAdminLocale, useAdminTranslations } from '@/lib/admin/i18n/client';
 import { ADMIN_LOCALE_CHANGE_EVENT, type Locale } from '@/lib/admin/i18n/shared';
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export default function LocaleToggle({ initialLocale }: { initialLocale: Locale }) {
+  const router = useRouter();
   const translations = useAdminTranslations(initialLocale);
   const locale = useAdminLocale(initialLocale);
 
@@ -22,6 +24,7 @@ export default function LocaleToggle({ initialLocale }: { initialLocale: Locale 
     // eslint-disable-next-line react-hooks/immutability -- Cookie persistence is an intentional browser side effect of this event handler.
     document.cookie = `admin-locale=${locale}; Path=/; SameSite=Lax; Max-Age=${COOKIE_MAX_AGE}`;
     window.dispatchEvent(new Event(ADMIN_LOCALE_CHANGE_EVENT));
+    router.refresh();
   }
 
   return (

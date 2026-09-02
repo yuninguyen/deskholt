@@ -24,8 +24,12 @@ const serverLocaleMock = moduleMock.module('@/lib/admin/i18n/server', {
 const nextFontMock = moduleMock.module('next/font/google', {
   namedExports: { IBM_Plex_Sans: () => ({ variable: 'admin-font' }) },
 });
+const nextNavigationMock = moduleMock.module('next/navigation', {
+  namedExports: { useRouter: () => ({ refresh: () => {} }) },
+});
 
 test.after(() => {
+  nextNavigationMock.restore();
   serverLocaleMock.restore();
   nextFontMock.restore();
 });
@@ -176,7 +180,10 @@ test('Admin locale infrastructure preserves SSR defaults and persists client sel
   assert.match(layoutSource, /root\.getAttribute\('data-locale'\)/);
   assert.match(layoutSource, /localStorage\.getItem\('admin-locale'\)/);
   assert.match(layoutSource, /suppressHydrationWarning/);
+  assert.match(localeToggleSource, /import \{ useRouter \} from 'next\/navigation';/);
+  assert.match(localeToggleSource, /const router = useRouter\(\);/);
   assert.match(localeToggleSource, /const locale = useAdminLocale\(initialLocale\);/);
+  assert.match(localeToggleSource, /document\.cookie = `admin-locale=\$\{locale\}; Path=\/; SameSite=Lax; Max-Age=\$\{COOKIE_MAX_AGE\}`;[\s\S]*?window\.dispatchEvent\(new Event\(ADMIN_LOCALE_CHANGE_EVENT\)\);[\s\S]*?router\.refresh\(\);/);
   assert.doesNotMatch(localeToggleSource, /resolveAdminLocale/);
   assert.match(localeToggleSource, /localStorage\.setItem\('admin-locale', locale\)/);
   assert.match(localeToggleSource, /document\.cookie = `admin-locale=\$\{locale\}; Path=\/; SameSite=Lax; Max-Age=/);
