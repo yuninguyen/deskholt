@@ -86,6 +86,20 @@ test('parseCreateAffiliateLinkInput rejects malformed raw URLs', () => {
   assert.throws(() => parseCreateAffiliateLinkInput(validCreateForm({ raw_url: 'not-a-url' })), /invalid raw url/i);
 });
 
+// Break caught: accepting non-web schemes stores a tracking URL that public redirect handling can navigate to without an HTTP(S) boundary.
+test('parseCreateAffiliateLinkInput rejects non-web raw URL schemes', () => {
+  for (const raw_url of ['javascript:alert(1)', 'data:text/html,x']) {
+    assert.throws(() => parseCreateAffiliateLinkInput(validCreateForm({ raw_url })), /invalid raw url/i);
+  }
+});
+
+// Break caught: update parsing must enforce the same HTTP(S)-only public redirect boundary as create parsing.
+test('parseUpdateAffiliateLinkInput rejects non-web raw URL schemes', () => {
+  for (const raw_url of ['javascript:alert(1)', 'data:text/html,x']) {
+    assert.throws(() => parseUpdateAffiliateLinkInput(validCreateForm({ linkId: 'link-1', raw_url })), /invalid raw url/i);
+  }
+});
+
 // Break caught: a missing product identity permits orphan offer records.
 test('parseCreateAffiliateLinkInput requires a product id', () => {
   const data = validCreateForm();
@@ -129,9 +143,9 @@ function inMemoryStore() {
     },
     findAffiliateLinkForProduct: async (linkId, productId) =>
       links.find((link) => link.id === linkId && link.product_id === productId) ?? null,
-    updateAffiliateLink: async (linkId, data) => {
-      const link = links.find((candidate) => candidate.id === linkId);
-      if (!link) throw new Error('unexpected update');
+    updateAffiliateLink: async (linkId, productId, data) => {
+      const link = links.find((candidate) => candidate.id === linkId && candidate.product_id === productId);
+      if (!link) return null;
       Object.assign(link, data);
       return { id: link.id };
     },
@@ -180,7 +194,10 @@ test('executeCreateAffiliateLink rejects unsafe product ids before store work', 
       calls.push('find');
       return { id: 'link-1' };
     },
-    updateAffiliateLink: async () => {
+    updateAffiliateLink: async (linkId, productId, data) => {
+      void linkId;
+      void productId;
+      void data;
       calls.push('update');
       return { id: 'link-1' };
     },
@@ -229,7 +246,10 @@ test('executeUpdateAffiliateLink rejects unsafe product ids before store work', 
       calls.push('find');
       return { id: 'link-1' };
     },
-    updateAffiliateLink: async () => {
+    updateAffiliateLink: async (linkId, productId, data) => {
+      void linkId;
+      void productId;
+      void data;
       calls.push('update');
       return { id: 'link-1' };
     },
@@ -258,6 +278,28 @@ test('executeUpdateAffiliateLink returns not-found for missing or cross-product 
     linkId: 'link-1',
   }), { ok: false, reason: 'not-found' });
   assert.equal(harness.links[0]?.price, 199.99);
+});
+
+// Break caught: an association change after lookup must prevent the conditional update from changing an offer under a different product.
+test('executeUpdateAffiliateLink returns not-found when its product-scoped conditional mutation affects no row', async () => {
+  const storedLink = { price: 199.99 };
+  const conditionalWrites: Array<{ linkId: string; productId: string }> = [];
+  const store: AffiliateLinkStore = {
+    createAffiliateLink: async () => ({ id: 'link-1' }),
+    findAffiliateLinkForProduct: async () => ({ id: 'link-1' }),
+    updateAffiliateLink: async (linkId, productId, data) => {
+      void data;
+      conditionalWrites.push({ linkId, productId });
+      return null;
+    },
+  };
+
+  assert.deepEqual(await executeUpdateAffiliateLink(store, 'link-1', {
+    ...input({ price: 149.5 }),
+    linkId: 'link-1',
+  }), { ok: false, reason: 'not-found' });
+  assert.deepEqual(conditionalWrites, [{ linkId: 'link-1', productId: 'product-1' }]);
+  assert.equal(storedLink.price, 199.99);
 });
 
 // Break caught: a successful update must retain its original link identity while saving all mutable offer fields.
@@ -297,5 +339,36 @@ test('createPrismaAffiliateLinkStore scopes the lookup to both link and product 
   assert.deepEqual(findFirstArgs, {
     where: { id: 'link-1', product_id: 'product-1' },
     select: { id: true },
+  });
+});
+
+// Break caught: an id-only Prisma update can cross a changed product association after the initial lookup.
+test('createPrismaAffiliateLinkStore conditionally updates by both link and product ids', async () => {
+  let updateManyArgs: unknown;
+  const store = createPrismaAffiliateLinkStore({
+    affiliateLink: {
+      updateMany: async (args: unknown) => {
+        updateManyArgs = args;
+        return { count: 1 };
+      },
+    },
+  } as never);
+
+  assert.deepEqual(await store.updateAffiliateLink('link-1', 'product-1', {
+    price: 149.5,
+    raw_url: 'https://shop.test/product',
+    tracking_url: 'https://shop.test/product?tag=deskholt-pending',
+    is_in_stock: false,
+    priority_order: 3,
+  }), { id: 'link-1' });
+  assert.deepEqual(updateManyArgs, {
+    where: { id: 'link-1', product_id: 'product-1' },
+    data: {
+      price: 149.5,
+      raw_url: 'https://shop.test/product',
+      tracking_url: 'https://shop.test/product?tag=deskholt-pending',
+      is_in_stock: false,
+      priority_order: 3,
+    },
   });
 });

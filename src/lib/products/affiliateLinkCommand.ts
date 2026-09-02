@@ -30,7 +30,7 @@ type AffiliateLinkUpdateData = Omit<AffiliateLinkData, 'product_id' | 'network'>
 export type AffiliateLinkStore = {
   createAffiliateLink(data: AffiliateLinkData): Promise<{ id: string }>;
   findAffiliateLinkForProduct(linkId: string, productId: string): Promise<{ id: string } | null>;
-  updateAffiliateLink(linkId: string, data: AffiliateLinkUpdateData): Promise<{ id: string }>;
+  updateAffiliateLink(linkId: string, productId: string, data: AffiliateLinkUpdateData): Promise<{ id: string } | null>;
 };
 
 export type AffiliateLinkCommandResult =
@@ -71,7 +71,13 @@ function parseOfferInput(formData: FormData): CreateAffiliateLinkInput {
   if (!Number.isFinite(price) || price <= 0) throw new Error('invalid price');
 
   const rawUrl = requiredText(formData, 'raw_url');
-  if (!URL.canParse(rawUrl)) throw new Error('invalid raw url');
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(rawUrl);
+  } catch {
+    throw new Error('invalid raw url');
+  }
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') throw new Error('invalid raw url');
 
   const priorityOrderText = optionalText(formData, 'priority_order');
   const priorityOrder = priorityOrderText === undefined ? 1 : Number(priorityOrderText);
@@ -155,7 +161,8 @@ export async function executeUpdateAffiliateLink(
   const existing = await store.findAffiliateLinkForProduct(linkId, input.productId);
   if (!existing) return { ok: false, reason: 'not-found' };
 
-  const link = await store.updateAffiliateLink(linkId, updateData(input));
+  const link = await store.updateAffiliateLink(linkId, input.productId, updateData(input));
+  if (!link) return { ok: false, reason: 'not-found' };
   return { ok: true, linkId: link.id };
 }
 
@@ -166,10 +173,12 @@ export function createPrismaAffiliateLinkStore(prisma: Prisma.TransactionClient)
       where: { id: linkId, product_id: productId },
       select: { id: true },
     }),
-    updateAffiliateLink: async (linkId, data) => prisma.affiliateLink.update({
-      where: { id: linkId },
-      data,
-      select: { id: true },
-    }),
+    updateAffiliateLink: async (linkId, productId, data) => {
+      const result = await prisma.affiliateLink.updateMany({
+        where: { id: linkId, product_id: productId },
+        data,
+      });
+      return result.count === 1 ? { id: linkId } : null;
+    },
   };
 }

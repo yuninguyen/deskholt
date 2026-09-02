@@ -90,7 +90,10 @@ function harness({
         findCalls += 1;
         return existing ? { id: 'link-1' } : null;
       },
-      updateAffiliateLink: async () => {
+      updateAffiliateLink: async (linkId, productId, data) => {
+        void linkId;
+        void productId;
+        void data;
         updateCalls += 1;
         return { id: 'link-1' };
       },
