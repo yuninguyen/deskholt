@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useAdminTranslations } from '@/lib/admin/i18n/client';
 import type { Locale } from '@/lib/admin/i18n/shared';
 import LocaleToggle from './LocaleToggle';
@@ -11,8 +12,11 @@ export default function AdminHeader({ initialLocale }: { initialLocale: Locale }
   return (
     <header className="border-b border-admin-border bg-admin-card">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <span className="font-body text-sm font-semibold uppercase tracking-[0.14em] text-admin-foreground">
-          {translations.header.title}
+        <span className="flex items-center gap-2">
+          <Image src="/logo-icon.webp" alt="" width={512} height={512} className="h-5 w-5 rounded-sm object-contain" />
+          <span className="font-body text-sm font-semibold uppercase tracking-[0.14em] text-admin-foreground">
+            {translations.header.title}
+          </span>
         </span>
         <div className="flex items-center gap-2">
           <LocaleToggle initialLocale={initialLocale} />
