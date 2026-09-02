@@ -49,7 +49,7 @@ test('edit page renders tokenized Card controls, DRAFT-only slug marker, locked 
 // Break caught: moving edit into the publishing control row changes its compact first-row control geometry.
 test('products page keeps the translated edit link in the second action row', () => {
   const source = readFileSync(productsPagePath, 'utf8');
-  const rows = source.match(/<div className="flex flex-nowrap items-center gap-2">([\s\S]*?)<\/div>\s*<div className="mt-2 flex items-center gap-2">([\s\S]*?)<\/div>/);
+  const rows = source.match(/<div className="flex flex-nowrap items-center gap-2">([\s\S]*?)<\/div>\s*<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">([\s\S]*?)<\/div>/);
 
   assert.ok(rows);
   assert.doesNotMatch(rows[1], /\/admin\/products\/\$\{product\.id\}\/edit/);

@@ -143,11 +143,11 @@ test('Admin Products loads and links to each product’s translated offer count 
   );
   assert.match(
     adminProductsPageSource,
-    /<div className="mt-2 flex items-center gap-2">[\s\S]*?href=\{`\/admin\/products\/\$\{product\.id\}\/offers`\}[\s\S]*?translations\.products\.actions\.offers\} \(\{product\._count\.affiliate_links\}\) →/
+    /<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">[\s\S]*?href=\{`\/admin\/products\/\$\{product\.id\}\/offers`\}[\s\S]*?className="whitespace-nowrap text-xs text-admin-primary hover:text-admin-primary\/90"[\s\S]*?translations\.products\.actions\.offers\} \(\{product\._count\.affiliate_links\}\) →/
   );
 
   const controlsRow = adminProductsPageSource.match(
-    /<div className="flex flex-nowrap items-center gap-2">([\s\S]*?)<\/div>\s*<div className="mt-2 flex items-center gap-2">/
+    /<div className="flex flex-nowrap items-center gap-2">([\s\S]*?)<\/div>\s*<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">/
   );
   assert.ok(controlsRow);
   assert.doesNotMatch(controlsRow[1], /\/admin\/products\/\$\{product\.id\}\/offers/);

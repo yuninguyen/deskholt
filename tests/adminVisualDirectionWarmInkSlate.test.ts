@@ -170,7 +170,7 @@ test('Admin product Actions cell keeps controls in two horizontal rows', () => {
   assert.match(actionsCell, /<div className="flex flex-nowrap items-center gap-2">[\s\S]*?<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="status"[\s\S]*?type="submit"/);
   assert.match(
     actionsCell,
-    /<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\}[\s\S]*?<\/form>[\s\S]*?<\/div>\s*<div className="mt-2 flex items-center gap-2">[\s\S]*?<Link[\s\S]*?href=\{`\/admin\/products\/\$\{product\.id\}\/specifications`\}/
+    /<form action=\{productPublishingAction\} className="contents">[\s\S]*?name="command" value=\{product\.is_indexed \? 'disable-index' : 'enable-index'\}[\s\S]*?<\/form>[\s\S]*?<\/div>\s*<div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">[\s\S]*?<Link[\s\S]*?href=\{`\/admin\/products\/\$\{product\.id\}\/specifications`\}[\s\S]*?className="whitespace-nowrap text-xs text-admin-primary hover:text-admin-primary\/90"/
   );
   assert.match(actionsCell, /<\/div>\s*\{isEnableDisabled && \(/);
 });
