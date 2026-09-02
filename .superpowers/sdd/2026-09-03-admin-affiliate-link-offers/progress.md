@@ -69,3 +69,10 @@
 - TDD RED: added the source regression in `tests/adminOffersPage.test.ts`; focused test run failed 1/5 because the raw emerald utilities remained.
 - GREEN: changed only the saved banner class to `border-admin-primary/30 bg-admin-primary/10 text-admin-foreground`, preserving its structure, status semantics, copy, and error banner.
 - Verification: focused Admin offers/i18n/shadcn/visual suite passed 18/18; `npm run lint`, `npm run typecheck`, and `git diff --check` passed. Impeccable detector was run once after the edit on the page and test and returned `[]`.
+
+## Task 4 — Products Offers entry point
+- Added the translated `Offers (N) →` link in the established second Actions link row of the Admin Products list, next to Edit specifications. Its href is product-bound (`/admin/products/${product.id}/offers`); no first-row lifecycle/Save/index control, form, table-scroll, or public route behavior changed.
+- The existing product `_count` query retains `product_attributes` and now selects `affiliate_links`; the count is rendered beside the translated offers label.
+- GitNexus: after stale-index refresh, `AdminProductsPage` upstream impact was LOW with 0 direct callers and 0 affected processes. No high/critical risk occurred.
+- TDD RED: the focused products test failed because `_count.affiliate_links` was absent. GREEN: focused Task 4 suite passed 13/13; full `npm test` passed 364 with 0 failures and 8 intentional skips. `npm run lint`, `npm run typecheck`, cached diff check, and post-edit Impeccable detector all passed (`[]`).
+- Pre-commit `npx gitnexus detect-changes --repo admin-redesign-shadcn-i18n` was attempted but this installed CLI reports `unknown command 'detect-changes'`. Commit `706c15e` contains only the products page and its regression test; pre-existing generated instruction/skill changes and untracked `PRODUCT.md` remain excluded.
