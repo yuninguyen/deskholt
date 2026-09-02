@@ -176,6 +176,12 @@ export default async function AdminProductsPage({
 
                     <div className="mt-2 flex items-center gap-2">
                       <Link
+                        href={`/admin/products/${product.id}/edit`}
+                        className="text-xs text-admin-primary hover:text-admin-primary/90"
+                      >
+                        {translations.products.actions.edit} →
+                      </Link>
+                      <Link
                         href={`/admin/products/${product.id}/specifications`}
                         className="text-xs text-admin-primary hover:text-admin-primary/90"
                       >
