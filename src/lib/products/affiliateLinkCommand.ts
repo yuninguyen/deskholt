@@ -57,6 +57,19 @@ function optionalText(formData: FormData, key: string): string | undefined {
   return value.trim();
 }
 
+function normalizeSafeAffiliateLinkRawUrl(rawUrl: unknown): string {
+  if (typeof rawUrl !== 'string') throw new Error('invalid raw url');
+  const normalizedRawUrl = rawUrl.trim();
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(normalizedRawUrl);
+  } catch {
+    throw new Error('invalid raw url');
+  }
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') throw new Error('invalid raw url');
+  return normalizedRawUrl;
+}
+
 function requiredProductId(formData: FormData): string {
   const productId = requiredText(formData, 'productId');
   if (!isSafeAffiliateLinkProductId(productId)) throw new Error('invalid productId');
@@ -70,14 +83,7 @@ function parseOfferInput(formData: FormData): CreateAffiliateLinkInput {
   const price = Number(requiredText(formData, 'price'));
   if (!Number.isFinite(price) || price <= 0) throw new Error('invalid price');
 
-  const rawUrl = requiredText(formData, 'raw_url');
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(rawUrl);
-  } catch {
-    throw new Error('invalid raw url');
-  }
-  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') throw new Error('invalid raw url');
+  const rawUrl = normalizeSafeAffiliateLinkRawUrl(requiredText(formData, 'raw_url'));
 
   const priorityOrderText = optionalText(formData, 'priority_order');
   const priorityOrder = priorityOrderText === undefined ? 1 : Number(priorityOrderText);
@@ -138,8 +144,15 @@ export async function executeCreateAffiliateLink(
 ): Promise<AffiliateLinkCommandResult> {
   if (!isSafeAffiliateLinkProductId(productId)) return { ok: false, reason: 'invalid-input' };
 
+  let normalizedInput: CreateAffiliateLinkInput;
   try {
-    const link = await store.createAffiliateLink(offerData(productId, input));
+    normalizedInput = { ...input, rawUrl: normalizeSafeAffiliateLinkRawUrl(input.rawUrl) };
+  } catch {
+    return { ok: false, reason: 'invalid-input' };
+  }
+
+  try {
+    const link = await store.createAffiliateLink(offerData(productId, normalizedInput));
     return { ok: true, linkId: link.id };
   } catch (error) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2003') {
@@ -158,10 +171,17 @@ export async function executeUpdateAffiliateLink(
     return { ok: false, reason: 'invalid-input' };
   }
 
-  const existing = await store.findAffiliateLinkForProduct(linkId, input.productId);
+  let normalizedInput: UpdateAffiliateLinkInput;
+  try {
+    normalizedInput = { ...input, rawUrl: normalizeSafeAffiliateLinkRawUrl(input.rawUrl) };
+  } catch {
+    return { ok: false, reason: 'invalid-input' };
+  }
+
+  const existing = await store.findAffiliateLinkForProduct(linkId, normalizedInput.productId);
   if (!existing) return { ok: false, reason: 'not-found' };
 
-  const link = await store.updateAffiliateLink(linkId, input.productId, updateData(input));
+  const link = await store.updateAffiliateLink(linkId, normalizedInput.productId, updateData(normalizedInput));
   if (!link) return { ok: false, reason: 'not-found' };
   return { ok: true, linkId: link.id };
 }
