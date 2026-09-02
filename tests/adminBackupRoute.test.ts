@@ -95,9 +95,11 @@ test('GET exports one transactional catalog snapshot as a JSON attachment withou
   sessionIsValid = true;
 
   const response = await GET(new Request('https://deskholt.example/admin/backup'));
-  const payload = await response.json();
+  const body = await response.text();
+  const payload = JSON.parse(body);
 
   assert.equal(response.status, 200);
+  assert.match(body, /\n  "categories": \[/);
   assert.match(
     response.headers.get('content-disposition') ?? '',
     /^attachment; filename="deskholt-backup-\d{4}-\d{2}-\d{2}\.json"$/

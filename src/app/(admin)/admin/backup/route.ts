@@ -19,19 +19,24 @@ export async function GET(request: Request) {
   ]);
   const exportedAt = new Date();
 
-  return NextResponse.json(
-    {
-      exportedAt: exportedAt.toISOString(),
-      categories,
-      brands,
-      attributeDefinitions,
-      categoryAttributes,
-      products,
-      productVariants,
-    },
+  return new NextResponse(
+    JSON.stringify(
+      {
+        exportedAt: exportedAt.toISOString(),
+        categories,
+        brands,
+        attributeDefinitions,
+        categoryAttributes,
+        products,
+        productVariants,
+      },
+      null,
+      2
+    ),
     {
       headers: {
         'Content-Disposition': `attachment; filename="deskholt-backup-${exportedAt.toISOString().slice(0, 10)}.json"`,
+        'Content-Type': 'application/json',
       },
     }
   );
