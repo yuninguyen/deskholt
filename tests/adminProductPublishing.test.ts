@@ -121,6 +121,23 @@ test('Admin Products renders its translated empty state as a table row inside Ta
   );
 });
 
+test('Admin Products loads and links to each product’s translated offer count in the second action row', () => {
+  assert.match(
+    adminProductsPageSource,
+    /_count:\s*\{\s*select:\s*\{\s*product_attributes:\s*true,\s*affiliate_links:\s*true\s*\}\s*\}/
+  );
+  assert.match(
+    adminProductsPageSource,
+    /<div className="mt-2 flex items-center gap-2">[\s\S]*?href=\{`\/admin\/products\/\$\{product\.id\}\/offers`\}[\s\S]*?translations\.products\.actions\.offers\} \(\{product\._count\.affiliate_links\}\) →/
+  );
+
+  const controlsRow = adminProductsPageSource.match(
+    /<div className="flex flex-nowrap items-center gap-2">([\s\S]*?)<\/div>\s*<div className="mt-2 flex items-center gap-2">/
+  );
+  assert.ok(controlsRow);
+  assert.doesNotMatch(controlsRow[1], /\/admin\/products\/\$\{product\.id\}\/offers/);
+});
+
 test('Admin Products preserves publishing submission and feedback contracts with a Radix lifecycle select', () => {
   assert.match(adminProductsPageSource, /import \{ Select, SelectContent, SelectItem, SelectTrigger, SelectValue \} from '@\/components\/ui\/select';/);
   assert.match(adminProductsPageSource, /<form action=\{productPublishingAction\}[\s\S]*?<input type="hidden" name="productId" value=\{product\.id\} \/>[\s\S]*?<input type="hidden" name="command" value="set-lifecycle" \/>[\s\S]*?<Select name="status" defaultValue=\{product\.status\}>[\s\S]*?<SelectTrigger\s+id=\{`status-\$\{product\.id\}`\}\s+autoFocus=\{isFeedbackTarget\}\s+className="box-border h-\[34px\] rounded-\[7px\] px-3 py-0 text-\[13px\] font-semibold"[\s\S]*?<SelectValue \/>[\s\S]*?<SelectContent>[\s\S]*?STATUS_OPTIONS\.map\(\(status\) => <SelectItem key=\{status\} value=\{status\}>\{lifecycleLabels\[status\]\}<\/SelectItem>\)/);

@@ -40,7 +40,7 @@ export default async function AdminProductsPage({
     where: { category: 'standing-desks' },
     orderBy: { name: 'asc' },
     include: {
-      _count: { select: { product_attributes: true } },
+      _count: { select: { product_attributes: true, affiliate_links: true } },
     },
   });
 
@@ -180,6 +180,12 @@ export default async function AdminProductsPage({
                         className="text-xs text-admin-primary hover:text-admin-primary/90"
                       >
                         {translations.products.actions.editSpecifications} ({product._count.product_attributes}) →
+                      </Link>
+                      <Link
+                        href={`/admin/products/${product.id}/offers`}
+                        className="text-xs text-admin-primary hover:text-admin-primary/90"
+                      >
+                        {translations.products.actions.offers} ({product._count.affiliate_links}) →
                       </Link>
                     </div>
 
