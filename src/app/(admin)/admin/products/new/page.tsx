@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import SlugAutoFillFields from '@/components/admin/products/SlugAutoFillFields';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -68,18 +69,11 @@ export function createNewProductPage({
         <Card>
           <CardContent className="p-5">
             <form action={action} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="name">{translations.createProduct.name}</Label>
-                <Input id="name" name="name" required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="slug" className="font-mono text-xs uppercase tracking-wide">
-                  {translations.createProduct.slug}
-                </Label>
-                <Input id="slug" name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" />
-                <p className="text-xs text-admin-muted-foreground">{translations.createProduct.slugHelp}</p>
-              </div>
+              <SlugAutoFillFields
+                nameLabel={translations.createProduct.name}
+                slugLabel={translations.createProduct.slug}
+                slugHelp={translations.createProduct.slugHelp}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="categorySlug">{translations.createProduct.category}</Label>

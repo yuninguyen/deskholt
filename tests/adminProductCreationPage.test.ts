@@ -6,6 +6,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 const pagePath = resolve(process.cwd(), 'src/app/(admin)/admin/products/new/page.tsx');
+const slugAutoFillFieldsPath = resolve(process.cwd(), 'src/components/admin/products/SlugAutoFillFields.tsx');
 const checkboxSourcePath = resolve(process.cwd(), 'node_modules/@radix-ui/react-checkbox/dist/index.js');
 const selectSourcePath = resolve(process.cwd(), 'node_modules/@radix-ui/react-select/dist/index.js');
 const creationAction = async () => undefined;
@@ -171,10 +172,13 @@ test('default new Product page uses the production category lookup configuration
 test('new Product page keeps the shadcn control FormData contract', () => {
   const page = readFileSync(pagePath, 'utf8');
 
+  const slugAutoFillFields = readFileSync(slugAutoFillFieldsPath, 'utf8');
+
   assert.match(page, /<form\s+action=\{action\}/);
   assert.match(page, /action:\s*createProductAction/);
-  assert.match(page, /<Input[^>]*id="name"[^>]*name="name"[^>]*required/);
-  assert.match(page, /<Input[^>]*id="slug"[^>]*name="slug"[^>]*required[^>]*pattern="\[a-z0-9\]\+\(-\[a-z0-9\]\+\)\*"/);
+  assert.match(page, /<SlugAutoFillFields\s+nameLabel=\{translations\.createProduct\.name\}\s+slugLabel=\{translations\.createProduct\.slug\}\s+slugHelp=\{translations\.createProduct\.slugHelp\}/);
+  assert.match(slugAutoFillFields, /<Input[^>]*id="name"[^>]*name="name"[^>]*required/);
+  assert.match(slugAutoFillFields, /<Input[\s\S]*id="slug"[\s\S]*name="slug"[\s\S]*required[\s\S]*pattern="\[a-z0-9\]\+\(-\[a-z0-9\]\+\)\*"/);
   assert.match(page, /<Select\s+name="categorySlug"\s+required/);
   assert.match(page, /<SelectItem\s+key=\{category\.slug\}\s+value=\{category\.slug\}/);
   assert.match(page, /<Textarea[^>]*id="description"[^>]*name="description"[^>]*required[^>]*rows=\{4\}/);
