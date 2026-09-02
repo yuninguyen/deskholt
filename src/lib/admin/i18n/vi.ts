@@ -6,7 +6,7 @@ export const vi = {
   },
   login: { title: 'Quản trị Deskholt', prompt: 'Nhập mật khẩu quản trị để tiếp tục.', invalidPassword: 'Sai mật khẩu. Vui lòng thử lại.', password: 'Mật khẩu', submit: 'Đăng nhập' },
   products: {
-    title: 'Bàn đứng — Quản trị', description: 'Quản lý xuất bản sản phẩm và khả năng hiển thị trên công cụ tìm kiếm.', newProduct: 'Sản phẩm mới',
+    title: 'Bàn đứng — Quản trị', description: 'Quản lý xuất bản sản phẩm và khả năng hiển thị trên công cụ tìm kiếm.', newProduct: 'Sản phẩm mới', downloadBackup: 'Tải bản sao lưu (JSON)',
     saved: 'Đã lưu thành công. Sản phẩm bị ảnh hưởng được làm nổi bật bên dưới.', publishingRejected: 'Thao tác xuất bản bị từ chối.',
     table: { product: 'Sản phẩm', lifecycle: 'Vòng đời', index: 'Chỉ mục', attributes: 'Thuộc tính', actions: 'Thao tác' },
     lifecycle: { DRAFT: 'Bản nháp', ACTIVE: 'Hoạt động', BLOCKED: 'Bị chặn', ARCHIVED: 'Đã lưu trữ' },

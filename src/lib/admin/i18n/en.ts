@@ -17,6 +17,7 @@ export const en = {
     title: 'Standing Desks — Admin',
     description: 'Manage product publication and search-index visibility.',
     newProduct: 'New Product',
+    downloadBackup: 'Download backup (JSON)',
     saved: 'Saved successfully. The affected Product is highlighted below.',
     publishingRejected: 'Publishing action rejected.',
     table: { product: 'Product', lifecycle: 'Lifecycle', index: 'Index', attributes: 'Attrs', actions: 'Actions' },

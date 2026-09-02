@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { evaluateProductAccess } from '../src/lib/products/productAccessPolicy.ts';
 import { createProductPublishingAction } from '../src/app/(admin)/admin/products/actions.ts';
+import { en } from '../src/lib/admin/i18n/en.ts';
+import { vi } from '../src/lib/admin/i18n/vi.ts';
 
 const adminProductsPageSource = readFileSync(
   join(process.cwd(), 'src/app/(admin)/admin/products/page.tsx'),
@@ -98,6 +100,19 @@ test('Admin Products uses typed server translations for all operator copy', () =
   assert.match(adminProductsPageSource, /translations\.products\.(title|description|newProduct|saved|publishingRejected|table|lifecycle|access|index|actions|empty|errors)/);
   assert.doesNotMatch(adminProductsPageSource, /Manage product publication and search-index visibility\./);
   assert.doesNotMatch(adminProductsPageSource, /Chưa có Standing Desk product nào\./);
+});
+
+test('Admin translations provide localized backup download copy', () => {
+  assert.equal(en.products.downloadBackup, 'Download backup (JSON)');
+  assert.equal(vi.products.downloadBackup, 'Tải bản sao lưu (JSON)');
+});
+
+test('Admin Products renders a translated backup download Link beside New Product', () => {
+  assert.match(
+    adminProductsPageSource,
+    /<div className="flex flex-wrap items-center gap-2">[\s\S]*?<Link\s+href="\/admin\/backup"[\s\S]*?translations\.products\.downloadBackup[\s\S]*?<\/Link>[\s\S]*?<Link\s+href="\/admin\/products\/new"/
+  );
+  assert.match(adminProductsPageSource, /translations\.products\.(newProduct|downloadBackup)/);
 });
 
 test('Admin Products uses shadcn Table and semantic named Badges in one direct horizontal scroll panel', () => {

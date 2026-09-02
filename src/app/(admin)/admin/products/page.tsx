@@ -53,12 +53,20 @@ export default async function AdminProductsPage({
             {translations.products.description}
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="rounded-lg bg-admin-primary px-3 py-2 text-sm font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
-        >
-          {translations.products.newProduct}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/backup"
+            className="rounded-lg border border-admin-input px-3 py-2 text-sm font-semibold text-admin-foreground hover:border-admin-primary"
+          >
+            {translations.products.downloadBackup}
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="rounded-lg bg-admin-primary px-3 py-2 text-sm font-semibold text-admin-primary-foreground shadow-sm hover:bg-admin-primary/90"
+          >
+            {translations.products.newProduct}
+          </Link>
+        </div>
       </div>
 
       <div aria-live="polite" aria-atomic="true">
