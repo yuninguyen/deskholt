@@ -2,6 +2,72 @@
 
 > **Note (slash commands):** This project has two separate slash-command families installed — spec-kit (`/speckit-specify`, `/speckit-plan`, `/speckit-implement`, etc., for the spec-driven workflow) and ecc/superpowers (`/plan`, `/executing-plans`, etc.). They come from different plugins and don't share state — don't confuse `/speckit-plan` with `/plan`.
 
+## Shared Project Continuity
+
+This repository may be worked on by Claude Code, DSH Harness, Codex, or other coding agents.
+
+Before substantial project work:
+
+1. Read `docs/operations/ai-workflow/HANDOFF.md` if it exists.
+2. Inspect the relevant repository state and Git history.
+3. Read the current designated DeskHolt canonical documentation relevant to the task.
+4. Verify important handoff claims against the repository before acting on them.
+
+`HANDOFF.md` is operational state only. It is not architectural authority.
+
+Use this authority order:
+
+1. Repository and Git history — actual implementation state.
+2. Current designated DeskHolt canonical documentation — architecture, scope, contracts, gates, invariants, and design decisions.
+3. Approved feature artifacts such as Spec-Kit `spec.md`, `plan.md`, and `tasks.md` — task-level requirements and implementation intent.
+4. `docs/operations/ai-workflow/HANDOFF.md` — current cross-agent workflow state.
+5. Conversation context — supplemental only.
+
+If these sources materially conflict, report the conflict instead of silently reconciling it.
+
+---
+
+## Handoff Discipline
+
+Use `docs/operations/ai-workflow/HANDOFF.md` as the shared project journal between Claude Code, DSH Harness, Codex, and other agents.
+
+Update it when work materially changes project/task state, including:
+
+- a spec or plan is created/approved;
+- implementation starts or completes;
+- a commit is created for independent review;
+- verification results materially change;
+- review finds blockers;
+- a replacement commit is created;
+- review passes;
+- the task is completed.
+
+Keep HANDOFF concise and factual.
+
+Prefer links/paths to existing artifacts rather than copying large plans into HANDOFF.
+
+Typical references:
+
+- Spec: `specs/<feature>/spec.md`
+- Plan: `specs/<feature>/plan.md`
+- Tasks: `specs/<feature>/tasks.md`
+- Latest implementation commit: `<sha>`
+- Reviewed commit: `<sha>`
+
+A previous agent's implementation summary is context, not proof. Reconstruct the real state from Git and the repository.
+
+---
+
+## Cross-Agent Review Checkpoint
+
+When implementation is ready for independent review, use a Git commit SHA as the review checkpoint.
+
+Review the committed snapshot, inspect its diff and surrounding code, and run the relevant verification.
+
+Do not assume work was performed by Claude simply because Claude is the current agent.
+
+---
+
 ## Spec-Kit Auto-Activation
 
 For any request to build a **new feature** (not a small fix or one-line change), automatically run the spec-kit workflow in order, without waiting for the user to invoke each step manually:
@@ -13,10 +79,33 @@ For any request to build a **new feature** (not a small fix or one-line change),
 
 Skip this workflow for bug fixes, small edits, or when the user explicitly asks to skip straight to coding.
 
+If the current work already has approved Spec-Kit artifacts (`spec.md`, `plan.md`, `tasks.md`) recorded in the repository or HANDOFF, continue from those artifacts instead of automatically generating a competing spec/plan.
+
+If the user explicitly asks for only one stage (for example plan-only, review-only, or implementation-only), honor that narrower request.
+
+After a material Spec-Kit milestone or implementation commit, update HANDOFF so another agent can continue without reconstructing the entire conversation.
+
+---
+
+## Tool Availability Rule
+
+Some repository policies require external tools such as GitNexus.
+
+Never claim a tool or check was executed when it was not.
+
+If a required tool is unavailable in the current environment:
+
+- report that it is unavailable;
+- do not fabricate impact-analysis, context, change-detection, or verification results;
+- use the safest available repository inspection path;
+- if repository policy explicitly forbids proceeding without the tool, stop before that operation unless the user resolves the blocker.
+
+---
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **deskholt** (491 symbols, 492 relationships, 0 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **deskholt** (2712 symbols, 4422 relationships, 142 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
