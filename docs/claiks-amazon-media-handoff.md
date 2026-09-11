@@ -104,3 +104,28 @@ A read-only forensic audit (2026-09-11) found that all 22 ProductAttribute rows 
 1. Re-verify every VERIFIED-confidence row's value against its cited `source_url` directly (do not assume prior audit conclusions still hold).
 2. Investigate whether this was a known script/tool run outside this session's authorized task history before assuming malicious or erroneous intent.
 3. Treat this note as open until a future session either identifies the source or completes a full re-verification pass.
+
+### Update — manual re-verification completed, 2026-09-11
+
+User manually opened `https://www.amazon.com/dp/B0BZ7GXM4M` in a real browser and compared all 14 VERIFIED-confidence rows against the live page content. Result: **all 14 values match the cited source.**
+
+```text
+min_height_in, max_height_in, max_load_lb, product_weight_lb,
+desktop_thickness_in, adjustment_type, frame_material, desktop_shape,
+desktop_included, desktop_width_in, desktop_depth_in, desktop_material,
+frame_color — confirmed against the structured "Technical Details" table.
+
+noise_db = 45 dB — confirmed present on the page, but sourced from a
+product-description infographic image, not the structured spec table.
+Still a genuine match to the cited source (VERIFIED remains valid per
+§22), but harder to re-check in the future (not searchable/copyable
+text) — flag this provenance nuance for any future re-verification pass.
+Conclusion: the unexplained 2026-09-07 bulk write did not corrupt row
+content. The source of that write is still unidentified (no audit trail
+exists), but its effect on this record's field values is now ruled out by
+direct manual verification. This warning is considered resolved for the
+14 VERIFIED rows. The 8 remaining LIKELY-confidence rows (motor_count,
+warranty_months, and the six DERIVED compatibility rows) were not part
+of this re-verification pass and remain unexamined for this event, though
+they carry lower factual-claim risk than a VERIFIED row.
+```
