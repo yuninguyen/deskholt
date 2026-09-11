@@ -87,3 +87,20 @@ Do not infer publication approval after resolving media or missing specification
 ## Suggested next session
 
 Read this handoff, establish cwd and sanitized database identity, and ask which objective the user authorizes. If they have Amazon API access, inspect current official program documentation before proposing a narrow integration plan. Otherwise keep Claiks DRAFT/noindex and leave its 21 rows and image untouched.
+
+## ⚠️ Data-integrity warning — unexplained bulk write, 2026-09-07
+
+A read-only forensic audit (2026-09-11) found that all 22 ProductAttribute rows for this Product currently carry evidence of a bulk write operation at `2026-09-07T09:50:37Z`:
+
+- 14 rows (all VERIFIED-confidence) share the **exact same** `verified_at` timestamp down to the millisecond (`2026-09-07T09:50:37.206Z`) — this cannot result from independent manual saves through the Admin form, each of which would set `verified_at = now()` at a different moment.
+- A new row, `noise_db = 45 dB` (source: Amazon `B0BZ7GXM4M`, RETAILER, VERIFIED), was inserted in the same event window and does not originate from `scripts/create-products-3to7-standing-desks.ts` (verified absent from that script).
+
+**No audit trail exists to identify the source.** The database has no ActivityLog/audit table, no `pg_stat_statements`, and no change triggers. The operation cannot be attributed to any task authorized in the cross-agent session history reviewed so far.
+
+**Consequence: the pre-2026-09-07 field values of the 21 previously-known rows cannot be verified as unchanged.** Content equality before/after this event cannot be proven from the database alone.
+
+**Do not treat the current 22-row Claiks record as a finalized/audited baseline.** Before any publication decision:
+
+1. Re-verify every VERIFIED-confidence row's value against its cited `source_url` directly (do not assume prior audit conclusions still hold).
+2. Investigate whether this was a known script/tool run outside this session's authorized task history before assuming malicious or erroneous intent.
+3. Treat this note as open until a future session either identifies the source or completes a full re-verification pass.
