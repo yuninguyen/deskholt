@@ -129,3 +129,41 @@ warranty_months, and the six DERIVED compatibility rows) were not part
 of this re-verification pass and remain unexamined for this event, though
 they carry lower factual-claim risk than a VERIFIED row.
 ```
+
+## LIKELY-confidence rows audit, 2026-09-12
+
+The remaining 8 `LIKELY` rows (not part of the 14-row VERIFIED re-verification) were reviewed read-only:
+
+```text
+motor_count = 1, warranty_months = 18
+  → source: standingdeskreference.com/desks/claiks-48x24/
+  → classification: LIKELY — retain (matches third-party source
+    directly; not manufacturer-confirmed, LIKELY remains correct)
+
+monitor_arm_compatible / dual_monitor_suitable / ultrawide_suitable
+  (Product + Variant, 6 rows total)
+  → source: amazon.com/dp/B0BZ7GXM4M (supports underlying desk specs,
+    not the compatibility judgment itself)
+  → classification: LIKELY — weak / needs qualification (reasonable
+    inference from VERIFIED desktop size/load rating, but does not
+    account for arm-specific clamp range, monitor weight/VESA, or
+    manufacturer guidance)
+Decision: keep all 8 rows unchanged. No database mutation, no schema
+redesign. This matches the existing DERIVED semantics (Blueprint §16:
+"not required; UI displayed separately; not raw manufacturer spec").
+
+Requirement for any future public-facing UI: whenever these six
+DERIVED compatibility rows are ever rendered on a public product page,
+they must be presented as conditional/qualified guidance (e.g. "likely
+compatible with standard clamp-mount monitor arms based on desktop size
+and load rating"), never as an unconditional compatibility claim. This
+is a UI/display requirement for whenever that page is built — it does
+not require any code change now, since Claiks is not yet published and
+no public DERIVED-attribute display exists today.
+
+Claiks integrity closeout: complete. All 22 ProductAttribute rows
+(14 VERIFIED + 8 LIKELY) have been reviewed following the 2026-09-07
+unexplained bulk write. Product remains DRAFT / is_indexed: false.
+Media/image selection and affiliate-tag activation remain the only open
+items before any publication decision.
+```
