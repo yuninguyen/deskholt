@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import test from 'node:test';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -15,6 +17,12 @@ import {
   type OfferCandidate,
   type OfferSelectionPolicy,
 } from '../src/lib/products/productStructuredData.ts';
+import { isDiagramUrl } from '../src/lib/products/productDiagram.ts';
+
+const productPagePath = resolve(
+  process.cwd(),
+  'src/app/(public)/products/[slug]/page.tsx'
+);
 
 const NOW = new Date('2026-08-25T12:00:00.000Z');
 const POLICY: OfferSelectionPolicy = {
@@ -147,6 +155,30 @@ const productInput = {
   description: 'A product description',
   sku: 'DESK-1',
 };
+
+test('product page omits diagram URLs from Product JSON-LD and preserves real-photo URLs', () => {
+  const diagramUrl = '/api/product-diagram/truthful-desk';
+  const realPhotoUrl = 'https://m.media-amazon.com/images/I/example.jpg';
+  const imageForStructuredData = (imageUrl: string) =>
+    isDiagramUrl(imageUrl) ? undefined : imageUrl;
+
+  const diagramJsonLd = buildProductJsonLd({
+    ...productInput,
+    image: imageForStructuredData(diagramUrl),
+  });
+  const photoJsonLd = buildProductJsonLd({
+    ...productInput,
+    image: imageForStructuredData(realPhotoUrl),
+  });
+
+  assert.equal(diagramJsonLd.image, undefined);
+  assert.doesNotMatch(serializeProductJsonLd(diagramJsonLd), /"image"/);
+  assert.equal(photoJsonLd.image, realPhotoUrl);
+
+  const pageSource = readFileSync(productPagePath, 'utf8');
+  assert.match(pageSource, /const isDiagram = isDiagramUrl\(product\.image_url\);/);
+  assert.match(pageSource, /image:\s*isDiagram \? undefined : product\.image_url/);
+});
 
 test('buildProductJsonLd preserves Product data while omitting a missing offer and rating', () => {
   const jsonLd = buildProductJsonLd(productInput);

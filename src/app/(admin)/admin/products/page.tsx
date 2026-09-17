@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { getAdminTranslations } from '@/lib/admin/i18n/server';
 import { prisma } from '@/lib/prisma';
 import { evaluateProductAccess, type ProductAccessReason } from '@/lib/products/productAccessPolicy';
+import { isDiagramUrl } from '@/lib/products/productDiagram';
 import { productPublishingAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -101,6 +102,10 @@ export default async function AdminProductsPage({
             const isActive = product.status === 'ACTIVE';
             const isFeedbackTarget = query.productId === product.id;
             const isEnableDisabled = !isActive && !product.is_indexed;
+            const isDiagram = isDiagramUrl(product.image_url);
+            const imageOriginLabel = isDiagram
+              ? translations.products.imageOrigin.diagram
+              : translations.products.imageOrigin.photo;
             const enableIndexHelpId = `enable-index-help-${product.id}`;
             const lifecycleVariant = {
               DRAFT: 'warning',
@@ -129,6 +134,11 @@ export default async function AdminProductsPage({
                   <div className="font-mono text-xs text-admin-muted-foreground">{product.slug}</div>
                   <div className="mt-2">
                     <AdminStatusBadge variant={accessVariant[decision.reason]}>{accessLabels[decision.reason]}</AdminStatusBadge>
+                  </div>
+                  <div className="mt-2">
+                    <AdminStatusBadge variant={isDiagram ? 'warning' : 'neutral'}>
+                      {imageOriginLabel}
+                    </AdminStatusBadge>
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-4">

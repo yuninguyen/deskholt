@@ -17,6 +17,7 @@ import Badge from '@/components/ui/Badge';
 import { CheckCircle2, ShoppingCart, ThumbsUp, XCircle } from 'lucide-react';
 import { loadSpecificationData, filterPublicDisplayRows, type SpecRow } from '@/lib/products/specificationRows';
 import { CATALOG_CURRENCY, toProductStructuredOffer } from '@/lib/products/productStructuredData';
+import { isDiagramUrl } from '@/lib/products/productDiagram';
 
 function probeResultVersion(result: Awaited<ReturnType<typeof getProductPageData>>): string {
   const versionedResult = { ...result, evaluatedAt: undefined };
@@ -72,6 +73,7 @@ export default async function ProductDetailPage({
     return notFound();
   }
   const { product, offerPresentation } = pageData;
+  const isDiagram = isDiagramUrl(product.image_url);
 
   // Parse specs and user sentiment safely
   let specsObj: Record<string, string> = {};
@@ -125,7 +127,7 @@ export default async function ProductDetailPage({
       <ProductSchema
         product={{
           name: product.name,
-          image: product.image_url,
+          image: isDiagram ? undefined : product.image_url,
           description: product.description || product.name,
           sku: product.upc_code || undefined,
           offer: structuredOffer,
@@ -160,6 +162,11 @@ export default async function ProductDetailPage({
               className="object-cover"
             />
           </div>
+          {isDiagram && (
+            <p className="mt-3 text-center font-mono text-xs text-ink-faint">
+              DeskHolt technical diagram — not an official product photo
+            </p>
+          )}
         </div>
 
         {/* Product Info & Multi-Store Table */}

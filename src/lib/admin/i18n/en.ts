@@ -21,6 +21,7 @@ export const en = {
     saved: 'Saved successfully. The affected Product is highlighted below.',
     publishingRejected: 'Publishing action rejected.',
     table: { product: 'Product', lifecycle: 'Lifecycle', index: 'Index', attributes: 'Attrs', actions: 'Actions' },
+    imageOrigin: { diagram: 'Diagram', photo: 'Photo' },
     lifecycle: { DRAFT: 'Draft', ACTIVE: 'Active', BLOCKED: 'Blocked', ARCHIVED: 'Archived' },
     access: {
       eligible: 'Eligible for public listings and indexing',

@@ -9,6 +9,7 @@ export const vi = {
     title: 'Bàn đứng — Quản trị', description: 'Quản lý xuất bản sản phẩm và khả năng hiển thị trên công cụ tìm kiếm.', newProduct: 'Sản phẩm mới', downloadBackup: 'Tải bản sao lưu (JSON)',
     saved: 'Đã lưu thành công. Sản phẩm bị ảnh hưởng được làm nổi bật bên dưới.', publishingRejected: 'Thao tác xuất bản bị từ chối.',
     table: { product: 'Sản phẩm', lifecycle: 'Vòng đời', index: 'Chỉ mục', attributes: 'Thuộc tính', actions: 'Thao tác' },
+    imageOrigin: { diagram: 'Sơ đồ', photo: 'Ảnh' },
     lifecycle: { DRAFT: 'Bản nháp', ACTIVE: 'Hoạt động', BLOCKED: 'Bị chặn', ARCHIVED: 'Đã lưu trữ' },
     access: { eligible: 'Đủ điều kiện hiển thị công khai và lập chỉ mục', explicitNoindex: 'Công khai, không lập chỉ mục', draft: 'Bản nháp—chưa công khai', blocked: 'Bị chặn—chưa công khai', archived: 'Đã lưu trữ—chưa công khai' },
     index: { enabled: 'Đã bật', disabled: 'Đã tắt', enable: 'Bật chỉ mục', disable: 'Tắt chỉ mục', enableHelp: 'Đặt vòng đời thành Hoạt động để bật lập chỉ mục.' },

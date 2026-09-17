@@ -3,7 +3,7 @@ import type { ProductStructuredOffer } from '@/lib/products/productStructuredDat
 
 export interface ProductSchemaProps {
   name: string;
-  image: string;
+  image?: string;
   description: string;
   brand?: string;
   sku?: string;
