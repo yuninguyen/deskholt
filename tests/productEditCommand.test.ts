@@ -92,6 +92,12 @@ test('parseEditProductInput rejects blank name, blank description, and invalid i
   assert.throws(() => parseEditProductInput(validForm({ imageUrl: '/images/desk.jpg' })), /invalid image url/i);
 });
 
+test('parseEditProductInput accepts a product diagram route path', () => {
+  const imageUrl = '/api/product-diagram/some-slug';
+
+  assert.equal(parseEditProductInput(validForm({ imageUrl })).imageUrl, imageUrl);
+});
+
 // Break caught: a malformed DRAFT slug must not bypass the existing Product URL contract.
 test('parseEditProductInput rejects a malformed editable slug', () => {
   assert.throws(() => parseEditProductInput(validForm({ slug: 'ErGear desk' })), /invalid slug/i);

@@ -1,4 +1,5 @@
 import type { Prisma, ProductStatus } from '@prisma/client';
+import { DIAGRAM_ROUTE_PREFIX } from './productDiagram';
 
 export type EditProductInput = {
   name: string;
@@ -52,7 +53,9 @@ export function parseEditProductInput(formData: FormData): EditProductInput {
   if (slug !== undefined && !PRODUCT_SLUG_PATTERN.test(slug)) throw new Error('invalid slug');
 
   const imageUrl = requiredText(formData, 'imageUrl');
-  if (!URL.canParse(imageUrl)) throw new Error('invalid image URL');
+  if (!imageUrl.startsWith(DIAGRAM_ROUTE_PREFIX) && !URL.canParse(imageUrl)) {
+    throw new Error('invalid image URL');
+  }
 
   return {
     name: requiredText(formData, 'name'),
