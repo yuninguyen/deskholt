@@ -6,6 +6,13 @@ Operational journal only; it is not architectural authority. Verify Git and cano
 
 No active implementation task.
 
+On 2026-09-17, the Neon production Product
+`ergear-egesd5b-standing-desk-black` had only its `image_url` corrected to
+`https://m.media-amazon.com/images/I/81k5-nCKHJL._AC_SX679_.jpg` in a transaction.
+The guarded update affected exactly one row; post-write verification retained
+`status=ACTIVE` and `is_indexed=true`. No ProductAttribute or AffiliateLink write
+was performed. The temporary mutation script was removed.
+
 The local Gate B branch contains three independently reviewed bugfix commits after initial pinned commit `2d4c818`:
 
 ```text
