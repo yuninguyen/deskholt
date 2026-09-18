@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/441681-1788282377/content/redesign-options.html"
+        ],
+        "createdAt": "2026-09-01T17:09:33.830Z",
+        "reason": "scratch comparison mockup shown to user for direction feedback, not shipped Admin UI code"
+      },
+      {
+        "rule": "broken-image",
+        "value": "/api/product-diagram/test-standing-desk",
+        "files": [
+          "tests/productCard.test.ts"
+        ],
+        "createdAt": "2026-09-18T07:08:08.149Z",
+        "reason": "test fixture string in regex assertion, not a rendered UI image"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "tests/productStructuredData.test.ts"
+        ],
+        "createdAt": "2026-09-18T07:09:40.838Z",
+        "reason": "source-string regex assertions in test file, not rendered UI images"
+      }
+    ]
+  }
+}

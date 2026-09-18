@@ -38,3 +38,13 @@ test('ProductCard preserves priced-offer rendering', () => {
   assert.doesNotMatch(html, /Price coming soon/);
   assert.doesNotMatch(html, /View product →/);
 });
+
+test('ProductCard renders a plain contained <img> for a diagram image and next/image for a real photo', () => {
+  const diagramHtml = renderProductCard({ imageUrl: '/api/product-diagram/test-standing-desk' });
+  assert.match(diagramHtml, /<img src="\/api\/product-diagram\/test-standing-desk"[^>]*class="[^"]*object-contain[^"]*"/);
+  assert.doesNotMatch(diagramHtml, /object-cover/);
+
+  const photoHtml = renderProductCard({ imageUrl: '/test-standing-desk.jpg' });
+  assert.match(photoHtml, /object-cover/);
+  assert.doesNotMatch(photoHtml, /<img src="\/test-standing-desk\.jpg"/);
+});

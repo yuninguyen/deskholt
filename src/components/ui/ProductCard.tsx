@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import Badge, { type BadgeProps } from './Badge';
+import { isDiagramUrl } from '@/lib/products/productDiagram';
 
 export interface ProductCardProps {
   name: string;
@@ -23,10 +24,17 @@ export default function ProductCard({
   badges = [],
   dimension,
 }: ProductCardProps) {
+  const isDiagram = isDiagramUrl(imageUrl);
+
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-line-strong bg-card">
       <div className="relative h-40 w-full bg-gradient-to-br from-walnut-soft to-paper-alt">
-        <Image src={imageUrl} alt={name} fill sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" className="object-cover" />
+        {isDiagram ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt={name} className="h-full w-full object-contain" />
+        ) : (
+          <Image src={imageUrl} alt={name} fill sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" className="object-cover" />
+        )}
         {dimension && (
           <div className="dim-line absolute bottom-2 left-3 right-3 rounded bg-card/80 px-1.5 py-1 backdrop-blur-sm">
             <span className="dim-val">{dimension.value}</span>

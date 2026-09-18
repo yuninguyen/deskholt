@@ -186,13 +186,13 @@ test('product page hero image renders plain <img> for diagram URLs and next/imag
   // Verify conditional branching on isDiagram for hero image
   assert.match(
     pageSource,
-    /\{isDiagram \?\s*\(\s*(?:\/\/[^\n]*\n\s*)?<img[\s\S]*?src=\{product\.image_url\}[\s\S]*?alt=\{product\.name\}[\s\S]*?className="h-full w-full object-cover"[\s\S]*?\/>\s*\)\s*:\s*\(\s*<Image[\s\S]*?src=\{product\.image_url\}[\s\S]*?alt=\{product\.name\}[\s\S]*?fill[\s\S]*?priority[\s\S]*?className="object-cover"[\s\S]*?\/>\s*\)\}/
+    /\{isDiagram \?\s*\(\s*(?:\/\/[^\n]*\n\s*)?<img[\s\S]*?src=\{product\.image_url\}[\s\S]*?alt=\{product\.name\}[\s\S]*?className="h-full w-full object-contain"[\s\S]*?\/>\s*\)\s*:\s*\(\s*<Image[\s\S]*?src=\{product\.image_url\}[\s\S]*?alt=\{product\.name\}[\s\S]*?fill[\s\S]*?priority[\s\S]*?className="object-cover"[\s\S]*?\/>\s*\)\}/
   );
 
-  // Assert diagram branch uses plain <img> and does not invoke <Image>
+  // Assert diagram branch uses plain <img> (object-contain, so edge labels aren't cropped) and does not invoke <Image>
   assert.match(
     pageSource,
-    /<img\s+src=\{product\.image_url\}\s+alt=\{product\.name\}\s+className="h-full w-full object-cover"\s*\/>/
+    /<img\s+src=\{product\.image_url\}\s+alt=\{product\.name\}\s+className="h-full w-full object-contain"\s*\/>/
   );
   assert.match(
     pageSource,
