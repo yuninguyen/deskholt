@@ -180,6 +180,26 @@ test('product page omits diagram URLs from Product JSON-LD and preserves real-ph
   assert.match(pageSource, /image:\s*isDiagram \? undefined : product\.image_url/);
 });
 
+test('product page hero image renders plain <img> for diagram URLs and next/image <Image> for real photos', () => {
+  const pageSource = readFileSync(productPagePath, 'utf8');
+
+  // Verify conditional branching on isDiagram for hero image
+  assert.match(
+    pageSource,
+    /\{isDiagram \?\s*\(\s*(?:\/\/[^\n]*\n\s*)?<img[\s\S]*?src=\{product\.image_url\}[\s\S]*?alt=\{product\.name\}[\s\S]*?className="h-full w-full object-cover"[\s\S]*?\/>\s*\)\s*:\s*\(\s*<Image[\s\S]*?src=\{product\.image_url\}[\s\S]*?alt=\{product\.name\}[\s\S]*?fill[\s\S]*?priority[\s\S]*?className="object-cover"[\s\S]*?\/>\s*\)\}/
+  );
+
+  // Assert diagram branch uses plain <img> and does not invoke <Image>
+  assert.match(
+    pageSource,
+    /<img\s+src=\{product\.image_url\}\s+alt=\{product\.name\}\s+className="h-full w-full object-cover"\s*\/>/
+  );
+  assert.match(
+    pageSource,
+    /<Image\s+src=\{product\.image_url\}\s+alt=\{product\.name\}\s+fill\s+priority/
+  );
+});
+
 test('buildProductJsonLd preserves Product data while omitting a missing offer and rating', () => {
   const jsonLd = buildProductJsonLd(productInput);
 

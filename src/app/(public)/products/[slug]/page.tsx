@@ -153,14 +153,23 @@ export default async function ProductDetailPage({
         {/* Product Image */}
         <div className="rounded-lg border border-line-strong bg-card p-4 lg:col-span-5">
           <div className="relative h-96 w-full overflow-hidden rounded-md bg-paper-alt">
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              fill
-              priority
-              sizes="(min-width: 1024px) 42vw, 100vw"
-              className="object-cover"
-            />
+            {isDiagram ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                fill
+                priority
+                sizes="(min-width: 1024px) 42vw, 100vw"
+                className="object-cover"
+              />
+            )}
           </div>
           {isDiagram && (
             <p className="mt-3 text-center font-mono text-xs text-ink-faint">
