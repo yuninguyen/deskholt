@@ -6,6 +6,10 @@ Operational journal only; it is not architectural authority. Verify Git and cano
 
 No active implementation task.
 
+**Production data source of truth: Neon (`deskholt.vercel.app`), NOT localhost `deskholt_db`.** The two databases have diverged (e.g. Claiks attribute count, legacy-product status). Audit or mutate production only via `.env.production.local` (gitignored, pulled with `vercel env pull`; `ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET` are not pullable). See `docs/operations/deployment-strategy.md` (Vercel/Neon are temporary validation infrastructure).
+
+Feature `005-product-spec-diagram` (`specs/005-product-spec-diagram/`) is COMPLETE and deployed (main `488b6e8`, pushed): a same-origin route `GET /api/product-diagram/[slug]` renders a DeskHolt technical SVG diagram from VERIFIED attributes; `image_url` of 5 Neon products (SHW, Veken 47.2", Claiks, FEZIBO, OffiGo) now points to it. Diagram images render via plain `<img object-contain>` (not `next/image`, which returns 400 for SVG), are excluded from Product JSON-LD `image`, and carry an on-page "not an official product photo" caption. Admin products list shows a Diagram/Photo badge. Replace a diagram with a real photo through the normal product-edit flow. Not yet done: Amazon Associates tag is still `deskholt-pending` (all `/go` links fail closed); `is_indexed=false` remains for SHW and Claiks; Gate B (21 commits) is unmerged.
+
 On 2026-09-17, the Neon production Product
 `ergear-egesd5b-standing-desk-black` had only its `image_url` corrected to
 `https://m.media-amazon.com/images/I/81k5-nCKHJL._AC_SX679_.jpg` in a transaction.
